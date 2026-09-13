@@ -1,4 +1,9 @@
-process.env.CHROME_BIN = process.env.CHROME_BIN || '/usr/bin/chromium';
+const fs = require('fs');
+// No CI (Linux) usamos o Chromium do sistema; localmente (Mac/Windows) deixamos
+// o karma-chrome-launcher detectar o Chrome instalado automaticamente.
+if (!process.env.CHROME_BIN && fs.existsSync('/usr/bin/chromium')) {
+  process.env.CHROME_BIN = '/usr/bin/chromium';
+}
 
 module.exports = function (config) {
   config.set({
