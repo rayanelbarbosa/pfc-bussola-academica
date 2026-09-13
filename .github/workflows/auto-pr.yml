@@ -23,9 +23,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr create \
-            --base develop \
-            --head "${{ github.ref_name }}" \
-            --title "${{ github.ref_name }}" \
-            --body "PR aberto automaticamente pelo workflow para a branch \`${{ github.ref_name }}\`." \
-            || echo "PR ja existe para essa branch, nada a fazer."
+          set -e
+          if gh pr view "${{ github.ref_name }}" --json url >/dev/null 2>&1; then
+            echo "PR ja existe para essa branch, nada a fazer."
+          else
+            gh pr create \
+              --base develop \
+              --head "${{ github.ref_name }}" \
+              --title "${{ github.ref_name }}" \
+              --body "PR aberto automaticamente pelo workflow para a branch \`${{ github.ref_name }}\`."
+          fi

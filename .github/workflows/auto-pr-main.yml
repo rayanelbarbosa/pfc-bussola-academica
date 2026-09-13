@@ -24,9 +24,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr create \
-            --base main \
-            --head develop \
-            --title "develop -> main" \
-            --body "PR aberto automaticamente pelo workflow apos atualizacao da develop." \
-            || echo "PR ja existe para develop -> main, nada a fazer."
+          set -e
+          if gh pr view develop --json url >/dev/null 2>&1; then
+            echo "PR ja existe para develop -> main, nada a fazer."
+          else
+            gh pr create \
+              --base main \
+              --head develop \
+              --title "develop -> main" \
+              --body "PR aberto automaticamente pelo workflow apos atualizacao da develop."
+          fi
