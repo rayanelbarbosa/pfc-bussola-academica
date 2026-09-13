@@ -1,27 +1,32 @@
-# Frontend
+# Front-end — Bússola Acadêmica
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.21.
+Aplicação Angular 18 (standalone components) responsável pelas telas do Bússola Acadêmica.
+Nesta entrega, implementa o questionário do teste vocacional e a tela de resultado, consumindo a
+API REST do back-end.
 
-## Development server
+## Servidor de desenvolvimento
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+Rode `npm start` (ou `ng serve`) para subir o servidor de desenvolvimento. Acesse
+`http://localhost:4200/` — a aplicação recarrega automaticamente ao salvar alterações nos
+arquivos.
 
-## Code scaffolding
+## Build de produção
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Rode `npm run build` (ou `ng build`) para gerar o build de produção. Os arquivos ficam na pasta
+`dist/`.
 
-## Build
+## Testes automatizados
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+Rode `npm test` (ou `ng test`) para executar os testes unitários via Jasmine/Karma.
 
-## Running unit tests
+## Estrutura principal
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+- `src/app/teste-vocacional/` — componente do questionário vocacional e tela de resultado.
+- `src/app/teste-vocacional.service.ts` — serviço HTTP de integração com a API do back-end.
+- `src/app/models/` — modelos (interfaces) usados na comunicação com a API.
 
-## Running end-to-end tests
+## Mais informações
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Este projeto foi gerado com o [Angular CLI](https://github.com/angular/angular-cli) versão
+18.2.21. Para mais comandos, veja a
+[documentação oficial do Angular CLI](https://angular.dev/tools/cli).

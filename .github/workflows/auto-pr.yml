@@ -1,0 +1,35 @@
+name: Abrir PR automaticamente
+
+# Toda vez que uma branch de entrega (feature/...) recebe um push,
+# abre (ou atualiza) um Pull Request automaticamente para a "develop",
+# ja pronto pra revisar e mergear.
+on:
+  push:
+    branches:
+      - "feature/**"
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  abrir-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Criar ou atualizar o PR para develop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          if gh pr view "${{ github.ref_name }}" --json url >/dev/null 2>&1; then
+            echo "PR ja existe para essa branch, nada a fazer."
+          else
+            gh pr create \
+              --base develop \
+              --head "${{ github.ref_name }}" \
+              --title "${{ github.ref_name }}" \
+              --body "PR aberto automaticamente pelo workflow para a branch \`${{ github.ref_name }}\`."
+          fi
