@@ -1,0 +1,32 @@
+name: Abrir PR de develop para main
+
+# Toda vez que a "develop" recebe um push (por exemplo, apos o merge de um
+# PR de uma branch de entrega), abre (ou atualiza) um Pull Request de
+# develop para main, pronto para revisar e mergear quando a entrega
+# estiver pronta.
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  abrir-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Criar ou atualizar o PR para main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --head develop \
+            --title "develop -> main" \
+            --body "PR aberto automaticamente pelo workflow apos atualizacao da develop." \
+            || echo "PR ja existe para develop -> main, nada a fazer."
