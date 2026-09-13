@@ -1,0 +1,53 @@
+<section class="teste-vocacional">
+  <h1>Bússola Acadêmica — Teste Vocacional</h1>
+
+  <p *ngIf="carregandoPerguntas">Carregando perguntas...</p>
+  <p class="erro" *ngIf="mensagemErro">{{ mensagemErro }}</p>
+
+  <form *ngIf="!resultado && !carregandoPerguntas" (ngSubmit)="enviarRespostas()">
+    <p class="instrucoes">
+      Para cada afirmação, indique o quanto ela combina com você
+      (1 = discordo totalmente, 5 = concordo totalmente).
+    </p>
+
+    <div class="pergunta" *ngFor="let pergunta of perguntas">
+      <p class="enunciado">{{ pergunta.id }}. {{ pergunta.enunciado }}</p>
+      <div class="escala">
+        <label *ngFor="let nota of escalaLikert">
+          <input
+            type="radio"
+            [name]="'pergunta-' + pergunta.id"
+            [value]="nota"
+            [(ngModel)]="notas[pergunta.id]"
+          />
+          {{ nota }}
+        </label>
+      </div>
+    </div>
+
+    <button type="submit" [disabled]="enviando">
+      {{ enviando ? 'Calculando...' : 'Ver meu resultado' }}
+    </button>
+  </form>
+
+  <div class="resultado" *ngIf="resultado">
+    <h2>Seu perfil vocacional</h2>
+    <p>
+      Categoria(s) predominante(s):
+      <strong>{{ resultado.categoriasPrincipais.join(', ') }}</strong>
+    </p>
+    <p>Áreas e cursos recomendados:</p>
+    <ul>
+      <li *ngFor="let area of resultado.areasRecomendadas">{{ area }}</li>
+    </ul>
+
+    <h3>Escores por categoria</h3>
+    <ul>
+      <li *ngFor="let categoria of resultado.escoresPorCategoria | keyvalue">
+        {{ categoria.key }}: {{ categoria.value }}
+      </li>
+    </ul>
+
+    <button type="button" (click)="refazerTeste()">Refazer teste</button>
+  </div>
+</section>
