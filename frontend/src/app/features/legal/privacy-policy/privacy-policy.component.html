@@ -1,0 +1,159 @@
+<main class="page">
+  <app-top-bar />
+
+  <article class="card legal">
+    <p class="eyebrow">Documento legal</p>
+    <h1>Política de Privacidade</h1>
+    <p class="version">Versão {{ version }} · vigente desde {{ effectiveDate }}</p>
+
+    <p>
+      Esta Política explica, de forma direta, quais dados pessoais a <strong>Bússola Acadêmica</strong> coleta, para
+      que eles são usados, como são protegidos e quais são os seus direitos, conforme a Lei Geral de Proteção de Dados
+      Pessoais (LGPD — Lei nº 13.709/2018).
+    </p>
+
+    <h2>1. Quem é a controladora dos dados</h2>
+    <p>
+      A controladora é <strong>Rayane da Luz Barbosa</strong>, responsável pela Bússola Acadêmica, projeto acadêmico
+      do curso de Engenharia de Software da Universidade de Mogi das Cruzes (UMC). Contato para qualquer assunto de
+      privacidade (encarregada): <a class="link" [href]="'mailto:' + contactEmail">{{ contactEmail }}</a>.
+    </p>
+
+    <h2>2. Quais dados coletamos, para quê e por quanto tempo</h2>
+    <p>Coletamos apenas o necessário para a plataforma funcionar (princípio da necessidade, art. 6º, III):</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Dado</th>
+          <th>Finalidade</th>
+          <th>Base legal (LGPD, art. 7º)</th>
+          <th>Por quanto tempo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Nome</td>
+          <td>Identificar você na plataforma e personalizar as telas</td>
+          <td>Execução do contrato de uso (inciso V)</td>
+          <td>Enquanto a conta existir</td>
+        </tr>
+        <tr>
+          <td>E-mail</td>
+          <td>Login e contato sobre a sua conta</td>
+          <td>Execução do contrato de uso (inciso V)</td>
+          <td>Enquanto a conta existir</td>
+        </tr>
+        <tr>
+          <td>Senha</td>
+          <td>Autenticação. É guardada <strong>somente como hash BCrypt</strong>: nem a equipe consegue ver a senha</td>
+          <td>Execução do contrato de uso (inciso V)</td>
+          <td>Enquanto a conta existir</td>
+        </tr>
+        <tr>
+          <td>Data e versão do aceite deste documento e do Termo de Uso</td>
+          <td>Comprovar que você foi informado e concordou com as regras</td>
+          <td>Exercício regular de direitos (inciso VI)</td>
+          <td>Enquanto a conta existir</td>
+        </tr>
+        <tr>
+          <td>Respostas do teste vocacional (notas de 1 a 5), escores por categoria RIASEC, perfil predominante e áreas
+            recomendadas</td>
+          <td>Calcular o seu resultado e montar o seu histórico</td>
+          <td>Execução do contrato de uso (inciso V)</td>
+          <td>Enquanto a conta existir (ou até você excluí-la)</td>
+        </tr>
+        <tr>
+          <td>Registros de acesso e auditoria: data e hora, endereço IP, ação realizada (ex.: login, teste respondido,
+            acesso negado) e rota acessada</td>
+          <td>Segurança, prevenção de fraudes e rastreabilidade das operações</td>
+          <td>Cumprimento de obrigação legal (inciso II — Marco Civil da Internet, art. 15) e legítimo interesse
+            (inciso IX)</td>
+          <td>Mínimo de 6 meses (exigência legal); são mantidos mesmo após a exclusão da conta até completar esse
+            prazo</td>
+        </tr>
+        <tr>
+          <td>Token de sessão (JWT) guardado no armazenamento local do seu navegador</td>
+          <td>Manter você logado entre uma tela e outra</td>
+          <td>Execução do contrato de uso (inciso V)</td>
+          <td>Expira em 2 horas ou quando você clica em "Sair"</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      <strong>Não coletamos</strong> CPF, endereço, telefone, localização, fotos, nem dados pessoais sensíveis (origem
+      racial, saúde, religião, opinião política etc.). As respostas do teste indicam interesses profissionais e não são
+      dados sensíveis nos termos do art. 5º, II. <strong>Não usamos</strong> cookies de rastreamento nem de
+      publicidade, e não vendemos dados.
+    </p>
+
+    <h2>3. Com quem os dados são compartilhados</h2>
+    <ul>
+      <li><strong>Neon</strong> (banco de dados PostgreSQL) e <strong>Amazon Web Services</strong> (hospedagem):
+        operadores que armazenam e processam os dados em nosso nome, em servidores nos Estados Unidos. A
+        transferência internacional ocorre com base no art. 33 da LGPD, por meio das cláusulas de proteção de dados
+        desses provedores.</li>
+      <li><strong>Google / YouTube (YouTube Data API v3)</strong>: para buscar vídeos, enviamos ao YouTube
+        <strong>apenas o nome da área</strong> recomendada (ex.: "Medicina"). Nenhum dado pessoal seu é enviado. Os
+        vídeos são exibidos como links; o YouTube só recebe dados seus se você clicar para assistir, e aí vale a
+        política de privacidade do Google.</li>
+      <li>Autoridades públicas, somente quando houver obrigação legal ou ordem judicial.</li>
+    </ul>
+
+    <h2>4. Como protegemos os seus dados</h2>
+    <ul>
+      <li>Comunicação criptografada (HTTPS) entre o navegador, a API e o banco de dados;</li>
+      <li>senhas com hash BCrypt, nunca em texto puro;</li>
+      <li>autenticação por token JWT com validade curta;</li>
+      <li>controle de acesso por perfil: um estudante só acessa os próprios resultados; somente administradores
+        acessam os registros de auditoria;</li>
+      <li>registro de auditoria das ações, inclusive das tentativas de acesso negadas.</li>
+    </ul>
+
+    <h2>5. Seus direitos como titular (LGPD, art. 18)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Direito</th>
+          <th>Como exercer na plataforma</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Confirmação e acesso aos dados</td>
+          <td>Página <a routerLink="/meus-dados" class="link">Meus dados</a>: mostra seu cadastro, a data do aceite e
+            todos os seus resultados</td>
+        </tr>
+        <tr>
+          <td>Eliminação dos dados e revogação do consentimento</td>
+          <td>Botão "Excluir minha conta" em <a routerLink="/meus-dados" class="link">Meus dados</a>: apaga o cadastro
+            e os resultados imediatamente (os registros de acesso ficam apenas pelo prazo legal)</td>
+        </tr>
+        <tr>
+          <td>Correção de dados incompletos, inexatos ou desatualizados</td>
+          <td>Por e-mail para a encarregada</td>
+        </tr>
+        <tr>
+          <td>Portabilidade, anonimização, bloqueio e informação sobre compartilhamento</td>
+          <td>Por e-mail para a encarregada, com resposta em até 15 dias</td>
+        </tr>
+        <tr>
+          <td>Reclamação à autoridade</td>
+          <td>Autoridade Nacional de Proteção de Dados (ANPD) — www.gov.br/anpd</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>6. Crianças e adolescentes</h2>
+    <p>
+      A plataforma é voltada a concluintes do ensino médio, a partir de 16 anos. Dados de adolescentes são tratados no
+      seu melhor interesse (art. 14 da LGPD), limitados ao mínimo necessário descrito acima. Não é permitido o uso por
+      menores de 16 anos.
+    </p>
+
+    <h2>7. Alterações desta Política</h2>
+    <p>
+      Esta Política pode ser atualizada. A versão e a data de vigência ficam no topo desta página, e a versão aceita por
+      você fica registrada no seu cadastro. Mudanças relevantes serão informadas na plataforma.
+    </p>
+  </article>
+</main>
