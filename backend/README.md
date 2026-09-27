@@ -10,7 +10,9 @@ br.com.bussolaacademica
 ├── model        entidades JPA e enums de domínio
 ├── dto          objetos de entrada/saída da API
 ├── exception    exceções de negócio + tratamento global de erros
-└── config       CORS e beans de configuração
+├── security     Spring Security, JWT, respostas 401/403
+├── integration  clientes de APIs externas (YouTube)
+└── config       propriedades, administrador inicial e beans de configuração
 ```
 
 ## Convenções
@@ -44,11 +46,20 @@ Relatório de cobertura: `target/site/jacoco/index.html`.
 
 ## Endpoints
 
-| Método | Rota | Descrição |
-| --- | --- | --- |
-| GET | `/api/vocational-test/questions` | lista as 12 perguntas do questionário |
-| POST | `/api/vocational-test/results` | recebe as 12 respostas, calcula e salva o resultado (201) |
-| GET | `/api/vocational-test/results/{id}` | consulta um resultado salvo |
-| GET | `/actuator/health` | health check usado no servidor |
+| Método | Rota | Acesso | Descrição |
+| --- | --- | --- | --- |
+| POST | `/api/auth/register` | público | cadastro (exige aceite do Termo e da Política) → JWT |
+| POST | `/api/auth/login` | público | login → JWT |
+| GET | `/api/users/me` | autenticado | dados do próprio usuário |
+| GET | `/api/users/me/results` | autenticado | histórico de resultados do usuário |
+| DELETE | `/api/users/me` | autenticado | exclui a conta e os resultados (LGPD) |
+| GET | `/api/vocational-test/questions` | autenticado | lista as 12 perguntas do questionário |
+| POST | `/api/vocational-test/results` | autenticado | recebe as 12 respostas, calcula e salva o resultado (201) |
+| GET | `/api/vocational-test/results/{id}` | dono ou admin | consulta um resultado salvo |
+| GET | `/api/videos?area=` | autenticado | vídeos do YouTube sobre a área |
+| GET | `/api/admin/audit-logs` | admin | logs de auditoria (filtros `action`, `email`, `page`, `size`) |
+| GET | `/actuator/health` | público | health check usado no servidor |
+
+Autenticação: enviar o token no cabeçalho `Authorization: Bearer <token>`.
 
 Erros seguem sempre o formato `{ status, message, details, timestamp }`.
