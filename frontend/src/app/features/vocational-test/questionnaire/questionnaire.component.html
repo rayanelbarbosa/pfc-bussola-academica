@@ -1,0 +1,68 @@
+<main class="container">
+  <section class="question-card">
+    @if (loading()) {
+      <p class="loading">Carregando perguntas...</p>
+    } @else if (currentQuestion()) {
+      <header class="progress-header">
+        <span class="counter">Pergunta {{ currentIndex() + 1 }} de {{ total() }}</span>
+        <span>{{ progress() }}% concluído</span>
+      </header>
+      <div
+        class="track"
+        role="progressbar"
+        aria-label="Progresso do teste"
+        [attr.aria-valuenow]="progress()"
+        aria-valuemin="0"
+        aria-valuemax="100"
+      >
+        <div class="fill" [style.width.%]="progress()"></div>
+      </div>
+
+      <p class="instruction">Quanto esta frase tem a ver com você?</p>
+      <h1 class="statement">“{{ currentQuestion()!.statement }}”</h1>
+
+      <div class="options" role="radiogroup" aria-label="Opções de resposta">
+        @for (option of options; track option.score) {
+          <button
+            type="button"
+            role="radio"
+            class="option"
+            [class.selected]="currentScore() === option.score"
+            [attr.aria-checked]="currentScore() === option.score"
+            (click)="select(option.score)"
+          >
+            <span class="circle">{{ option.score }}</span>
+            <span class="option-label">{{ option.label }}</span>
+            @if (currentScore() === option.score) {
+              <span class="check" aria-hidden="true">✓</span>
+            }
+          </button>
+        }
+      </div>
+
+      @if (error()) {
+        <p class="error-message" role="alert">{{ error() }}</p>
+      }
+
+      <nav class="navigation">
+        <button type="button" class="btn btn-link" (click)="previous()" [disabled]="currentIndex() === 0">
+          ← Anterior
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="next()"
+          [disabled]="currentScore() === undefined || submitting()"
+        >
+          @if (isLast()) {
+            {{ submitting() ? 'Calculando...' : 'Ver meu resultado →' }}
+          } @else {
+            Próxima →
+          }
+        </button>
+      </nav>
+    } @else if (error()) {
+      <p class="error-message" role="alert">{{ error() }}</p>
+    }
+  </section>
+</main>

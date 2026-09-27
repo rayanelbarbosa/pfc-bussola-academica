@@ -1,0 +1,32 @@
+<main class="page">
+  <app-top-bar />
+
+  <section class="greeting">
+    <p class="eyebrow">{{ today | date: "EEEE, d 'de' MMMM" }}</p>
+    <h1>Olá!</h1>
+    <p class="subtitle">Que bom ter você por aqui. Vamos pensar no seu futuro?</p>
+  </section>
+
+  <section class="hero" aria-labelledby="test-title">
+    <span class="badge">Teste RIASEC</span>
+    <h2 id="test-title">Descubra seu perfil vocacional</h2>
+    <p class="hero-text">
+      Responda 12 afirmações em escala de 1 a 5 e veja quais das 6 categorias RIASEC mais combinam
+      com você — com áreas de curso recomendadas ao final.
+    </p>
+    <ul class="meta">
+      <li>✓ 12 perguntas</li>
+      <li>✓ Cerca de 5 minutos</li>
+    </ul>
+    <a routerLink="/teste-vocacional" class="btn btn-accent">Fazer o teste agora →</a>
+  </section>
+
+  <section class="info-cards">
+    @for (info of infoCards; track info.title) {
+      <article class="card info-card">
+        <h3>{{ info.title }}</h3>
+        <p>{{ info.text }}</p>
+      </article>
+    }
+  </section>
+</main>

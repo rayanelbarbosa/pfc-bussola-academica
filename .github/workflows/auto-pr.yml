@@ -24,8 +24,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          if gh pr view "${{ github.ref_name }}" --json url >/dev/null 2>&1; then
-            echo "PR ja existe para essa branch, nada a fazer."
+          # So conta PRs ABERTOS: um PR antigo ja mergeado/fechado da mesma branch nao pode impedir um novo
+          ABERTOS=$(gh pr list --head "${{ github.ref_name }}" --base develop --state open --json number --jq 'length')
+          if [ "$ABERTOS" -gt 0 ]; then
+            echo "Ja existe PR aberto para essa branch, nada a fazer."
           else
             gh pr create \
               --base develop \

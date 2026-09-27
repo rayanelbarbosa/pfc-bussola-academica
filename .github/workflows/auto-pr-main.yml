@@ -25,8 +25,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          if gh pr view develop --json url >/dev/null 2>&1; then
-            echo "PR ja existe para develop -> main, nada a fazer."
+          # So conta PRs ABERTOS: o PR develop -> main de uma entrega anterior ja foi mergeado
+          # e nao pode impedir a abertura do proximo
+          ABERTOS=$(gh pr list --head develop --base main --state open --json number --jq 'length')
+          if [ "$ABERTOS" -gt 0 ]; then
+            echo "Ja existe PR aberto de develop para main, nada a fazer."
           else
             gh pr create \
               --base main \
