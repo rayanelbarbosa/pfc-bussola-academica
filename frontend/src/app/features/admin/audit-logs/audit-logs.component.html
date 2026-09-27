@@ -1,0 +1,85 @@
+<main class="page">
+  <app-top-bar />
+
+  <header>
+    <p class="eyebrow">Administração</p>
+    <h1>Logs de auditoria</h1>
+    <p class="subtitle">Registro das ações dos usuários e das operações do sistema, do mais recente para o mais antigo.</p>
+  </header>
+
+  <form class="card filters" (ngSubmit)="search()">
+    <div class="field">
+      <label for="action">Ação</label>
+      <select id="action" name="action" [(ngModel)]="action">
+        <option value="">Todas</option>
+        @for (a of actions; track a) {
+          <option [value]="a">{{ label(a) }}</option>
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label for="email">E-mail do usuário</label>
+      <input id="email" name="email" type="text" placeholder="Parte do e-mail" [(ngModel)]="email" />
+    </div>
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-primary">Filtrar</button>
+      <button type="button" class="btn btn-secondary" (click)="clear()">Limpar</button>
+    </div>
+  </form>
+
+  @if (error()) {
+    <p class="error-message" role="alert">{{ error() }}</p>
+  }
+
+  @if (page(); as p) {
+    <section class="card table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Data/hora</th>
+            <th>Usuário</th>
+            <th>Ação</th>
+            <th>Rota</th>
+            <th>Detalhes</th>
+            <th>IP</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (log of p.content; track log.id) {
+            <tr>
+              <td class="nowrap">{{ log.createdAt | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+              <td>{{ log.userEmail ?? '—' }}</td>
+              <td class="nowrap">{{ label(log.action) }}</td>
+              <td class="mono">{{ log.resource ?? '—' }}</td>
+              <td>{{ log.details ?? '—' }}</td>
+              <td class="mono">{{ log.ipAddress ?? '—' }}</td>
+              <td>
+                <span class="status" [class.ok]="log.success" [class.fail]="!log.success">
+                  {{ log.success ? 'Sucesso' : 'Falha' }}
+                </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="empty">Nenhum registro encontrado.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <nav class="pagination" aria-label="Paginação">
+      <button type="button" class="btn btn-secondary" (click)="load(p.page - 1)" [disabled]="p.page === 0 || loading()">
+        ← Anterior
+      </button>
+      <span>Página {{ p.page + 1 }} de {{ p.totalPages || 1 }} · {{ p.totalElements }} registros</span>
+      <button type="button" class="btn btn-secondary" (click)="load(p.page + 1)"
+              [disabled]="p.page + 1 >= p.totalPages || loading()">
+        Próxima →
+      </button>
+    </nav>
+  } @else if (loading()) {
+    <p class="loading">Carregando logs...</p>
+  }
+</main>

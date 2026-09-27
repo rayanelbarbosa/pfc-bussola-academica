@@ -50,6 +50,37 @@
       </section>
     </div>
 
+    <section class="card videos" aria-labelledby="videos-title">
+      <p class="small-label">Conheça essas carreiras</p>
+      <h2 id="videos-title">Vídeos sobre as áreas recomendadas</h2>
+      <p class="videos-note">
+        Vídeos públicos de terceiros, buscados em tempo real na API do YouTube. Só o nome da área é enviado ao YouTube.
+      </p>
+
+      @if (loadingVideos()) {
+        <p class="loading">Buscando vídeos no YouTube...</p>
+      } @else if (allVideosFailed()) {
+        <p class="error-message">Não foi possível carregar os vídeos agora. Seu resultado continua salvo.</p>
+      } @else {
+        @for (group of areaVideos(); track group.area) {
+          @if (group.videos.length > 0) {
+            <h3>{{ group.area }}</h3>
+            <div class="video-grid">
+              @for (video of group.videos; track video.videoId) {
+                <a class="video" [href]="video.url" target="_blank" rel="noopener noreferrer">
+                  @if (video.thumbnailUrl) {
+                    <img [src]="video.thumbnailUrl" [alt]="'Miniatura do vídeo ' + video.title" loading="lazy" />
+                  }
+                  <span class="video-title">{{ video.title }}</span>
+                  <span class="video-channel">{{ video.channelTitle }} · Assistir no YouTube ↗</span>
+                </a>
+              }
+            </div>
+          }
+        }
+      }
+    </section>
+
     <div class="actions">
       <a routerLink="/teste-vocacional" class="btn btn-secondary">↺ Refazer o teste</a>
       <a routerLink="/" class="btn btn-primary">Voltar para a Home →</a>

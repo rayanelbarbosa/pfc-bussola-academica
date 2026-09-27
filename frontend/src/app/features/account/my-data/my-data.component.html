@@ -1,0 +1,79 @@
+<main class="page">
+  <app-top-bar />
+
+  <header>
+    <p class="eyebrow">Privacidade</p>
+    <h1>Meus dados</h1>
+    <p class="subtitle">
+      Estes são todos os dados pessoais que a Bússola Acadêmica guarda sobre você. Saiba mais na
+      <a routerLink="/politica-de-privacidade" class="link">Política de Privacidade</a>.
+    </p>
+  </header>
+
+  @if (error()) {
+    <p class="error-message" role="alert">{{ error() }}</p>
+  }
+
+  @if (user(); as u) {
+    <div class="columns">
+      <section class="card box">
+        <h2>Cadastro</h2>
+        <dl>
+          <dt>Nome</dt>
+          <dd>{{ u.name }}</dd>
+          <dt>E-mail</dt>
+          <dd>{{ u.email }}</dd>
+          <dt>Perfil de acesso</dt>
+          <dd>{{ roleLabels[u.role] }}</dd>
+          <dt>Conta criada em</dt>
+          <dd>{{ u.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          <dt>Aceite do Termo de Uso e da Política</dt>
+          <dd>Versão {{ u.termsVersion }}, em {{ u.termsAcceptedAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          <dt>Senha</dt>
+          <dd>Guardada apenas como hash criptográfico (BCrypt)</dd>
+        </dl>
+      </section>
+
+      <section class="card box">
+        <h2>Meus resultados do teste</h2>
+        @if (results().length === 0) {
+          <p class="muted">Você ainda não respondeu o teste. <a routerLink="/teste-vocacional" class="link">Fazer agora</a></p>
+        } @else {
+          <ul class="results">
+            @for (result of results(); track result.id) {
+              <li>
+                <a [routerLink]="['/teste-vocacional/resultado', result.id]">
+                  <span>{{ result.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                  <strong>{{ result.topCategories.join(', ') }}</strong>
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+
+    <section class="card box danger">
+      <h2>Excluir minha conta</h2>
+      <p>
+        Apaga definitivamente seu cadastro e todos os seus resultados. Os registros de acesso ficam guardados apenas
+        pelo prazo exigido pelo Marco Civil da Internet (6 meses).
+      </p>
+      @if (!confirmingDeletion()) {
+        <button type="button" class="btn btn-danger" (click)="confirmingDeletion.set(true)">Excluir minha conta</button>
+      } @else {
+        <p class="confirm"><strong>Tem certeza?</strong> Essa ação não pode ser desfeita.</p>
+        <div class="actions">
+          <button type="button" class="btn btn-secondary" (click)="confirmingDeletion.set(false)" [disabled]="deleting()">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-danger" (click)="deleteAccount()" [disabled]="deleting()">
+            {{ deleting() ? 'Excluindo...' : 'Sim, excluir tudo' }}
+          </button>
+        </div>
+      }
+    </section>
+  } @else if (!error()) {
+    <p class="loading">Carregando seus dados...</p>
+  }
+</main>

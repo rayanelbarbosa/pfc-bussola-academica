@@ -1,0 +1,73 @@
+<main class="auth-page">
+  <section class="auth-brand">
+    <p class="eyebrow">Bússola Acadêmica</p>
+    <p class="tagline">Seu futuro começa com autoconhecimento</p>
+    <h1>Crie sua conta e guarde seus resultados.</h1>
+    <p>Pedimos só o necessário: nome, e-mail e senha. Seus dados são usados apenas para o funcionamento da plataforma.</p>
+  </section>
+
+  <section class="auth-panel">
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <p class="eyebrow">Cadastro</p>
+      <h2>Criar conta</h2>
+
+      <div class="field">
+        <label for="name">Nome</label>
+        <input id="name" type="text" formControlName="name" placeholder="Seu nome" autocomplete="name"
+               [class.invalid]="isInvalid('name')" />
+        @if (isInvalid('name')) {
+          <span class="field-error">Informe seu nome (até 100 caracteres).</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" formControlName="email" placeholder="voce@exemplo.com" autocomplete="email"
+               [class.invalid]="isInvalid('email')" />
+        @if (isInvalid('email')) {
+          <span class="field-error">Informe um e-mail válido.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="password">Senha</label>
+        <input id="password" type="password" formControlName="password" placeholder="Mínimo 8 caracteres"
+               autocomplete="new-password" [class.invalid]="isInvalid('password')" />
+        @if (isInvalid('password')) {
+          <span class="field-error">A senha deve ter pelo menos 8 caracteres, com letras e números.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="confirmPassword">Confirmar senha</label>
+        <input id="confirmPassword" type="password" formControlName="confirmPassword" placeholder="Repita a senha"
+               autocomplete="new-password" [class.invalid]="isInvalid('confirmPassword') || passwordsMismatch" />
+        @if (passwordsMismatch) {
+          <span class="field-error">As senhas não conferem.</span>
+        }
+      </div>
+
+      <label class="checkbox">
+        <input type="checkbox" formControlName="acceptedTerms" />
+        <span>
+          Li e aceito o <a routerLink="/termos-de-uso" target="_blank" class="link">Termo de Uso</a> e a
+          <a routerLink="/politica-de-privacidade" target="_blank" class="link">Política de Privacidade</a>
+          (versão {{ legalVersion }}).
+        </span>
+      </label>
+      @if (isInvalid('acceptedTerms')) {
+        <span class="field-error">Para criar a conta é preciso aceitar os dois documentos.</span>
+      }
+
+      @if (error()) {
+        <p class="error-message" role="alert">{{ error() }}</p>
+      }
+
+      <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+        {{ submitting() ? 'Criando conta...' : 'Criar conta' }}
+      </button>
+
+      <p class="auth-switch">Já tem conta? <a routerLink="/login" class="link">Entrar</a></p>
+    </form>
+  </section>
+</main>

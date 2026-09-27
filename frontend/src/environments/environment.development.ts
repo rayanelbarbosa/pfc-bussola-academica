@@ -1,5 +1,6 @@
 // Desenvolvimento local (ng serve): back-end rodando na maquina.
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080/api'
+  apiUrl: 'http://localhost:8080/api',
+  privacyContactEmail: 'rayaneluz08@gmail.com'
 };

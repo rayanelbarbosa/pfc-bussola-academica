@@ -1,0 +1,102 @@
+h1 {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.subtitle,
+.muted {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 28px 32px;
+}
+
+.box h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 10px 20px;
+  margin: 0;
+  font-size: 14px;
+}
+
+dt {
+  color: var(--color-text-muted);
+}
+
+dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.results a {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-info-bg);
+  color: var(--color-text);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.danger {
+  border-color: #f5c2bd;
+}
+
+.danger p {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.btn-danger {
+  align-self: flex-start;
+  background: var(--color-error);
+  color: #fff;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  dl {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  dd {
+    margin-bottom: 10px;
+  }
+}

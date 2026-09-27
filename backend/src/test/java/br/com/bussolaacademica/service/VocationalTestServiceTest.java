@@ -8,9 +8,15 @@ import br.com.bussolaacademica.exception.InvalidAnswersException;
 import br.com.bussolaacademica.exception.ResourceNotFoundException;
 import br.com.bussolaacademica.model.Question;
 import br.com.bussolaacademica.model.RiasecCategory;
+import br.com.bussolaacademica.model.Role;
+import br.com.bussolaacademica.model.User;
 import br.com.bussolaacademica.model.VocationalTestResult;
 import br.com.bussolaacademica.repository.QuestionRepository;
+import br.com.bussolaacademica.repository.UserRepository;
 import br.com.bussolaacademica.repository.VocationalTestResultRepository;
+import br.com.bussolaacademica.security.CurrentUser;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,16 +54,39 @@ class VocationalTestServiceTest {
     @Mock
     private VocationalTestResultRepository resultRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private CurrentUser currentUser;
+
+    @Mock
+    private AuditService auditService;
+
     private VocationalTestService service;
 
     @BeforeEach
     void setUp() {
         Clock fixedClock = Clock.fixed(Instant.parse("2026-09-28T12:00:00Z"), ZoneId.of("America/Sao_Paulo"));
-        service = new VocationalTestService(questionRepository, resultRepository, fixedClock);
+        service = new VocationalTestService(questionRepository, resultRepository, userRepository,
+                currentUser, auditService, fixedClock);
+    }
+
+    private static User user(long id) {
+        User user = new User("Aluna " + id, "aluna" + id + "@teste.com", "hash", Role.STUDENT,
+                LocalDateTime.of(2026, 9, 1, 10, 0), "1.0");
+        ReflectionTestUtils.setField(user, "id", id);
+        return user;
+    }
+
+    private void loggedAs(long id) {
+        when(currentUser.id()).thenReturn(id);
+        when(userRepository.findById(id)).thenReturn(Optional.of(user(id)));
     }
 
     @Test
     void shouldSumScoresPerCategoryAndFindTopProfile() {
+        loggedAs(1L);
         when(questionRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(QUESTIONS);
         when(resultRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -79,6 +109,7 @@ class VocationalTestServiceTest {
 
     @Test
     void shouldKeepAllTiedCategoriesAndMergeTheirAreas() {
+        loggedAs(1L);
         when(questionRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(QUESTIONS);
         when(resultRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -139,6 +170,44 @@ class VocationalTestServiceTest {
         when(resultRepository.findById(42L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.findResult(42L)).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void shouldLetOwnerSeeTheirResult() {
+        VocationalTestResult result = savedResultOf(user(1L));
+        when(resultRepository.findById(10L)).thenReturn(Optional.of(result));
+        when(currentUser.isAdmin()).thenReturn(false);
+        when(currentUser.id()).thenReturn(1L);
+
+        assertThat(service.findResult(10L).recommendedAreas()).contains("Medicina");
+    }
+
+    @Test
+    void shouldDenyStudentFromSeeingSomeoneElsesResult() {
+        VocationalTestResult result = savedResultOf(user(1L));
+        when(resultRepository.findById(10L)).thenReturn(Optional.of(result));
+        when(currentUser.isAdmin()).thenReturn(false);
+        when(currentUser.id()).thenReturn(2L);
+
+        assertThatThrownBy(() -> service.findResult(10L)).isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void shouldLetAdminSeeAnyResult() {
+        VocationalTestResult result = savedResultOf(user(1L));
+        when(resultRepository.findById(10L)).thenReturn(Optional.of(result));
+        when(currentUser.isAdmin()).thenReturn(true);
+
+        assertThat(service.findResult(10L).topCategories()).isNotEmpty();
+    }
+
+    private static VocationalTestResult savedResultOf(User owner) {
+        java.util.Map<RiasecCategory, Integer> scores = new java.util.EnumMap<>(RiasecCategory.class);
+        for (RiasecCategory category : RiasecCategory.values()) {
+            scores.put(category, category == RiasecCategory.INVESTIGATIVE ? 9 : 5);
+        }
+        return new VocationalTestResult(owner, LocalDateTime.of(2026, 9, 28, 9, 0), scores,
+                List.of(RiasecCategory.INVESTIGATIVE), RiasecCategory.INVESTIGATIVE.getRecommendedAreas());
     }
 
     private static SubmitTestRequest request(int... scores) {

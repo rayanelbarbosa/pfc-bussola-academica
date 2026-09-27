@@ -11,6 +11,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static br.com.bussolaacademica.support.AuthTestHelper.bearer;
+import static br.com.bussolaacademica.support.AuthTestHelper.registerStudent;
+import static br.com.bussolaacademica.support.AuthTestHelper.uniqueEmail;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -30,7 +33,9 @@ class VocationalTestIntegrationTest {
 
     @Test
     void shouldAnswerQuestionnaireSaveAndFetchResult() throws Exception {
-        mockMvc.perform(get("/api/vocational-test/questions"))
+        String token = registerStudent(mockMvc, uniqueEmail());
+
+        mockMvc.perform(get("/api/vocational-test/questions").header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(12)));
 
@@ -40,6 +45,7 @@ class VocationalTestIntegrationTest {
                 .collect(Collectors.joining(",", "{\"answers\":[", "]}"));
 
         String body = mockMvc.perform(post("/api/vocational-test/results")
+                        .header("Authorization", bearer(token))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(answers))
                 .andExpect(status().isCreated())
@@ -49,7 +55,7 @@ class VocationalTestIntegrationTest {
 
         Integer id = JsonPath.read(body, "$.id");
 
-        mockMvc.perform(get("/api/vocational-test/results/" + id))
+        mockMvc.perform(get("/api/vocational-test/results/" + id).header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.recommendedAreas", hasSize(3)));
     }

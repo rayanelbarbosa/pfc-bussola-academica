@@ -1,0 +1,48 @@
+<main class="auth-page">
+  <section class="auth-brand">
+    <p class="eyebrow">Bússola Acadêmica</p>
+    <p class="tagline">Seu futuro começa com autoconhecimento</p>
+    <h1>Descubra qual perfil vocacional combina com você.</h1>
+    <p>Responda 12 perguntas rápidas e veja quais áreas do modelo RIASEC mais combinam com o seu jeito de ser.</p>
+  </section>
+
+  <section class="auth-panel">
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <p class="eyebrow">Bem-vindo(a)</p>
+      <h2>Entre na Bússola Acadêmica</h2>
+      <p class="subtitle">Comece agora a descobrir possibilidades para o seu futuro.</p>
+
+      @if (expirou()) {
+        <p class="info-message">Sua sessão expirou. Entre novamente para continuar.</p>
+      }
+
+      <div class="field">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" formControlName="email" placeholder="voce@exemplo.com"
+               autocomplete="email" [class.invalid]="isInvalid('email')" />
+        @if (isInvalid('email')) {
+          <span class="field-error">Informe um e-mail válido.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="password">Senha</label>
+        <input id="password" type="password" formControlName="password" placeholder="Digite sua senha"
+               autocomplete="current-password" [class.invalid]="isInvalid('password')" />
+        @if (isInvalid('password')) {
+          <span class="field-error">Informe a senha.</span>
+        }
+      </div>
+
+      @if (error()) {
+        <p class="error-message" role="alert">{{ error() }}</p>
+      }
+
+      <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+        {{ submitting() ? 'Entrando...' : 'Entrar' }}
+      </button>
+
+      <p class="auth-switch">Ainda não tem conta? <a routerLink="/cadastro" class="link">Criar conta</a></p>
+    </form>
+  </section>
+</main>
