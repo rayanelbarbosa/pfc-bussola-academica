@@ -4,7 +4,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
@@ -26,6 +29,11 @@ public class VocationalTestResult {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** Dono do resultado: só ele (ou um administrador) pode consultá-lo. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -59,8 +67,9 @@ public class VocationalTestResult {
         // exigido pelo JPA
     }
 
-    public VocationalTestResult(LocalDateTime createdAt, Map<RiasecCategory, Integer> scores,
+    public VocationalTestResult(User user, LocalDateTime createdAt, Map<RiasecCategory, Integer> scores,
                                 List<RiasecCategory> topCategories, List<String> recommendedAreas) {
+        this.user = user;
         this.createdAt = createdAt;
         this.realisticScore = scores.get(RiasecCategory.REALISTIC);
         this.investigativeScore = scores.get(RiasecCategory.INVESTIGATIVE);
@@ -94,6 +103,15 @@ public class VocationalTestResult {
 
     public Long getId() {
         return id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    /** true se o resultado pertence ao usuário informado. */
+    public boolean belongsTo(Long userId) {
+        return user != null && user.getId().equals(userId);
     }
 
     public LocalDateTime getCreatedAt() {

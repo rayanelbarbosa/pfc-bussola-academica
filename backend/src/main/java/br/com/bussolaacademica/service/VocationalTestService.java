@@ -6,11 +6,16 @@ import br.com.bussolaacademica.dto.SubmitTestRequest;
 import br.com.bussolaacademica.dto.VocationalTestResultResponse;
 import br.com.bussolaacademica.exception.InvalidAnswersException;
 import br.com.bussolaacademica.exception.ResourceNotFoundException;
+import br.com.bussolaacademica.model.AuditAction;
 import br.com.bussolaacademica.model.Question;
 import br.com.bussolaacademica.model.RiasecCategory;
+import br.com.bussolaacademica.model.User;
 import br.com.bussolaacademica.model.VocationalTestResult;
 import br.com.bussolaacademica.repository.QuestionRepository;
+import br.com.bussolaacademica.repository.UserRepository;
 import br.com.bussolaacademica.repository.VocationalTestResultRepository;
+import br.com.bussolaacademica.security.CurrentUser;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,19 +42,29 @@ import java.util.stream.Collectors;
  *   <li>A(s) categoria(s) com maior escore formam o perfil predominante (empates são mantidos).</li>
  *   <li>As áreas recomendadas são a união das áreas das categorias predominantes.</li>
  * </ol>
+ * Cada resultado pertence ao usuário que respondeu: só ele (ou um administrador) pode consultá-lo.
  */
 @Service
 public class VocationalTestService {
 
     private final QuestionRepository questionRepository;
     private final VocationalTestResultRepository resultRepository;
+    private final UserRepository userRepository;
+    private final CurrentUser currentUser;
+    private final AuditService auditService;
     private final Clock clock;
 
     public VocationalTestService(QuestionRepository questionRepository,
                                  VocationalTestResultRepository resultRepository,
+                                 UserRepository userRepository,
+                                 CurrentUser currentUser,
+                                 AuditService auditService,
                                  Clock clock) {
         this.questionRepository = questionRepository;
         this.resultRepository = resultRepository;
+        this.userRepository = userRepository;
+        this.currentUser = currentUser;
+        this.auditService = auditService;
         this.clock = clock;
     }
 
@@ -69,15 +84,25 @@ public class VocationalTestService {
         List<RiasecCategory> topCategories = findTopCategories(scores);
         List<String> areas = mergeRecommendedAreas(topCategories);
 
-        VocationalTestResult result = new VocationalTestResult(LocalDateTime.now(clock), scores, topCategories, areas);
-        return VocationalTestResultResponse.from(resultRepository.save(result));
+        User owner = userRepository.findById(currentUser.id())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+        VocationalTestResult result = resultRepository.save(
+                new VocationalTestResult(owner, LocalDateTime.now(clock), scores, topCategories, areas));
+        auditService.record(AuditAction.TEST_SUBMITTED, owner.getId(), owner.getEmail(),
+                "resultadoId=" + result.getId() + ", perfil=" + topCategories, true);
+        return VocationalTestResultResponse.from(result);
     }
 
     @Transactional(readOnly = true)
     public VocationalTestResultResponse findResult(Long id) {
-        return resultRepository.findById(id)
-                .map(VocationalTestResultResponse::from)
+        VocationalTestResult result = resultRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Resultado não encontrado: id=" + id));
+        if (!currentUser.isAdmin() && !result.belongsTo(currentUser.id())) {
+            auditService.recordForCurrentUser(AuditAction.ACCESS_DENIED, "Resultado de outro usuário: id=" + id, false);
+            throw new AccessDeniedException("Você só pode consultar os seus próprios resultados.");
+        }
+        auditService.recordForCurrentUser(AuditAction.RESULT_VIEWED, "resultadoId=" + id, true);
+        return VocationalTestResultResponse.from(result);
     }
 
     private void validateAnswers(List<AnswerRequest> answers, List<Question> questions) {
