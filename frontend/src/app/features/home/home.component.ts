@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 import { TopBarComponent } from '../../shared/components/top-bar/top-bar.component';
+import { AuthService } from '../../core/services/auth.service';
 
 /** Tela inicial (protótipo 02 - Home). */
 @Component({
@@ -13,7 +14,10 @@ import { TopBarComponent } from '../../shared/components/top-bar/top-bar.compone
   styleUrl: './home.component.css'
 })
 export class HomeComponent {
+  private readonly auth = inject(AuthService);
+
   readonly today = new Date();
+  readonly firstName = computed(() => this.auth.user()?.name.trim().split(' ')[0] ?? '');
 
   readonly infoCards = [
     {
