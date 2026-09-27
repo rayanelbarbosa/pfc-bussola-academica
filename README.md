@@ -21,6 +21,7 @@ Protótipo: [Figma](https://www.figma.com/design/TcdjgXfxrIpZVJAwjXlsDy/Prot%C3%
 backend/    API REST (detalhes em backend/README.md)
 frontend/   aplicação Angular (detalhes em frontend/README.md)
 infra/      configuração do nginx do servidor
+docs/       documentação técnica da integração com o YouTube
 ```
 
 ## Funcionalidades entregues
@@ -28,12 +29,24 @@ infra/      configuração do nginx do servidor
 - **Teste vocacional RIASEC (Holland)** — questionário de 12 afirmações (2 por categoria, escala
   de 1 a 5). O escore de cada categoria é a soma das suas 2 respostas (2 a 10); a(s) categoria(s)
   de maior escore formam o perfil predominante e as áreas recomendadas são a união das áreas dessas
-  categorias. O resultado fica salvo no banco.
+  categorias. O resultado fica salvo no banco, vinculado ao usuário.
+- **Login e controle de acesso** — cadastro e login com JWT (HS256), senhas com hash BCrypt e dois
+  perfis: estudante (faz o teste e vê só os próprios resultados) e administrador (acessa a auditoria).
+- **Logs de auditoria** — cadastro, login (inclusive recusado), teste respondido, resultado consultado,
+  busca de vídeos, consulta aos próprios dados, exclusão de conta e acessos negados, com data/hora,
+  usuário, rota e IP. Tela de consulta com filtros para o administrador.
+- **Integração com API externa** — vídeos da YouTube Data API v3 sobre as áreas recomendadas.
+  Documentação técnica em [docs/integracao-youtube.md](docs/integracao-youtube.md).
+- **LGPD** — Termo de Uso e Política de Privacidade específicos do sistema, acessíveis a qualquer
+  momento pelo rodapé; aceite obrigatório (com data e versão) no cadastro; página "Meus dados" com
+  acesso aos dados pessoais e exclusão da conta.
 
 ## Rodando localmente
 
-Pré-requisitos: Java 21, Maven, Node.js 20+ e um banco PostgreSQL no Neon (a connection string
-fica em `backend/.env`, que não é versionado; modelo em `backend/.env.example`).
+Pré-requisitos: Java 21, Maven, Node.js 20+, um banco PostgreSQL no Neon e uma chave da YouTube
+Data API v3. As configurações ficam em `backend/.env`, que não é versionado (modelo em
+`backend/.env.example`): conexão com o banco, `JWT_SECRET`, `ADMIN_EMAIL`/`ADMIN_PASSWORD` (cria o
+administrador inicial) e `YOUTUBE_API_KEY`.
 
 ```bash
 # back-end (terminal 1)
@@ -73,4 +86,4 @@ Todo merge na `main` publica automaticamente pelo GitHub Actions:
 Secrets necessários no repositório: `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY`, `AWS_ACCESS_KEY_ID`,
 `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET` e `AWS_CLOUDFRONT_DISTRIBUTION_ID`. Enquanto
 não existem, os workflows de deploy são pulados. Na EC2, as variáveis da API (banco e CORS) ficam em
-`/opt/bussola/.env`.
+`/opt/bussola/.env` (as mesmas do `backend/.env.example`, com `SPRING_PROFILES_ACTIVE=prod`).

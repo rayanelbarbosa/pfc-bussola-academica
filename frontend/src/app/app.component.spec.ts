@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { AppComponent } from './app.component';
 
 describe('AppComponent', () => {
-  it('creates the root component with the router outlet', async () => {
+  it('renders the router outlet and the footer with the legal links', async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
       providers: [provideRouter([])]
@@ -11,7 +11,10 @@ describe('AppComponent', () => {
 
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
 
-    expect(fixture.nativeElement.querySelector('router-outlet')).toBeTruthy();
+    expect(el.querySelector('router-outlet')).toBeTruthy();
+    expect(el.querySelector('a[href="/termos-de-uso"]')).toBeTruthy();
+    expect(el.querySelector('a[href="/politica-de-privacidade"]')).toBeTruthy();
   });
 });

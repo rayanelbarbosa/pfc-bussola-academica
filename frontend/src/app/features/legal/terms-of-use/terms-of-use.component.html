@@ -1,0 +1,90 @@
+<main class="page">
+  <app-top-bar />
+
+  <article class="card legal">
+    <p class="eyebrow">Documento legal</p>
+    <h1>Termo de Uso</h1>
+    <p class="version">Versão {{ version }} · vigente desde {{ effectiveDate }}</p>
+
+    <p>
+      Este Termo de Uso regula o acesso e a utilização da <strong>Bússola Acadêmica</strong>, plataforma web de apoio
+      ao ingresso no ensino superior desenvolvida como Projeto Final de Curso do Bacharelado em Engenharia de Software
+      da Universidade de Mogi das Cruzes (UMC). Ao criar uma conta e marcar a opção de aceite, você declara que leu,
+      entendeu e concorda com este Termo e com a
+      <a routerLink="/politica-de-privacidade" class="link">Política de Privacidade</a>.
+    </p>
+
+    <h2>1. O que a plataforma oferece</h2>
+    <ul>
+      <li>Teste vocacional com 12 afirmações, baseado no modelo RIASEC (John Holland), que calcula um escore de 2 a 10
+        para cada uma das 6 categorias (Realista, Investigativo, Artístico, Social, Empreendedor e Convencional) e
+        indica áreas de graduação ligadas ao perfil predominante;</li>
+      <li>histórico dos seus resultados, visível apenas para você;</li>
+      <li>vídeos públicos do YouTube sobre as áreas recomendadas, buscados automaticamente.</li>
+    </ul>
+
+    <h2>2. Natureza orientativa do teste</h2>
+    <p>
+      O resultado do teste é uma <strong>orientação inicial</strong>, calculada por regras fixas e transparentes (soma
+      das respostas por categoria). Ele não é um diagnóstico psicológico, não substitui a orientação de profissionais
+      (psicólogos, orientadores educacionais) e não garante aprovação, adaptação ou sucesso em nenhum curso.
+      A decisão sobre qual curso seguir é sempre sua.
+    </p>
+
+    <h2>3. Cadastro e conta</h2>
+    <ul>
+      <li>Para usar o teste é necessário criar uma conta com nome, e-mail e senha. Informe dados verdadeiros.</li>
+      <li>A plataforma é destinada a estudantes a partir de 16 anos. Se você tem menos de 18 anos, use a plataforma
+        com o conhecimento dos seus pais ou responsáveis.</li>
+      <li>Sua senha é pessoal e intransferível. Você é responsável por mantê-la em sigilo; em caso de suspeita de uso
+        indevido, entre em contato.</li>
+      <li>Cada conta tem um perfil de acesso: <strong>estudante</strong> (faz o teste e vê apenas os próprios dados) ou
+        <strong>administrador</strong> (responsável pela plataforma, com acesso aos registros de auditoria).</li>
+    </ul>
+
+    <h2>4. Regras de uso</h2>
+    <p>Ao usar a plataforma, você se compromete a não:</p>
+    <ul>
+      <li>tentar acessar contas, resultados ou áreas restritas de outras pessoas;</li>
+      <li>tentar burlar os controles de segurança ou sobrecarregar o sistema com requisições automatizadas;</li>
+      <li>usar a plataforma para fins ilegais ou que violem direitos de terceiros.</li>
+    </ul>
+    <p>
+      Todas as ações relevantes (cadastro, login, tentativas de acesso negadas, respostas ao teste, consultas) são
+      registradas em logs de auditoria para garantir a segurança e a rastreabilidade, conforme descrito na Política
+      de Privacidade.
+    </p>
+
+    <h2>5. Conteúdo de terceiros (YouTube)</h2>
+    <p>
+      Os vídeos exibidos são conteúdos públicos de terceiros, obtidos pela API oficial do YouTube. A Bússola
+      Acadêmica não produz, não controla e não se responsabiliza pelo conteúdo desses vídeos. Ao clicar em um vídeo,
+      você é levado ao site do YouTube, sujeito aos termos e à política de privacidade do Google.
+    </p>
+
+    <h2>6. Disponibilidade</h2>
+    <p>
+      Por se tratar de um projeto acadêmico hospedado em serviços de nuvem gratuitos, a plataforma pode ficar
+      indisponível temporariamente para manutenção ou por limitações dos provedores, sem aviso prévio.
+    </p>
+
+    <h2>7. Encerramento da conta</h2>
+    <p>
+      Você pode excluir sua conta a qualquer momento em <a routerLink="/meus-dados" class="link">Meus dados</a>. A
+      exclusão apaga seu cadastro e seus resultados. A conta também pode ser bloqueada se houver violação deste Termo.
+    </p>
+
+    <h2>8. Alterações deste Termo</h2>
+    <p>
+      Este Termo pode ser atualizado. A versão e a data de vigência ficam no topo da página, e a versão que você
+      aceitou fica registrada no seu cadastro.
+    </p>
+
+    <h2>9. Contato e legislação</h2>
+    <p>
+      Dúvidas sobre este Termo: <a class="link" [href]="'mailto:' + contactEmail">{{ contactEmail }}</a>.
+      Este Termo é regido pelas leis brasileiras, em especial o Marco Civil da Internet (Lei nº 12.965/2014), a Lei
+      Geral de Proteção de Dados (Lei nº 13.709/2018) e o Código de Defesa do Consumidor, quando aplicável.
+    </p>
+  </article>
+</main>

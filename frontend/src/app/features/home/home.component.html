@@ -3,7 +3,7 @@
 
   <section class="greeting">
     <p class="eyebrow">{{ today | date: "EEEE, d 'de' MMMM" }}</p>
-    <h1>Olá!</h1>
+    <h1>Olá{{ firstName() ? ', ' + firstName() : '' }}!</h1>
     <p class="subtitle">Que bom ter você por aqui. Vamos pensar no seu futuro?</p>
   </section>
 

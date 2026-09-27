@@ -1,0 +1,14 @@
+package br.com.bussolaacademica.dto;
+
+import org.springframework.data.domain.Page;
+
+import java.util.List;
+
+/** Página de resultados em formato estável para o front-end. */
+public record PageResponse<T>(List<T> content, int page, int size, long totalElements, int totalPages) {
+
+    public static <T> PageResponse<T> from(Page<T> page) {
+        return new PageResponse<>(page.getContent(), page.getNumber(), page.getSize(),
+                page.getTotalElements(), page.getTotalPages());
+    }
+}

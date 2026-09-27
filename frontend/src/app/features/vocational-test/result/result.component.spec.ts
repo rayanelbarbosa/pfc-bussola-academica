@@ -4,10 +4,14 @@ import { of } from 'rxjs';
 
 import { ResultComponent } from './result.component';
 import { VocationalTestService } from '../../../core/services/vocational-test.service';
+import { VideoService } from '../../../core/services/video.service';
+import { provideHttpClient } from '@angular/common/http';
+import { throwError } from 'rxjs';
 import { CategoryScore, VocationalTestResult } from '../../../core/models/vocational-test.model';
 
 describe('ResultComponent', () => {
   let service: jasmine.SpyObj<VocationalTestService>;
+  let videoService: jasmine.SpyObj<VideoService>;
 
   const score = (category: string, label: string, value: number): CategoryScore => ({ category, label, score: value });
   const scores = [
@@ -22,9 +26,20 @@ describe('ResultComponent', () => {
   async function create(result: VocationalTestResult): Promise<ComponentFixture<ResultComponent>> {
     service = jasmine.createSpyObj('VocationalTestService', ['getResult']);
     service.getResult.and.returnValue(of(result));
+    videoService = jasmine.createSpyObj('VideoService', ['searchByArea']);
+    videoService.searchByArea.and.callFake((area: string) =>
+      area === 'Falha'
+        ? throwError(() => new Error('api fora'))
+        : of([{ videoId: 'v-' + area, title: 'Vídeo ' + area, channelTitle: 'Canal', thumbnailUrl: null, url: 'https://www.youtube.com/watch?v=x' }])
+    );
     await TestBed.configureTestingModule({
       imports: [ResultComponent],
-      providers: [provideRouter([]), { provide: VocationalTestService, useValue: service }]
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        { provide: VocationalTestService, useValue: service },
+        { provide: VideoService, useValue: videoService }
+      ]
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ResultComponent);
@@ -48,6 +63,21 @@ describe('ResultComponent', () => {
     expect(el.querySelector('.top-score')?.textContent).toContain('9 de 10');
     expect(el.querySelectorAll('.score').length).toBe(6);
     expect(el.querySelectorAll('.area').length).toBe(3);
+    expect(videoService.searchByArea).toHaveBeenCalledTimes(3);
+    expect(el.querySelectorAll('.video').length).toBe(3);
+  });
+
+  it('keeps showing the result when the YouTube search fails', async () => {
+    const fixture = await create({
+      id: 5,
+      createdAt: '',
+      scores,
+      topCategories: [scores[1]],
+      recommendedAreas: ['Falha']
+    });
+
+    expect(fixture.nativeElement.querySelector('h1')?.textContent).toContain('Investigativo');
+    expect(fixture.nativeElement.querySelector('.videos .error-message')?.textContent).toContain('vídeos');
   });
 
   it('handles a tie in the top profile', async () => {
