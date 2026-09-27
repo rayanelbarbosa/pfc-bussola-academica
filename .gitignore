@@ -1,1 +1,22 @@
+# Sistema / editores
 .DS_Store
+Thumbs.db
+.idea/
+*.iml
+
+# Segredos (nunca versionar)
+.env
+*.pem
+
+# Artefatos gerados
+node_modules/
+target/
+dist/
+coverage/
+.angular/
+
+# Ferramentas locais que nao fazem parte do projeto
+.github/modernize/
+
+# Configuracoes locais do editor na raiz
+/.vscode/

@@ -1,59 +1,54 @@
 # Back-end — Bússola Acadêmica
 
-API REST em Spring Boot 3 (Java 21) responsável pelas regras de negócio do Bússola Acadêmica.
-Nesta entrega, implementa a regra de negócio de pontuação do teste vocacional, baseada no modelo
-RIASEC (Holland).
+API REST em Spring Boot 3.3 (Java 21), organizada em camadas:
 
-## Executando localmente
-
-Pré-requisitos: Java 21, Maven e um PostgreSQL acessível (o mais rápido é via Docker).
-
-```bash
-docker run --name bussola-postgres \
-  -e POSTGRES_USER=bussola \
-  -e POSTGRES_PASSWORD=bussola \
-  -e POSTGRES_DB=bussola_academica \
-  -p 5432:5432 \
-  -d postgres:16
-
-mvn spring-boot:run
+```
+br.com.bussolaacademica
+├── controller   endpoints REST (recebem e devolvem DTOs)
+├── service      regras de negócio (ex.: pontuação RIASEC)
+├── repository   acesso ao banco (Spring Data JPA)
+├── model        entidades JPA e enums de domínio
+├── dto          objetos de entrada/saída da API
+├── exception    exceções de negócio + tratamento global de erros
+└── config       CORS e beans de configuração
 ```
 
-A API sobe em `http://localhost:8080`. Na primeira execução, o Hibernate cria automaticamente a
-tabela `resultado_teste_vocacional` no banco (`spring.jpa.hibernate.ddl-auto=update`).
+## Convenções
+
+Código (pacotes, classes, métodos, tabelas, endpoints e JSON) em **inglês**, padrão de mercado.
+Textos exibidos ao usuário (mensagens de erro, rótulos das categorias) e comentários/Javadoc em
+**português**.
+
+## Configuração
+
+| Perfil | Quando usar | Como ativa |
+| --- | --- | --- |
+| `dev` (padrão) | rodando na máquina, conectado ao Neon | automático |
+| `prod` | servidor na AWS (EC2 + Docker) | `SPRING_PROFILES_ACTIVE=prod` |
+
+As credenciais do banco **nunca** ficam no código. Localmente, copie `.env.example` para `.env`
+(este arquivo não vai para o Git) e preencha com a connection string do Neon.
+
+O schema do banco é versionado com **Flyway** (`src/main/resources/db/migration`). Para mudar uma
+tabela, crie um novo arquivo `V<n>__descricao.sql` — nunca edite uma migration já aplicada.
+
+## Rodando
+
+```bash
+cp .env.example .env   # só na primeira vez; depois edite o .env
+mvn spring-boot:run     # sobe em http://localhost:8080
+mvn verify              # testes + cobertura JaCoCo (falha se < 50%)
+```
+
+Relatório de cobertura: `target/site/jacoco/index.html`.
 
 ## Endpoints
 
-- `GET /api/teste-vocacional/perguntas` — lista as 12 perguntas fixas do questionário (2 por
-  categoria RIASEC).
-- `POST /api/teste-vocacional` — recebe as respostas do usuário, calcula a(s) categoria(s)
-  predominante(s), persiste o resultado no banco e retorna as áreas/cursos recomendados.
+| Método | Rota | Descrição |
+| --- | --- | --- |
+| GET | `/api/vocational-test/questions` | lista as 12 perguntas do questionário |
+| POST | `/api/vocational-test/results` | recebe as 12 respostas, calcula e salva o resultado (201) |
+| GET | `/api/vocational-test/results/{id}` | consulta um resultado salvo |
+| GET | `/actuator/health` | health check usado no servidor |
 
-## Testes automatizados
-
-```bash
-mvn test     # JUnit 5 + AssertJ + MockMvc, banco H2 em memória
-mvn verify   # roda os testes e gera o relatório de cobertura JaCoCo (target/site/jacoco)
-```
-
-## Estrutura principal
-
-```
-src/main/java/br/com/bussolaacademica/
-├── config/            configurações gerais (CORS, etc.)
-└── testevocacional/
-    ├── controller      endpoints REST
-    ├── service         regra de negócio (pontuação RIASEC)
-    ├── repository      acesso ao banco (Spring Data JPA)
-    └── domain/dto      entidades, categorias, perguntas e objetos de requisição/resposta
-```
-
-## Configuração do banco
-
-As credenciais e a URL do banco ficam em `src/main/resources/application.properties`. Em
-produção, são configuradas via variáveis de ambiente (`DB_URL`, `DB_USER`, `DB_PASSWORD`).
-
-## Mais informações
-
-Projeto gerado com o [Spring Initializr](https://start.spring.io/). Documentação oficial do
-Spring Boot: https://docs.spring.io/spring-boot/
+Erros seguem sempre o formato `{ status, message, details, timestamp }`.

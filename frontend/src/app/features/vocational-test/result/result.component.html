@@ -1,0 +1,63 @@
+<main class="page">
+  <app-top-bar />
+
+  @if (result(); as data) {
+    <header class="heading">
+      <p class="eyebrow">Seu perfil RIASEC</p>
+      <h1>{{ title() }}</h1>
+      <p class="description">{{ description() }}</p>
+    </header>
+
+    <div class="columns">
+      <section class="card scores" aria-label="Escores por categoria">
+        <div class="top-profile">
+          <div>
+            <p class="small-label">Perfil predominante</p>
+            <p class="top-name" [style.color]="topColor()">{{ topLabels() }}</p>
+          </div>
+          <p class="top-score">{{ highestScore() }} de {{ maxScore }}</p>
+        </div>
+
+        @for (bar of scoreBars(); track bar.label) {
+          <div class="score">
+            <div class="score-label">
+              <span>{{ bar.label }}</span>
+              <span class="score-value">{{ bar.score }} de {{ maxScore }}</span>
+            </div>
+            <div class="track">
+              <div class="fill" [style.width.%]="bar.percent" [style.background]="bar.color"></div>
+            </div>
+          </div>
+        }
+      </section>
+
+      <section class="card areas" aria-labelledby="areas-title">
+        <p class="small-label">Caminhos para explorar</p>
+        <h2 id="areas-title">Áreas recomendadas</h2>
+        <ol>
+          @for (area of data.recommendedAreas; track area; let i = $index) {
+            <li class="area">
+              <span class="number-badge">{{ i + 1 }}</span>
+              {{ area }}
+            </li>
+          }
+        </ol>
+        <p class="rule-note">
+          As áreas recomendadas correspondem exatamente às áreas associadas
+          {{ isTie() ? 'às categorias' : 'à categoria' }} com maior pontuação ({{ topLabels() }}),
+          conforme a regra de negócio.
+        </p>
+      </section>
+    </div>
+
+    <div class="actions">
+      <a routerLink="/teste-vocacional" class="btn btn-secondary">↺ Refazer o teste</a>
+      <a routerLink="/" class="btn btn-primary">Voltar para a Home →</a>
+    </div>
+  } @else if (error()) {
+    <p class="error-message" role="alert">{{ error() }}</p>
+    <a routerLink="/" class="btn btn-primary back">Voltar para a Home</a>
+  } @else {
+    <p class="loading">Carregando resultado...</p>
+  }
+</main>
