@@ -6,6 +6,7 @@ import br.com.bussolaacademica.dto.SubmitTestRequest;
 import br.com.bussolaacademica.dto.VocationalTestResultResponse;
 import br.com.bussolaacademica.exception.InvalidAnswersException;
 import br.com.bussolaacademica.exception.ResourceNotFoundException;
+import br.com.bussolaacademica.model.AuditAction;
 import br.com.bussolaacademica.model.Question;
 import br.com.bussolaacademica.model.RiasecCategory;
 import br.com.bussolaacademica.model.Role;
@@ -20,6 +21,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -39,6 +43,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class VocationalTestServiceTest {
@@ -199,6 +207,58 @@ class VocationalTestServiceTest {
         when(currentUser.isAdmin()).thenReturn(true);
 
         assertThat(service.findResult(10L).topCategories()).isNotEmpty();
+    }
+
+    @Test
+    void deveSalvarResultadoDoUsuarioLogadoERegistrarAuditoria() {
+        // Arrange
+        loggedAs(1L);
+        when(questionRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(QUESTIONS);
+        when(resultRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act: Convencional 5+5=10 é o maior escore
+        VocationalTestResultResponse result = service.submit(request(2, 2, 3, 3, 1, 1, 3, 3, 2, 2, 5, 5));
+
+        // Assert
+        ArgumentCaptor<VocationalTestResult> salvo = ArgumentCaptor.forClass(VocationalTestResult.class);
+        verify(resultRepository).save(salvo.capture());
+        assertEquals(1L, salvo.getValue().getUser().getId());
+        assertEquals(List.of("Ciências Contábeis", "Gestão Pública", "Biblioteconomia"), result.recommendedAreas());
+        verify(auditService).record(eq(AuditAction.TEST_SUBMITTED), eq(1L), eq("aluna1@teste.com"),
+                anyString(), eq(true));
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoListaDeRespostasEstiverVazia() {
+        // Arrange
+        when(questionRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(QUESTIONS);
+        SubmitTestRequest vazio = new SubmitTestRequest(List.of());
+
+        // Act
+        InvalidAnswersException ex = assertThrows(InvalidAnswersException.class, () -> service.submit(vazio));
+
+        // Assert
+        assertEquals("Responda todas as perguntas. Faltando: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]", ex.getMessage());
+        verify(resultRepository, never()).save(any());
+        verify(auditService, never()).record(any(), any(), any(), any(), eq(true));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"1,2", "3,6", "5,10"})
+    void deveCalcularEscoreNosLimitesDaEscalaEEmpatarTodasAsCategorias(int nota, int escoreEsperado) {
+        // Arrange
+        loggedAs(1L);
+        when(questionRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(QUESTIONS);
+        when(resultRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        int[] notas = IntStream.range(0, 12).map(i -> nota).toArray();
+
+        // Act
+        VocationalTestResultResponse result = service.submit(request(notas));
+
+        // Assert
+        assertThat(result.scores()).extracting(CategoryScoreResponse::score).containsOnly(escoreEsperado);
+        assertEquals(6, result.topCategories().size());
+        assertEquals(18, result.recommendedAreas().size());
     }
 
     private static VocationalTestResult savedResultOf(User owner) {
