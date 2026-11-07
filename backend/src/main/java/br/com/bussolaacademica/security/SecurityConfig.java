@@ -23,7 +23,7 @@ import java.util.List;
  * Regras de autenticação e autorização da API.
  *
  * <ul>
- *   <li>Públicas: cadastro, login e health check.</li>
+ *   <li>Públicas: cadastro, login, health check e consulta das formas de ingresso.</li>
  *   <li>/api/admin/**: somente perfil ADMIN.</li>
  *   <li>Demais rotas: qualquer usuário autenticado (a posse dos dados é checada nos services).</li>
  * </ul>
@@ -45,6 +45,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**", "/actuator/health", "/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admission-methods/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -68,7 +69,7 @@ public class SecurityConfig {
             @Value("${app.cors.allowed-origins}") String[] allowedOrigins) {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(allowedOrigins));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);
