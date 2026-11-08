@@ -1,0 +1,121 @@
+<div class="container-page section-y max-w-5xl">
+  <div class="mb-6">
+    <h1>Termos e política</h1>
+    <p class="mt-2 max-w-2xl text-muted-foreground">
+      Edite o Termo de Uso e a Política de Privacidade e publique como uma nova versão, com um resumo do que mudou.
+      Todos os usuários vão precisar aceitar a nova versão no próximo acesso.
+    </p>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-error mb-4" role="alert"><app-icon name="alert-circle" class="mt-0.5 size-5" />{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="skeleton h-96"></div>
+  } @else {
+    <form class="card" [formGroup]="form" (ngSubmit)="askConfirmation()" novalidate>
+      <h2 class="text-xl">Nova versão</h2>
+      <div class="mt-4 grid gap-4 sm:grid-cols-[160px_1fr]">
+        <div class="field">
+          <label for="t-version" class="field-label">Versão</label>
+          <input id="t-version" formControlName="version" class="field-input" placeholder="Ex.: 1.1"
+            [class.is-invalid]="isInvalid('version')" [attr.aria-invalid]="isInvalid('version')" />
+          @if (isInvalid('version')) {
+            <p class="field-error" role="alert">Use números separados por ponto, como 1.1.</p>
+          }
+        </div>
+        <div class="field">
+          <label for="t-summary" class="field-label">Resumo da mudança (aparece para os usuários)</label>
+          <input id="t-summary" formControlName="summary" class="field-input" maxlength="500"
+            placeholder="Ex.: incluímos a exportação dos dados pessoais."
+            [class.is-invalid]="isInvalid('summary')" [attr.aria-invalid]="isInvalid('summary')" />
+          @if (isInvalid('summary')) {
+            <p class="field-error" role="alert">Descreva o que mudou (até 500 caracteres).</p>
+          }
+        </div>
+      </div>
+
+      <div class="mt-5 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex gap-1 rounded-full border border-border p-1" role="tablist">
+          <button type="button" role="tab" class="btn btn-sm" [class.btn-primary]="tab() === 'termsOfUse'"
+            [class.btn-ghost]="tab() !== 'termsOfUse'" [attr.aria-selected]="tab() === 'termsOfUse'"
+            (click)="tab.set('termsOfUse')">Termo de Uso</button>
+          <button type="button" role="tab" class="btn btn-sm" [class.btn-primary]="tab() === 'privacyPolicy'"
+            [class.btn-ghost]="tab() !== 'privacyPolicy'" [attr.aria-selected]="tab() === 'privacyPolicy'"
+            (click)="tab.set('privacyPolicy')">Política de Privacidade</button>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="preview.set(!preview())">
+          {{ preview() ? 'Voltar a editar' : 'Pré-visualizar' }}
+        </button>
+      </div>
+
+      @if (preview()) {
+        <div class="legal-doc mt-4 max-h-[60vh] overflow-y-auto rounded-md border border-border p-5">
+          <app-legal-document [content]="form.controls[tab()].value" />
+        </div>
+      } @else {
+        <div class="field mt-4">
+          <label [for]="'t-' + tab()" class="field-label">
+            Texto {{ tab() === 'termsOfUse' ? 'do Termo de Uso' : 'da Política de Privacidade' }}
+          </label>
+          <textarea [id]="'t-' + tab()" [formControlName]="tab()" rows="18" class="field-input font-mono text-sm"
+            [class.is-invalid]="isInvalid(tab())" [attr.aria-invalid]="isInvalid(tab())"></textarea>
+          @if (isInvalid(tab())) {
+            <p class="field-error" role="alert">O texto é obrigatório (até 20.000 caracteres).</p>
+          }
+          <p class="mt-1 text-xs text-muted-foreground">
+            Formatação: linha em branco separa parágrafos, "## " no início vira título, "- " vira item de lista,
+            "| coluna | coluna |" vira tabela, **texto** fica em negrito e [texto](/rota ou https://...) vira link.
+          </p>
+        </div>
+      }
+
+      @if (!confirming()) {
+        <button type="submit" class="btn btn-primary mt-5">Publicar versão</button>
+      } @else {
+        <div class="alert alert-warning mt-5" role="alert">
+          <app-icon name="alert-circle" class="mt-0.5 size-5" />
+          <span>Todos os usuários, inclusive você, vão precisar aceitar a versão {{ form.controls.version.value }} para continuar. Confirma?</span>
+        </div>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button type="button" class="btn btn-secondary" (click)="confirming.set(false)" [disabled]="publishing()">Cancelar</button>
+          <button type="button" class="btn btn-primary" (click)="publish()" [disabled]="publishing()">
+            {{ publishing() ? 'Publicando...' : 'Sim, publicar' }}
+          </button>
+        </div>
+      }
+    </form>
+
+    <section class="card mt-4">
+      <h2 class="text-xl">Histórico de versões</h2>
+      <ul class="mt-4 divide-y divide-border">
+        @for (v of versions(); track v.version; let first = $first) {
+          <li class="py-3 text-sm">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-semibold">Versão {{ v.version }}</span>
+              @if (first) {
+                <span class="badge badge-success">Vigente</span>
+              }
+              <span class="text-muted-foreground">{{ v.publishedAt | date: 'dd/MM/yyyy HH:mm' }}{{ v.publishedBy ? ', por ' + v.publishedBy : '' }}</span>
+              <button type="button" class="btn btn-ghost btn-sm ml-auto" (click)="viewing.set(viewing() === v ? null : v)">
+                {{ viewing() === v ? 'Fechar' : 'Ver textos' }}
+              </button>
+            </div>
+            <p class="mt-1 text-foreground/85">{{ v.summary }}</p>
+            @if (viewing() === v) {
+              <div class="legal-doc mt-3 max-h-[50vh] overflow-y-auto rounded-md border border-border p-5">
+                <h2>Termo de Uso</h2>
+                <app-legal-document [content]="v.termsOfUse" />
+                <h2>Política de Privacidade</h2>
+                <app-legal-document [content]="v.privacyPolicy" />
+              </div>
+            }
+          </li>
+        } @empty {
+          <li class="py-3 text-sm text-muted-foreground">Nenhuma versão publicada.</li>
+        }
+      </ul>
+    </section>
+  }
+</div>

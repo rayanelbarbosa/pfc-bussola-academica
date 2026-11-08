@@ -1,18 +1,31 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 
-import { LEGAL_EFFECTIVE_DATE, LEGAL_VERSION } from '../../../core/models/auth.model';
-import { environment } from '../../../../environments/environment';
+import { TermsVersion } from '../../../core/models/auth.model';
+import { AuthService } from '../../../core/services/auth.service';
+import { getErrorMessage } from '../../../core/services/api-error';
+import { LegalDocumentComponent } from '../../../shared/components/legal-document/legal-document.component';
 
-/** Termo de Uso (Termo de Aceite) da plataforma: acessível a qualquer momento, com ou sem login. */
+/**
+ * Termo de Uso: texto da versão vigente, lido da API (o administrador altera pela tela "Termos e política").
+ * Acessível a qualquer momento, com ou sem login.
+ */
 @Component({
   selector: 'app-terms-of-use',
   standalone: true,
-  imports: [RouterLink],
+  imports: [DatePipe, LegalDocumentComponent],
   templateUrl: './terms-of-use.component.html'
 })
-export class TermsOfUseComponent {
-  readonly version = LEGAL_VERSION;
-  readonly effectiveDate = LEGAL_EFFECTIVE_DATE;
-  readonly contactEmail = environment.privacyContactEmail;
+export class TermsOfUseComponent implements OnInit {
+  private readonly auth = inject(AuthService);
+
+  readonly terms = signal<TermsVersion | null>(null);
+  readonly error = signal<string | null>(null);
+
+  ngOnInit(): void {
+    this.auth.currentTerms().subscribe({
+      next: (terms) => this.terms.set(terms),
+      error: (err) => this.error.set(getErrorMessage(err, 'Não foi possível carregar o documento. Tente novamente.'))
+    });
+  }
 }
