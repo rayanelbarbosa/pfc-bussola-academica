@@ -60,7 +60,9 @@ public class UserService {
                 resultRepository.findByUser_IdOrderByCreatedAtDesc(user.getId()).stream()
                         .map(UserDataExportResponse.ExportedTestResult::from)
                         .toList(),
-                auditService.findByUser(user.getId()));
+                auditService.findByUser(user.getId()).stream()
+                        .map(UserDataExportResponse.ExportedActivity::from)
+                        .toList());
     }
 
     /** Exclui a conta e todos os resultados do teste do usuário. */

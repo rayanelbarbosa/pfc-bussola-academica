@@ -174,9 +174,9 @@
           <textarea id="tips" formControlName="tips" class="field-input"></textarea>
         </div>
         <div class="field sm:col-span-2">
-          <label for="officialUrl" class="field-label">Link oficial</label>
+          <label for="officialUrl" class="field-label">Link oficial <span class="font-normal text-muted-foreground">(opcional)</span></label>
           <input id="officialUrl" type="url" formControlName="officialUrl" placeholder="https://" class="field-input" [class.is-invalid]="isInvalid('officialUrl')" />
-          @if (isInvalid('officialUrl')) { <p class="field-error">Informe um link válido, começando com http:// ou https://.</p> }
+          @if (isInvalid('officialUrl')) { <p class="field-error">O link deve começar com http:// ou https://.</p> }
         </div>
         <label class="flex cursor-pointer items-center gap-3 text-sm sm:col-span-2">
           <input type="checkbox" formControlName="active" class="size-5 accent-[var(--primary)]" /> Ativa (aparece na página inicial)

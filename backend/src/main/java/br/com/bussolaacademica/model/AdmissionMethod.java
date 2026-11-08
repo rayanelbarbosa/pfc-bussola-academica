@@ -54,7 +54,7 @@ public class AdmissionMethod {
     @Column(length = 1000)
     private String tips;
 
-    @Column(name = "official_url", nullable = false, length = 300)
+    @Column(name = "official_url", length = 300)
     private String officialUrl;
 
     @Column(nullable = false)
