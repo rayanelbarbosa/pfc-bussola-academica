@@ -5,8 +5,7 @@ import { adminGuard, authGuard, guestGuard } from './core/guards/auth.guards';
 export const routes: Routes = [
   {
     path: '',
-    title: 'Bússola Acadêmica',
-    canActivate: [authGuard],
+    title: 'Bússola Acadêmica | Formas de ingresso e teste vocacional',
     loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent)
   },
   {
@@ -25,8 +24,14 @@ export const routes: Routes = [
     path: 'teste-vocacional',
     title: 'Teste vocacional | Bússola Acadêmica',
     canActivate: [authGuard],
+    loadComponent: () => import('./features/vocational-test/areas/areas.component').then((m) => m.AreasComponent)
+  },
+  {
+    path: 'teste-vocacional/perguntas',
+    title: 'Teste vocacional | Bússola Acadêmica',
+    canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/vocational-test/questionnaire/questionnaire.component').then((m) => m.QuestionnaireComponent)
+      import('./features/vocational-test/questions/questions.component').then((m) => m.QuestionsComponent)
   },
   {
     path: 'teste-vocacional/resultado/:id',
@@ -35,14 +40,28 @@ export const routes: Routes = [
     loadComponent: () => import('./features/vocational-test/result/result.component').then((m) => m.ResultComponent)
   },
   {
+    path: 'meus-resultados',
+    title: 'Meus resultados | Bússola Acadêmica',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/account/my-results/my-results.component').then((m) => m.MyResultsComponent)
+  },
+  {
     path: 'meus-dados',
     title: 'Meus dados | Bússola Acadêmica',
     canActivate: [authGuard],
     loadComponent: () => import('./features/account/my-data/my-data.component').then((m) => m.MyDataComponent)
   },
   {
+    path: 'admin/formas-de-ingresso',
+    title: 'Formas de ingresso | Administração',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./features/admin/admission-methods/admission-methods.component').then((m) => m.AdmissionMethodsComponent)
+  },
+  {
     path: 'admin/auditoria',
-    title: 'Auditoria | Bússola Acadêmica',
+    title: 'Auditoria | Administração',
     canActivate: [adminGuard],
     loadComponent: () =>
       import('./features/admin/audit-logs/audit-logs.component').then((m) => m.AuditLogsComponent)
@@ -59,5 +78,15 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/legal/privacy-policy/privacy-policy.component').then((m) => m.PrivacyPolicyComponent)
   },
-  { path: '**', redirectTo: '' }
+  {
+    path: 'acesso-negado',
+    title: 'Acesso negado | Bússola Acadêmica',
+    data: { code: '403', heading: 'Acesso negado', description: 'Esta área é exclusiva para administradores.' },
+    loadComponent: () => import('./features/errors/error-page.component').then((m) => m.ErrorPageComponent)
+  },
+  {
+    path: '**',
+    title: 'Página não encontrada | Bússola Acadêmica',
+    loadComponent: () => import('./features/errors/error-page.component').then((m) => m.ErrorPageComponent)
+  }
 ];
