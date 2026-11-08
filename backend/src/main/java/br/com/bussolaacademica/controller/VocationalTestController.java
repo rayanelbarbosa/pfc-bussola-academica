@@ -1,5 +1,6 @@
 package br.com.bussolaacademica.controller;
 
+import br.com.bussolaacademica.dto.OptionResponse;
 import br.com.bussolaacademica.dto.QuestionResponse;
 import br.com.bussolaacademica.dto.SubmitTestRequest;
 import br.com.bussolaacademica.dto.VocationalTestResultResponse;
@@ -30,6 +31,11 @@ public class VocationalTestController {
     @GetMapping("/questions")
     public List<QuestionResponse> listQuestions() {
         return service.listQuestions();
+    }
+
+    @GetMapping("/interest-areas")
+    public List<OptionResponse> listInterestAreas() {
+        return service.listInterestAreas();
     }
 
     @PostMapping("/results")

@@ -60,6 +60,66 @@ class VocationalTestIntegrationTest {
                 .andExpect(jsonPath("$.recommendedAreas", hasSize(3)));
     }
 
+    /** Nota 5 nas perguntas de Realista (1 e 2) e Investigativo (3 e 4), 2 nas demais. */
+    private static String answersWithAreas(String areasJson) {
+        String answers = IntStream.rangeClosed(1, 12)
+                .mapToObj(id -> "{\"questionId\":" + id + ",\"score\":" + (id <= 4 ? 5 : 2) + "}")
+                .collect(Collectors.joining(","));
+        return "{\"answers\":[" + answers + "],\"interestAreas\":" + areasJson + "}";
+    }
+
+    @Test
+    void shouldRecommendCareersForEachChosenArea() throws Exception {
+        String token = registerStudent(mockMvc, uniqueEmail());
+
+        mockMvc.perform(get("/api/vocational-test/interest-areas").header("Authorization", bearer(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(8)));
+
+        String body = mockMvc.perform(post("/api/vocational-test/results")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(answersWithAreas("[\"ENGINEERING\",\"HEALTH\"]")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.interestAreas[0].value").value("ENGINEERING"))
+                .andExpect(jsonPath("$.careerRecommendations", hasSize(2)))
+                .andExpect(jsonPath("$.careerRecommendations[0].label").value("Engenharias"))
+                // R=10, I=10: carreiras RI e IR empatam com 30 pontos
+                .andExpect(jsonPath("$.careerRecommendations[0].careers[0].compatibility").value(30))
+                .andExpect(jsonPath("$.careerRecommendations[1].area").value("HEALTH"))
+                .andReturn().getResponse().getContentAsString();
+
+        Integer id = JsonPath.read(body, "$.id");
+        mockMvc.perform(get("/api/vocational-test/results/" + id).header("Authorization", bearer(token)))
+                .andExpect(jsonPath("$.careerRecommendations", hasSize(2)));
+        mockMvc.perform(get("/api/users/me/results").header("Authorization", bearer(token)))
+                .andExpect(jsonPath("$[0].interestAreas[0]").value("Engenharias"));
+    }
+
+    @Test
+    void shouldRejectInvalidInterestAreas() throws Exception {
+        String token = registerStudent(mockMvc, uniqueEmail());
+
+        mockMvc.perform(post("/api/vocational-test/results")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(answersWithAreas("[\"HEALTH\",\"ENGINEERING\",\"BUSINESS\",\"EDUCATION\"]")))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/vocational-test/results")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(answersWithAreas("[\"UNDECIDED\",\"HEALTH\"]")))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/vocational-test/results")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(answersWithAreas("[\"UNDECIDED\"]")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.careerRecommendations[0].label").value("Todas as áreas"));
+    }
+
     @Test
     void shouldExposeHealthCheck() throws Exception {
         mockMvc.perform(get("/actuator/health"))
