@@ -28,8 +28,6 @@ public class AuditLogController {
                                                  @RequestParam(required = false) String email,
                                                  @RequestParam(defaultValue = "0") int page,
                                                  @RequestParam(defaultValue = "20") int size) {
-        auditService.recordForCurrentUser(AuditAction.AUDIT_LOG_VIEWED,
-                "filtros: acao=" + action + ", email=" + email, true);
         return auditService.search(action, email, page, size);
     }
 

@@ -4,7 +4,6 @@ import br.com.bussolaacademica.config.YouTubeProperties;
 import br.com.bussolaacademica.dto.VideoResponse;
 import br.com.bussolaacademica.exception.ExternalServiceException;
 import br.com.bussolaacademica.integration.youtube.YouTubeClient;
-import br.com.bussolaacademica.model.AuditAction;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
@@ -30,14 +29,12 @@ public class VideoService {
 
     private final YouTubeClient client;
     private final YouTubeProperties properties;
-    private final AuditService auditService;
     private final Clock clock;
     private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
 
-    public VideoService(YouTubeClient client, YouTubeProperties properties, AuditService auditService, Clock clock) {
+    public VideoService(YouTubeClient client, YouTubeProperties properties, Clock clock) {
         this.client = client;
         this.properties = properties;
-        this.auditService = auditService;
         this.clock = clock;
     }
 
@@ -49,19 +46,11 @@ public class VideoService {
         String key = normalizedArea.toLowerCase(Locale.ROOT);
         CacheEntry cached = cache.get(key);
         if (cached != null && cached.expiresAt().isAfter(clock.instant())) {
-            auditService.recordForCurrentUser(AuditAction.VIDEOS_SEARCHED, "area=" + normalizedArea + " (cache)", true);
             return cached.videos();
         }
-        try {
-            List<VideoResponse> videos = client.searchVideos(normalizedArea + QUERY_SUFFIX);
-            cache.put(key, new CacheEntry(videos, clock.instant().plus(Duration.ofHours(properties.cacheHours()))));
-            auditService.recordForCurrentUser(AuditAction.VIDEOS_SEARCHED,
-                    "area=" + normalizedArea + " (YouTube, " + videos.size() + " vídeos)", true);
-            return videos;
-        } catch (ExternalServiceException ex) {
-            auditService.recordForCurrentUser(AuditAction.VIDEOS_SEARCHED, "area=" + normalizedArea + " (falha na API)", false);
-            throw ex;
-        }
+        List<VideoResponse> videos = client.searchVideos(normalizedArea + QUERY_SUFFIX);
+        cache.put(key, new CacheEntry(videos, clock.instant().plus(Duration.ofHours(properties.cacheHours()))));
+        return videos;
     }
 
     private static String validate(String area) {
