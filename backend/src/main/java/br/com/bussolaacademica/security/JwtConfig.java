@@ -17,6 +17,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 
 import javax.crypto.SecretKey;
+import java.time.Clock;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 
@@ -46,10 +47,10 @@ public class JwtConfig {
     /** Além da assinatura e da validade, confere se o token não foi revogado, se o usuário existe e se o perfil é o atual. */
     @Bean
     public JwtDecoder jwtDecoder(SecretKey jwtSecretKey, UserRepository userRepository,
-                                 RevokedTokenRepository revokedTokenRepository) {
+                                 RevokedTokenRepository revokedTokenRepository, Clock clock) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtSecretKey).macAlgorithm(MacAlgorithm.HS256).build();
         decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
-                JwtValidators.createDefault(), new UserStateTokenValidator(userRepository, revokedTokenRepository)));
+                JwtValidators.createDefault(), new UserStateTokenValidator(userRepository, revokedTokenRepository, clock)));
         return decoder;
     }
 

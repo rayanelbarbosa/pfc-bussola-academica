@@ -64,17 +64,19 @@ public class AuditService {
 
     /**
      * Senhas erradas para o e-mail dentro da janela, contadas só depois do último login com sucesso
-     * (quem acerta a senha zera a contagem).
+     * (quem acerta a senha ou redefine a senha pelo e-mail zera a contagem).
      */
     @Transactional(readOnly = true)
     public long countLoginFailuresSinceLastSuccess(String email, Duration window) {
         LocalDateTime since = LocalDateTime.now(clock).minus(window);
-        LocalDateTime lastSuccess = repository
-                .findFirstByUserEmailAndActionOrderByCreatedAtDesc(email, AuditAction.LOGIN_SUCCESS)
-                .map(AuditLog::getCreatedAt)
-                .orElse(null);
-        if (lastSuccess != null && lastSuccess.isAfter(since)) {
-            since = lastSuccess;
+        for (AuditAction reset : new AuditAction[] {AuditAction.LOGIN_SUCCESS, AuditAction.PASSWORD_RESET_COMPLETED}) {
+            LocalDateTime last = repository.findFirstByUserEmailAndActionOrderByCreatedAtDesc(email, reset)
+                    .filter(AuditLog::isSuccess)
+                    .map(AuditLog::getCreatedAt)
+                    .orElse(null);
+            if (last != null && last.isAfter(since)) {
+                since = last;
+            }
         }
         return repository.countByUserEmailAndActionAndCreatedAtAfter(email, AuditAction.LOGIN_FAILURE, since);
     }
