@@ -39,8 +39,8 @@ describe('ResultComponent', () => {
   beforeEach(async () => {
     const testService = jasmine.createSpyObj('VocationalTestService', ['getResult']);
     testService.getResult.and.returnValue(of(RESULT));
-    videoService = jasmine.createSpyObj('VideoService', ['searchByArea']);
-    videoService.searchByArea.and.returnValue(throwError(() => new Error('cota')));
+    videoService = jasmine.createSpyObj('VideoService', ['searchByCareer']);
+    videoService.searchByCareer.and.returnValue(throwError(() => new Error('cota')));
     await TestBed.configureTestingModule({
       imports: [ResultComponent],
       providers: [
@@ -64,12 +64,12 @@ describe('ResultComponent', () => {
   });
 
   it('loads the videos of each career and keeps the page working when the API is down', () => {
-    expect(videoService.searchByArea).toHaveBeenCalledWith('Engenharia Civil');
+    expect(videoService.searchByCareer).toHaveBeenCalledWith('Engenharia Civil');
     expect(fixture.nativeElement.textContent).toContain('Vídeos indisponíveis no momento');
   });
 
   it('shows the videos found', () => {
-    videoService.searchByArea.and.returnValue(of([
+    videoService.searchByCareer.and.returnValue(of([
       { videoId: 'a1', title: 'Rotina de engenheira civil', channelTitle: 'Canal', thumbnailUrl: null, url: 'https://youtube.com/watch?v=a1' }
     ]));
     fixture.componentInstance.loadVideos('Engenharia Civil');

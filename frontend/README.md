@@ -1,12 +1,15 @@
 # Front-end — Bússola Acadêmica
 
-Angular 18 (standalone components), visual baseado no protótipo do Figma.
+Angular 18 (standalone components), estilizado com Tailwind CSS.
 
 ```
 src/app
-├── core        modelos e serviços HTTP (comunicação com a API)
-├── shared      componentes reutilizáveis (ex.: barra superior)
-└── features    telas: home, teste-vocacional/questionario, teste-vocacional/resultado
+├── core        modelos, serviços HTTP, guards e interceptor (token, sessão expirada e novo aceite dos termos)
+├── shared      componentes reutilizáveis (barra superior, rodapé, gráficos do dashboard)
+└── features    telas: home (formas de ingresso), auth (login, cadastro, recuperação de senha),
+                vocational-test (áreas, questionário e resultado), account (meus dados e meus resultados),
+                admin (formas de ingresso, usuários, termos, auditoria e dashboard),
+                legal (Termo de Uso e Política de Privacidade) e errors (acesso negado)
 ```
 
 A URL da API fica em `src/environments/` (`environment.development.ts` no `npm start`,
