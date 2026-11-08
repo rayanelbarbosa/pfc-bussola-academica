@@ -15,6 +15,7 @@ describe('RegisterComponent', () => {
     email: 'marina@teste.com',
     password: 'Senha1234',
     confirmPassword: 'Senha1234',
+    ageConfirmed: true,
     acceptedTerms: true
   };
 
@@ -37,6 +38,13 @@ describe('RegisterComponent', () => {
 
   it('requires accepting the legal documents', () => {
     fixture.componentInstance.form.setValue({ ...valid, acceptedTerms: false });
+    fixture.componentInstance.submit();
+
+    expect(auth.register).not.toHaveBeenCalled();
+  });
+
+  it('requires declaring the minimum age of 16', () => {
+    fixture.componentInstance.form.setValue({ ...valid, ageConfirmed: false });
     fixture.componentInstance.submit();
 
     expect(auth.register).not.toHaveBeenCalled();

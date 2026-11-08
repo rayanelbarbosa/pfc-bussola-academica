@@ -35,6 +35,7 @@ export interface ResultSummary {
   id: number;
   createdAt: string;
   topCategories: string[];
+  interestAreas: string[];
 }
 
 /** Versão vigente do Termo de Uso e da Política de Privacidade. */

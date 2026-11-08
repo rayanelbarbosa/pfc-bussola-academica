@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { LEGAL_VERSION } from '../../../core/models/auth.model';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 /** Senha com pelo menos 8 caracteres, letras e números (mesma regra do back-end). */
 export const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
@@ -15,11 +16,11 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
   return password && confirmation && password !== confirmation ? { passwordsMismatch: true } : null;
 }
 
-/** Cadastro de estudante: só os dados necessários + aceite obrigatório do Termo e da Política (LGPD). */
+/** Cadastro de estudante (RF02): só os dados necessários, declaração de idade mínima e aceite do Termo e da Política (LGPD). */
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, IconComponent],
   templateUrl: './register.component.html'
 })
 export class RegisterComponent {
@@ -37,6 +38,7 @@ export class RegisterComponent {
       email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
       password: ['', [Validators.required, Validators.pattern(PASSWORD_PATTERN)]],
       confirmPassword: ['', Validators.required],
+      ageConfirmed: [false, Validators.requiredTrue],
       acceptedTerms: [false, Validators.requiredTrue]
     },
     { validators: passwordsMatch }
@@ -51,7 +53,7 @@ export class RegisterComponent {
     this.submitting.set(true);
     this.error.set(null);
     this.auth.register({ name: name.trim(), email: email.trim(), password, acceptedTerms }).subscribe({
-      next: () => this.router.navigateByUrl('/'),
+      next: () => this.router.navigateByUrl('/teste-vocacional'),
       error: (err) => {
         this.error.set(getErrorMessage(err, 'Não foi possível criar sua conta. Tente novamente.'));
         this.submitting.set(false);
@@ -59,10 +61,23 @@ export class RegisterComponent {
     });
   }
 
-  isInvalid(field: 'name' | 'email' | 'password' | 'confirmPassword' | 'acceptedTerms'): boolean {
+  isInvalid(field: 'name' | 'email' | 'password' | 'confirmPassword' | 'ageConfirmed' | 'acceptedTerms'): boolean {
     const control = this.form.controls[field];
     return control.invalid && control.touched;
   }
+
+  /** Força da senha de 0 a 4 (só indicação visual; a regra obrigatória é a do PASSWORD_PATTERN). */
+  get passwordStrength(): number {
+    const value = this.form.controls.password.value;
+    let strength = 0;
+    if (value.length >= 8) strength++;
+    if (/[a-zA-Z]/.test(value) && /\d/.test(value)) strength++;
+    if (value.length >= 12) strength++;
+    if (/[^a-zA-Z0-9]/.test(value) || /[A-Z]/.test(value)) strength++;
+    return strength;
+  }
+
+  readonly strengthLabels = ['Muito fraca', 'Fraca', 'Razoável', 'Boa', 'Forte'];
 
   get passwordsMismatch(): boolean {
     return this.form.hasError('passwordsMismatch') && this.form.controls.confirmPassword.touched;

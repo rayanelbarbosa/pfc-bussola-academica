@@ -4,12 +4,13 @@ import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { getErrorMessage } from '../../../core/services/api-error';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
-/** Tela de login (protótipo 01 - Login), apenas com e-mail e senha. */
+/** Tela de login (RF03): e-mail e senha; o perfil (estudante ou administrador) vem do token. */
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, IconComponent],
   templateUrl: './login.component.html'
 })
 export class LoginComponent {
