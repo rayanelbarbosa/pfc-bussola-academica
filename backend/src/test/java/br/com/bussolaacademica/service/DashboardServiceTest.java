@@ -56,7 +56,7 @@ class DashboardServiceTest {
         for (RiasecCategory category : RiasecCategory.values()) {
             scores.put(category, top.contains(category) ? 10 : 4);
         }
-        return new VocationalTestResult(null, when, scores, top, List.of(), areas);
+        return new VocationalTestResult(null, when, scores, top, areas);
     }
 
     @ParameterizedTest

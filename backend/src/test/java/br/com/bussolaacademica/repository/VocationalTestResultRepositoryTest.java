@@ -46,7 +46,7 @@ class VocationalTestResultRepositoryTest {
             scores.put(category, category == RiasecCategory.SOCIAL ? 10 : 4);
         }
         return entityManager.persist(new VocationalTestResult(user, createdAt, scores,
-                List.of(RiasecCategory.SOCIAL), RiasecCategory.SOCIAL.getRecommendedAreas(),
+                List.of(RiasecCategory.SOCIAL),
                 List.of(br.com.bussolaacademica.model.InterestArea.UNDECIDED)));
     }
 
@@ -68,7 +68,7 @@ class VocationalTestResultRepositoryTest {
         assertEquals(2, historico.size());
         assertEquals(recente.getId(), historico.get(0).getId());
         assertEquals(antigo.getId(), historico.get(1).getId());
-        assertEquals(List.of("Pedagogia", "Psicologia", "Enfermagem"), historico.get(0).getRecommendedAreas());
+        assertEquals(List.of(RiasecCategory.SOCIAL), historico.get(0).getTopCategories());
     }
 
     @Test
