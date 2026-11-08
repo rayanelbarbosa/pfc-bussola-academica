@@ -1,94 +1,137 @@
-<main class="page">
-  <app-top-bar />
-
-  @if (result(); as data) {
-    <header class="heading">
-      <p class="eyebrow">Seu perfil RIASEC</p>
-      <h1>{{ title() }}</h1>
-      <p class="description">{{ description() }}</p>
-    </header>
-
-    <div class="columns">
-      <section class="card scores" aria-label="Escores por categoria">
-        <div class="top-profile">
-          <div>
-            <p class="small-label">Perfil predominante</p>
-            <p class="top-name" [style.color]="topColor()">{{ topLabels() }}</p>
-          </div>
-          <p class="top-score">{{ highestScore() }} de {{ maxScore }}</p>
-        </div>
-
-        @for (bar of scoreBars(); track bar.label) {
-          <div class="score">
-            <div class="score-label">
-              <span>{{ bar.label }}</span>
-              <span class="score-value">{{ bar.score }} de {{ maxScore }}</span>
-            </div>
-            <div class="track">
-              <div class="fill" [style.width.%]="bar.percent" [style.background]="bar.color"></div>
-            </div>
-          </div>
-        }
-      </section>
-
-      <section class="card areas" aria-labelledby="areas-title">
-        <p class="small-label">Caminhos para explorar</p>
-        <h2 id="areas-title">Áreas recomendadas</h2>
-        <ol>
-          @for (area of data.recommendedAreas; track area; let i = $index) {
-            <li class="area">
-              <span class="number-badge">{{ i + 1 }}</span>
-              {{ area }}
-            </li>
-          }
-        </ol>
-        <p class="rule-note">
-          As áreas recomendadas correspondem exatamente às áreas associadas
-          {{ isTie() ? 'às categorias' : 'à categoria' }} com maior pontuação ({{ topLabels() }}),
-          conforme a regra de negócio.
-        </p>
-      </section>
+<div class="container-page section-y">
+  @if (loading()) {
+    <div class="space-y-4" aria-busy="true">
+      <div class="skeleton h-10 w-72"></div>
+      <div class="skeleton h-80"></div>
+    </div>
+  } @else if (error()) {
+    <div class="alert alert-error" role="alert">
+      <app-icon name="alert-circle" class="mt-0.5 size-5" />
+      <div>
+        <p class="font-semibold">{{ error() }}</p>
+        <a routerLink="/meus-resultados" class="btn btn-secondary btn-sm mt-3">Ver meus resultados</a>
+      </div>
+    </div>
+  }
+  @if (result(); as r) {
+    <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div>
+        <h1>Seu resultado</h1>
+        <p class="mt-2 text-muted-foreground">{{ r.createdAt | date: "dd/MM/yyyy 'às' HH:mm" }}</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <a routerLink="/teste-vocacional" class="btn btn-primary"><app-icon name="rotate-ccw" class="size-4" /> Refazer o teste</a>
+        <a routerLink="/meus-resultados" class="btn btn-secondary"><app-icon name="history" class="size-4" /> Ver histórico</a>
+      </div>
     </div>
 
-    <section class="card videos" aria-labelledby="videos-title">
-      <p class="small-label">Conheça essas carreiras</p>
-      <h2 id="videos-title">Vídeos sobre as áreas recomendadas</h2>
-      <p class="videos-note">
-        Vídeos públicos de terceiros, buscados em tempo real na API do YouTube. Só o nome da área é enviado ao YouTube.
-      </p>
+    <section class="border-y border-border py-6">
+      <h2 class="text-xl">Seus escores RIASEC</h2>
+      <p class="mt-1 text-sm text-muted-foreground">Cada escore é a soma de duas respostas, de 2 a 10 pontos.</p>
+      <div class="mt-4 grid items-center gap-6 md:grid-cols-2">
+        <div class="flex justify-center"><app-radar-chart [points]="radarPoints()" /></div>
+        <ul class="space-y-3">
+          @for (score of r.scores; track score.category) {
+            <li class="flex items-center justify-between gap-4 border-b border-border pb-3">
+              <span class="flex items-center gap-3">
+                <span class="grid size-7 place-items-center rounded-md bg-muted text-sm font-semibold" [class]="riasecClass(score.category)">{{ letter(score.category) }}</span>
+                {{ score.label }}
+              </span>
+              <strong class="font-semibold">{{ score.score }}/10</strong>
+            </li>
+          }
+        </ul>
+      </div>
+    </section>
 
-      @if (loadingVideos()) {
-        <p class="loading">Buscando vídeos no YouTube...</p>
-      } @else if (allVideosFailed()) {
-        <p class="error-message">Não foi possível carregar os vídeos agora. Seu resultado continua salvo.</p>
-      } @else {
-        @for (group of areaVideos(); track group.area) {
-          @if (group.videos.length > 0) {
-            <h3>{{ group.area }}</h3>
-            <div class="video-grid">
-              @for (video of group.videos; track video.videoId) {
-                <a class="video" [href]="video.url" target="_blank" rel="noopener noreferrer">
-                  @if (video.thumbnailUrl) {
-                    <img [src]="video.thumbnailUrl" [alt]="'Miniatura do vídeo ' + video.title" loading="lazy" />
-                  }
-                  <span class="video-title">{{ video.title }}</span>
-                  <span class="video-channel">{{ video.channelTitle }} · Assistir no YouTube ↗</span>
-                </a>
-              }
+    <section class="py-7">
+      <h2 class="text-xl">Seu perfil principal</h2>
+      @if (hasTie()) {
+        <p class="mt-2 text-sm text-muted-foreground">
+          {{ r.topCategories.length }} tipos tiveram o mesmo maior escore. Todos fazem parte do seu perfil principal.
+        </p>
+      }
+      <div class="mt-4 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
+        @for (top of r.topCategories; track top.category) {
+          @if (categoryInfo(top.category); as info) {
+            <div class="card p-5 sm:p-5">
+              <h3 class="text-lg" [class]="riasecClass(top.category)">{{ info.name }} <span class="text-sm font-normal text-muted-foreground">({{ top.score }}/10)</span></h3>
+              <p class="mt-3 text-sm leading-relaxed text-muted-foreground">{{ info.meaning }}</p>
+              <h4 class="mt-4 text-sm font-semibold">Características comuns</h4>
+              <p class="mt-1 text-sm leading-relaxed text-muted-foreground">{{ info.traits }}</p>
+              <h4 class="mt-4 text-sm font-semibold">Ambientes de trabalho</h4>
+              <p class="mt-1 text-sm leading-relaxed text-muted-foreground">{{ info.environments }}</p>
             </div>
           }
         }
+      </div>
+    </section>
+
+    <section class="border-t border-border py-7">
+      <h2 class="text-xl">Carreiras mais compatíveis</h2>
+      <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+        A compatibilidade soma 2 vezes o seu escore no 1º tipo da carreira com o escore no 2º tipo.
+      </p>
+      @for (group of r.careerRecommendations; track group.area) {
+        <div class="mt-6">
+          <h3 class="text-lg">{{ group.label }}</h3>
+          @if (group.careers.length > 3) {
+            <p class="mt-1 text-sm text-muted-foreground">Incluímos as carreiras empatadas na terceira posição.</p>
+          }
+          <div class="mt-3 grid items-stretch gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))]">
+            @for (career of group.careers; track career.name) {
+              <div class="card flex flex-col p-5 sm:p-5">
+                <h4 class="font-semibold">{{ career.name }}</h4>
+                <div class="mt-3 flex items-center justify-between gap-2">
+                  <span class="flex gap-1">
+                    @for (type of career.categories; track $index) {
+                      <span class="grid size-7 place-items-center rounded-md bg-muted text-xs font-semibold" [class]="riasecClass(type.category)"
+                        [attr.title]="type.label">{{ letter(type.category) }}</span>
+                    }
+                  </span>
+                  <span class="text-sm font-medium">{{ career.compatibility }} pontos</span>
+                </div>
+                <p class="mt-3 text-sm leading-relaxed text-muted-foreground">{{ career.description }}</p>
+                <div class="mt-auto pt-4">
+                  @switch (videos()[career.name]?.status) {
+                    @case ('ok') {
+                      <p class="mb-2 text-xs font-medium">Vídeos sobre a carreira</p>
+                      <ul class="space-y-2">
+                        @for (video of $any(videos()[career.name]).videos; track video.videoId) {
+                          <li>
+                            <a [href]="video.url" target="_blank" rel="noopener noreferrer" class="flex gap-3 rounded-md p-1 hover:bg-muted">
+                              @if (video.thumbnailUrl) {
+                                <img [src]="video.thumbnailUrl" alt="" class="h-12 w-20 shrink-0 rounded object-cover" loading="lazy" />
+                              }
+                              <span class="min-w-0">
+                                <span class="line-clamp-2 text-xs font-medium">{{ video.title }}</span>
+                                <span class="block truncate text-xs text-muted-foreground">{{ video.channelTitle }}</span>
+                              </span>
+                            </a>
+                          </li>
+                        } @empty {
+                          <li class="text-xs text-muted-foreground">Nenhum vídeo encontrado.</li>
+                        }
+                      </ul>
+                    }
+                    @case ('error') {
+                      <p class="text-xs text-muted-foreground">Vídeos indisponíveis no momento.</p>
+                      <button type="button" class="btn btn-ghost btn-sm mt-1 h-8 px-2" (click)="loadVideos(career.name)">Tentar de novo</button>
+                    }
+                    @default {
+                      <div class="skeleton h-16" aria-label="Carregando vídeos"></div>
+                    }
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
       }
     </section>
 
-    <div class="actions">
-      <a routerLink="/teste-vocacional" class="btn btn-secondary">↺ Refazer o teste</a>
-      <a routerLink="/" class="btn btn-primary">Voltar para a Home →</a>
-    </div>
-  } @else if (error()) {
-    <p class="error-message" role="alert">{{ error() }}</p>
-    <a routerLink="/" class="btn btn-primary back">Voltar para a Home</a>
-  } @else {
-    <p class="loading">Carregando resultado...</p>
+    <p class="border-t border-border pt-5 text-sm leading-relaxed text-muted-foreground">
+      O teste é uma orientação inicial. Vale conversar com professores, profissionais da área e visitar faculdades antes de decidir.
+    </p>
   }
-</main>
+</div>

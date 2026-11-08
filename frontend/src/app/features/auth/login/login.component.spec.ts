@@ -62,6 +62,6 @@ describe('LoginComponent', () => {
     fixture.componentInstance.submit();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.error-message')?.textContent).toContain('E-mail ou senha inválidos.');
+    expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain('E-mail ou senha inválidos.');
   });
 });

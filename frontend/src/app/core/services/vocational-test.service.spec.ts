@@ -23,8 +23,13 @@ describe('VocationalTestService', () => {
     http.expectOne(`${base}/questions`).flush([{ id: 1, statement: 'x', category: 'REALISTIC' }]);
   });
 
+  it('fetches the interest areas', () => {
+    service.getInterestAreas().subscribe((areas) => expect(areas.length).toBe(1));
+    http.expectOne(`${base}/interest-areas`).flush([{ value: 'HEALTH', label: 'Saúde' }]);
+  });
+
   it('submits the answers via POST', () => {
-    const body = { answers: [{ questionId: 1, score: 5 }] };
+    const body = { answers: [{ questionId: 1, score: 5 }], interestAreas: ['HEALTH'] };
     service.submitAnswers(body).subscribe();
 
     const req = http.expectOne(`${base}/results`);

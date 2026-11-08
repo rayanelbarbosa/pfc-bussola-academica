@@ -38,7 +38,7 @@ describe('route guards', () => {
 
   it('blocks students from the admin area', () => {
     loginAs('STUDENT');
-    expect(urlOf(run(adminGuard))).toBe('/');
+    expect(urlOf(run(adminGuard))).toBe('/acesso-negado');
   });
 
   it('lets admins into the admin area', () => {

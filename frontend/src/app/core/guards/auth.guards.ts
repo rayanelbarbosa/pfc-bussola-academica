@@ -11,13 +11,13 @@ export const authGuard: CanActivateFn = (_route, state) => {
     : inject(Router).createUrlTree(['/login'], { queryParams: { voltar: state.url } });
 };
 
-/** Só administradores. */
+/** Só administradores. Quem está logado sem ser administrador vê a página de acesso negado (RF16). */
 export const adminGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   if (!auth.token() || !auth.isLoggedIn()) {
     return inject(Router).createUrlTree(['/login']);
   }
-  return auth.isAdmin() ? true : inject(Router).createUrlTree(['/']);
+  return auth.isAdmin() ? true : inject(Router).createUrlTree(['/acesso-negado']);
 };
 
 /** Telas de login/cadastro: quem já está logado vai direto para a Home. */
