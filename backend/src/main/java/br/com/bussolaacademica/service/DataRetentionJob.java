@@ -13,7 +13,8 @@ import java.time.Period;
  * <ul>
  *   <li>logs de auditoria com mais de 6 meses (o Marco Civil da Internet, art. 15, exige guardar
  *       registros de acesso por 6 meses; depois disso, pela LGPD, não há motivo para mantê-los);</li>
- *   <li>tokens revogados que já expiraram.</li>
+ *   <li>tokens revogados que já expiraram;</li>
+ *   <li>pedidos de redefinição de senha vencidos.</li>
  * </ul>
  */
 @Component
@@ -24,16 +25,21 @@ public class DataRetentionJob {
 
     private final AuditService auditService;
     private final TokenRevocationService tokenRevocationService;
+    private final PasswordResetService passwordResetService;
 
-    public DataRetentionJob(AuditService auditService, TokenRevocationService tokenRevocationService) {
+    public DataRetentionJob(AuditService auditService, TokenRevocationService tokenRevocationService,
+                            PasswordResetService passwordResetService) {
         this.auditService = auditService;
         this.tokenRevocationService = tokenRevocationService;
+        this.passwordResetService = passwordResetService;
     }
 
     @Scheduled(cron = "${app.retention.cron:0 30 3 * * *}", zone = "America/Sao_Paulo")
     public void purgeExpiredData() {
         int logs = auditService.purgeOlderThan(AUDIT_RETENTION);
         int tokens = tokenRevocationService.purgeExpired();
-        log.info("Limpeza diária: {} logs de auditoria e {} tokens revogados apagados", logs, tokens);
+        int resets = passwordResetService.purgeExpired();
+        log.info("Limpeza diária: {} logs de auditoria, {} tokens revogados e {} pedidos de redefinição apagados",
+                logs, tokens, resets);
     }
 }

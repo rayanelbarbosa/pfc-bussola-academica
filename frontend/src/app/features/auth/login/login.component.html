@@ -3,6 +3,9 @@
     <h1>Entrar</h1>
     <p class="mt-2 text-sm text-muted-foreground">Entre para fazer o teste vocacional e ver seus resultados.</p>
 
+    @if (senhaRedefinida()) {
+      <div class="alert alert-success mt-5" role="status">Senha alterada. Entre com a nova senha.</div>
+    }
     @if (expirou()) {
       <div class="alert alert-info mt-5" role="status">Sua sessão expirou. Entre novamente para continuar.</div>
     }
@@ -26,6 +29,7 @@
         @if (isInvalid('password')) {
           <p class="field-error" role="alert">Digite sua senha.</p>
         }
+        <a routerLink="/esqueci-senha" class="self-end text-sm font-semibold text-primary underline underline-offset-4">Esqueci minha senha</a>
       </div>
       <button type="submit" class="btn btn-primary w-full" [disabled]="submitting()">
         {{ submitting() ? 'Entrando...' : 'Entrar' }}
