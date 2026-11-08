@@ -139,7 +139,8 @@
                             <executable>bash</executable>
                             <arguments>
                                 <argument>-c</argument>
-                                <argument>awk -F',' 'NR&gt;1 {missed+=$4; covered+=$5} END {printf "\n>>> Cobertura de instrucoes: %.1f%% (%d de %d)\n\n", 100*covered/(missed+covered), covered, missed+covered}' ${project.build.directory}/site/jacoco/jacoco.csv</argument>
+                                <!-- sem testes (ex.: build da imagem Docker com -DskipTests) nao ha relatorio: so avisa e segue -->
+                                <argument>f=${project.build.directory}/site/jacoco/jacoco.csv; if [ ! -f "$f" ]; then echo "Cobertura nao calculada (testes pulados)"; exit 0; fi; awk -F',' 'NR&gt;1 {missed+=$4; covered+=$5} END {printf "\n&gt;&gt;&gt; Cobertura de instrucoes: %.1f%% (%d de %d)\n\n", 100*covered/(missed+covered), covered, missed+covered}' "$f"</argument>
                             </arguments>
                         </configuration>
                     </execution>
