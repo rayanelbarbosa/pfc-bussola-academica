@@ -18,7 +18,7 @@ import java.util.Map;
 
 /**
  * Resultado persistido de uma aplicação do teste vocacional: o escore de cada
- * categoria RIASEC, a(s) categoria(s) predominante(s) e as áreas recomendadas.
+ * categoria RIASEC, a(s) categoria(s) predominante(s), as áreas recomendadas e as áreas de interesse escolhidas.
  */
 @Entity
 @Table(name = "vocational_test_result")
@@ -63,12 +63,17 @@ public class VocationalTestResult {
     @Column(name = "recommended_areas", nullable = false, length = 500)
     private String recommendedAreas;
 
+    /** Áreas de interesse escolhidas antes do teste, ex.: "HEALTH;ENGINEERING". Nulo = "Ainda não sei". */
+    @Column(name = "interest_areas", length = 200)
+    private String interestAreas;
+
     protected VocationalTestResult() {
         // exigido pelo JPA
     }
 
     public VocationalTestResult(User user, LocalDateTime createdAt, Map<RiasecCategory, Integer> scores,
-                                List<RiasecCategory> topCategories, List<String> recommendedAreas) {
+                                List<RiasecCategory> topCategories, List<String> recommendedAreas,
+                                List<InterestArea> interestAreas) {
         this.user = user;
         this.createdAt = createdAt;
         this.realisticScore = scores.get(RiasecCategory.REALISTIC);
@@ -79,6 +84,7 @@ public class VocationalTestResult {
         this.conventionalScore = scores.get(RiasecCategory.CONVENTIONAL);
         this.topCategories = String.join(SEPARATOR, topCategories.stream().map(Enum::name).toList());
         this.recommendedAreas = String.join(SEPARATOR, recommendedAreas);
+        this.interestAreas = String.join(SEPARATOR, interestAreas.stream().map(Enum::name).toList());
     }
 
     /** Escores na ordem oficial do RIASEC (R, I, A, S, E, C). */
@@ -99,6 +105,13 @@ public class VocationalTestResult {
 
     public List<String> getRecommendedAreas() {
         return Arrays.asList(recommendedAreas.split(SEPARATOR));
+    }
+
+    public List<InterestArea> getInterestAreas() {
+        if (interestAreas == null || interestAreas.isBlank()) {
+            return List.of(InterestArea.UNDECIDED);
+        }
+        return Arrays.stream(interestAreas.split(SEPARATOR)).map(InterestArea::valueOf).toList();
     }
 
     public Long getId() {

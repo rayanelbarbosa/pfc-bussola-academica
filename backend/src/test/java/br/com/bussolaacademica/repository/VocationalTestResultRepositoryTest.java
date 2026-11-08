@@ -46,7 +46,8 @@ class VocationalTestResultRepositoryTest {
             scores.put(category, category == RiasecCategory.SOCIAL ? 10 : 4);
         }
         return entityManager.persist(new VocationalTestResult(user, createdAt, scores,
-                List.of(RiasecCategory.SOCIAL), RiasecCategory.SOCIAL.getRecommendedAreas()));
+                List.of(RiasecCategory.SOCIAL), RiasecCategory.SOCIAL.getRecommendedAreas(),
+                List.of(br.com.bussolaacademica.model.InterestArea.UNDECIDED)));
     }
 
     @Test
