@@ -1,13 +1,13 @@
 name: Frontend CI
 
+# Roda só no push: o PR aberto pelo auto-pr usa o mesmo commit, então o resultado
+# já aparece nos checks do PR (rodar também no pull_request duplicava a execução
+# e, como o PR é aberto pelo github-actions[bot], o GitHub pedia aprovação manual).
 on:
   push:
     paths:
       - "frontend/**"
       - ".github/workflows/frontend-ci.yml"
-  pull_request:
-    paths:
-      - "frontend/**"
 
 jobs:
   build-and-test:
