@@ -63,6 +63,11 @@ public class User {
         this.createdAt = termsAcceptedAt;
     }
 
+    /** Promove ou rebaixa o perfil de acesso (regras no AdminUserService). */
+    public void changeRole(Role role) {
+        this.role = role;
+    }
+
     public boolean isAdmin() {
         return role == Role.ADMIN;
     }
