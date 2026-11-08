@@ -127,6 +127,19 @@ class AdmissionMethodIntegrationTest {
     }
 
     @Test
+    void methodWithoutOfficialLinkIsAccepted() throws Exception {
+        String admin = login(mockMvc, ADMIN_EMAIL, ADMIN_PASSWORD);
+        String name = "Bolsa " + UUID.randomUUID().toString().substring(0, 8);
+
+        mockMvc.perform(post("/api/admin/admission-methods")
+                        .header("Authorization", bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(name, "SCHOLARSHIP_PORTAL", "")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.officialUrl").doesNotExist());
+    }
+
+    @Test
     void invalidDataIsRejected() throws Exception {
         String admin = login(mockMvc, ADMIN_EMAIL, ADMIN_PASSWORD);
         mockMvc.perform(post("/api/admin/admission-methods")

@@ -42,6 +42,13 @@ describe('AdmissionMethodsComponent', () => {
     expect(component.form.controls.officialUrl.invalid).toBeTrue();
   });
 
+  it('accepts an empty official link (optional field)', () => {
+    const component = fixture.componentInstance;
+    component.openCreate();
+    component.form.patchValue({ officialUrl: '' });
+    expect(component.form.controls.officialUrl.valid).toBeTrue();
+  });
+
   it('edits keeping the steps one per line', () => {
     const component = fixture.componentInstance;
     component.openEdit(ENEM);

@@ -23,13 +23,15 @@
         }
       </div>
       <div class="field">
-        <label for="password" class="field-label">Senha</label>
+        <div class="flex items-baseline justify-between gap-3">
+          <label for="password" class="field-label">Senha</label>
+          <a routerLink="/esqueci-senha" class="text-sm font-semibold text-primary underline underline-offset-4">Esqueci minha senha</a>
+        </div>
         <input id="password" type="password" formControlName="password" autocomplete="current-password" class="field-input"
           [class.is-invalid]="isInvalid('password')" [attr.aria-invalid]="isInvalid('password')" />
         @if (isInvalid('password')) {
           <p class="field-error" role="alert">Digite sua senha.</p>
         }
-        <a routerLink="/esqueci-senha" class="self-end text-sm font-semibold text-primary underline underline-offset-4">Esqueci minha senha</a>
       </div>
       <button type="submit" class="btn btn-primary w-full" [disabled]="submitting()">
         {{ submitting() ? 'Entrando...' : 'Entrar' }}

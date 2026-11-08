@@ -142,7 +142,9 @@ class SecurityLgpdIntegrationTest {
                 .andExpect(jsonPath("$.account.email").value(email))
                 .andExpect(jsonPath("$.account.passwordHash").doesNotExist())
                 .andExpect(jsonPath("$.vocationalTestResults").isArray())
-                .andExpect(jsonPath("$.activityLog[0].action").value("PERSONAL_DATA_EXPORTED"));
+                .andExpect(jsonPath("$.activityLog[0].action").value("Exportação dos dados pessoais"))
+                .andExpect(jsonPath("$.activityLog[0].userEmail").doesNotExist())
+                .andExpect(jsonPath("$.activityLog[0].resource").doesNotExist());
     }
 
     @Test
