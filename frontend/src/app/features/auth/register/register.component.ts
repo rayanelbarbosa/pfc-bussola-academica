@@ -1,10 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { getErrorMessage } from '../../../core/services/api-error';
-import { LEGAL_VERSION } from '../../../core/models/auth.model';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 /** Senha com pelo menos 8 caracteres, letras e números (mesma regra do back-end). */
@@ -23,12 +22,13 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
   imports: [ReactiveFormsModule, RouterLink, IconComponent],
   templateUrl: './register.component.html'
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
-  readonly legalVersion = LEGAL_VERSION;
+  /** Versão vigente do Termo/Política, mostrada ao lado do aceite. */
+  readonly legalVersion = signal<string | null>(null);
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -44,15 +44,19 @@ export class RegisterComponent {
     { validators: passwordsMatch }
   );
 
+  ngOnInit(): void {
+    this.auth.currentTerms().subscribe({ next: (terms) => this.legalVersion.set(terms.version), error: () => undefined });
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-    const { name, email, password, acceptedTerms } = this.form.getRawValue();
+    const { name, email, password, ageConfirmed, acceptedTerms } = this.form.getRawValue();
     this.submitting.set(true);
     this.error.set(null);
-    this.auth.register({ name: name.trim(), email: email.trim(), password, acceptedTerms }).subscribe({
+    this.auth.register({ name: name.trim(), email: email.trim(), password, ageConfirmed, acceptedTerms }).subscribe({
       next: () => this.router.navigateByUrl('/teste-vocacional'),
       error: (err) => {
         this.error.set(getErrorMessage(err, 'Não foi possível criar sua conta. Tente novamente.'));

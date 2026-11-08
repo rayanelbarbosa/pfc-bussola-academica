@@ -21,6 +21,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/register/register.component').then((m) => m.RegisterComponent)
   },
   {
+    path: 'novo-aceite',
+    title: 'Termos atualizados | Bússola Acadêmica',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/auth/terms-update/terms-update.component').then((m) => m.TermsUpdateComponent)
+  },
+  {
     path: 'teste-vocacional',
     title: 'Teste vocacional | Bússola Acadêmica',
     canActivate: [authGuard],
@@ -70,6 +77,12 @@ export const routes: Routes = [
     title: 'Usuários | Administração',
     canActivate: [adminGuard],
     loadComponent: () => import('./features/admin/users/users.component').then((m) => m.UsersComponent)
+  },
+  {
+    path: 'admin/termos',
+    title: 'Termos e política | Administração',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/admin/terms/terms.component').then((m) => m.TermsComponent)
   },
   {
     path: 'admin/auditoria',

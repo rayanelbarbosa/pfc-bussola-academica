@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { RegisterComponent } from './register.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { authResponse } from '../../../core/testing/auth-fixtures';
+import { TermsVersion } from '../../../core/models/auth.model';
 
 describe('RegisterComponent', () => {
   let fixture: ComponentFixture<RegisterComponent>;
@@ -20,7 +21,8 @@ describe('RegisterComponent', () => {
   };
 
   beforeEach(async () => {
-    auth = jasmine.createSpyObj('AuthService', ['register']);
+    auth = jasmine.createSpyObj('AuthService', ['register', 'currentTerms']);
+    auth.currentTerms.and.returnValue(of({ version: '1.0' } as TermsVersion));
     await TestBed.configureTestingModule({
       imports: [RegisterComponent],
       providers: [provideRouter([]), { provide: AuthService, useValue: auth }]
@@ -70,6 +72,7 @@ describe('RegisterComponent', () => {
       name: 'Marina Alves',
       email: 'marina@teste.com',
       password: 'Senha1234',
+      ageConfirmed: true,
       acceptedTerms: true
     });
   });

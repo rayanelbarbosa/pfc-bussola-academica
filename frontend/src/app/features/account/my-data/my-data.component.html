@@ -42,6 +42,17 @@
       </p>
     </section>
 
+    <section class="card mt-4">
+      <h2 class="text-xl">Baixar meus dados</h2>
+      <p class="mt-2 text-sm text-muted-foreground">
+        Um arquivo JSON com seu cadastro, todos os seus resultados e o histórico de ações da sua conta.
+        Você pode guardar ou levar esses dados para outro serviço.
+      </p>
+      <button type="button" class="btn btn-secondary mt-4" (click)="downloadMyData()" [disabled]="exporting()">
+        <app-icon name="download" class="size-4" /> {{ exporting() ? 'Gerando arquivo...' : 'Baixar meus dados (JSON)' }}
+      </button>
+    </section>
+
     <section class="mt-4 rounded-lg border border-destructive/30 bg-destructive-soft p-5 sm:p-6">
       <h2 class="text-xl text-destructive">Excluir minha conta</h2>
       <p class="mt-2 text-sm text-foreground/85">
