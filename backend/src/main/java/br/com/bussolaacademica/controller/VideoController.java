@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Vídeos de apoio por área, vindos da YouTube Data API v3 (integração externa). */
+/** Vídeos de apoio de uma carreira cadastrada, vindos da YouTube Data API v3 (integração externa). */
 @RestController
 @RequestMapping("/api/videos")
 public class VideoController {
@@ -21,7 +21,7 @@ public class VideoController {
     }
 
     @GetMapping
-    public List<VideoResponse> searchByArea(@RequestParam String area) {
-        return videoService.searchByArea(area);
+    public List<VideoResponse> searchByCareer(@RequestParam String career) {
+        return videoService.searchByCareer(career);
     }
 }
