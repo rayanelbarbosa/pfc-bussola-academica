@@ -53,6 +53,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/account/my-data/my-data.component').then((m) => m.MyDataComponent)
   },
   {
+    path: 'admin',
+    title: 'Dashboard | Administração',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/admin/dashboard/dashboard.component').then((m) => m.DashboardComponent)
+  },
+  {
     path: 'admin/formas-de-ingresso',
     title: 'Formas de ingresso | Administração',
     canActivate: [adminGuard],
