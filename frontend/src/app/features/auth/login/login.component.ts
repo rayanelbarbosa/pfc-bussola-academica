@@ -22,6 +22,8 @@ export class LoginComponent {
   readonly voltar = input<string>();
   /** Presente quando a sessão expirou (?expirou=1). */
   readonly expirou = input<string>();
+  /** Presente depois de redefinir a senha pelo link do e-mail (?senhaRedefinida=1). */
+  readonly senhaRedefinida = input<string>();
 
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
