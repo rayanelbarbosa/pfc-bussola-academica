@@ -12,11 +12,24 @@ export interface User {
   createdAt: string;
 }
 
+/** Versão do Termo de Uso e da Política de Privacidade publicada pelo administrador. */
+export interface TermsVersion {
+  version: string;
+  summary: string;
+  /** Textos completos, no formato de app-legal-document (## título, - lista, | tabela |, **negrito**, [link](url)). */
+  termsOfUse: string;
+  privacyPolicy: string;
+  publishedAt: string;
+  publishedBy: string | null;
+}
+
 export interface AuthResponse {
   token: string;
   tokenType: string;
   expiresInSeconds: number;
   user: User;
+  /** Preenchido quando existe uma versão nova dos termos que o usuário ainda não aceitou. */
+  pendingTerms?: TermsVersion | null;
 }
 
 export interface LoginRequest {
@@ -28,6 +41,7 @@ export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
+  ageConfirmed: boolean;
   acceptedTerms: boolean;
 }
 
@@ -37,7 +51,3 @@ export interface ResultSummary {
   topCategories: string[];
   interestAreas: string[];
 }
-
-/** Versão vigente do Termo de Uso e da Política de Privacidade. */
-export const LEGAL_VERSION = '1.0';
-export const LEGAL_EFFECTIVE_DATE = '27/09/2026';

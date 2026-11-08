@@ -39,7 +39,10 @@ export class LoginComponent {
     this.submitting.set(true);
     this.error.set(null);
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => this.router.navigateByUrl(this.safeReturnUrl()),
+      next: (res) =>
+        res.pendingTerms
+          ? this.router.navigate(['/novo-aceite'], { queryParams: { voltar: this.safeReturnUrl() } })
+          : this.router.navigateByUrl(this.safeReturnUrl()),
       error: (err) => {
         this.error.set(getErrorMessage(err, 'Não foi possível entrar. Tente novamente.'));
         this.submitting.set(false);

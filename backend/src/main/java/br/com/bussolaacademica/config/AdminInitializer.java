@@ -3,7 +3,7 @@ package br.com.bussolaacademica.config;
 import br.com.bussolaacademica.model.Role;
 import br.com.bussolaacademica.model.User;
 import br.com.bussolaacademica.repository.UserRepository;
-import br.com.bussolaacademica.service.AuthService;
+import br.com.bussolaacademica.service.TermsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -29,13 +29,15 @@ public class AdminInitializer implements ApplicationRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
+    private final TermsService termsService;
 
     public AdminInitializer(AdminProperties properties, UserRepository userRepository,
-                            PasswordEncoder passwordEncoder, Clock clock) {
+                            PasswordEncoder passwordEncoder, Clock clock, TermsService termsService) {
         this.properties = properties;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.clock = clock;
+        this.termsService = termsService;
     }
 
     @Override
@@ -51,7 +53,7 @@ public class AdminInitializer implements ApplicationRunner {
         }
         String name = isBlank(properties.name()) ? "Administrador" : properties.name().trim();
         userRepository.save(new User(name, email, passwordEncoder.encode(properties.password()), Role.ADMIN,
-                LocalDateTime.now(clock), AuthService.CURRENT_TERMS_VERSION));
+                LocalDateTime.now(clock), termsService.currentVersion()));
         log.info("Administrador inicial criado: {}", email);
     }
 

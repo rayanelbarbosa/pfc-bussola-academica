@@ -7,7 +7,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-/** Dados do cadastro. Só o mínimo necessário (LGPD: princípio da necessidade). */
+/**
+ * Dados do cadastro. Só o mínimo necessário (LGPD: princípio da necessidade):
+ * a idade mínima de 16 anos é declarada, sem guardar a data de nascimento.
+ */
 public record RegisterRequest(
         @NotBlank(message = "o nome é obrigatório")
         @Size(max = 100, message = "o nome deve ter no máximo 100 caracteres") String name,
@@ -17,6 +20,8 @@ public record RegisterRequest(
         @NotBlank(message = "a senha é obrigatória")
         @Size(min = 8, max = 72, message = "a senha deve ter entre 8 e 72 caracteres")
         @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$", message = "a senha deve ter letras e números") String password,
+        @NotNull(message = "é necessário declarar que tem 16 anos ou mais")
+        @AssertTrue(message = "é necessário ter 16 anos ou mais para criar uma conta") Boolean ageConfirmed,
         @NotNull(message = "é necessário aceitar os Termos de Uso e a Política de Privacidade")
         @AssertTrue(message = "é necessário aceitar os Termos de Uso e a Política de Privacidade") Boolean acceptedTerms
 ) {

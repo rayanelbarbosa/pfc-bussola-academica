@@ -1,0 +1,37 @@
+<div class="flex flex-1 items-center justify-center bg-muted px-4 py-8">
+  <div class="w-full max-w-[400px] rounded-lg border border-border bg-card p-6">
+    <h1>Atualizamos nossos termos</h1>
+    <p class="mt-2 text-sm text-muted-foreground">
+      Para continuar usando a plataforma, leia o que mudou e aceite a nova versão.
+    </p>
+
+    @if (error()) {
+      <div class="alert alert-error mt-5" role="alert"><app-icon name="alert-circle" class="mt-0.5 size-5" />{{ error() }}</div>
+    }
+
+    @if (terms(); as t) {
+      <div class="mt-5 rounded-md border border-border bg-muted p-4 text-sm">
+        <p class="font-semibold">Versão {{ t.version }}, publicada em {{ t.publishedAt | date: 'dd/MM/yyyy' }}</p>
+        <p class="mt-2 text-foreground/85">{{ t.summary }}</p>
+      </div>
+      <p class="mt-4 text-sm">
+        Leia o <a routerLink="/termos-de-uso" target="_blank" class="font-semibold text-primary underline">Termo de Uso</a>
+        e a <a routerLink="/politica-de-privacidade" target="_blank" class="font-semibold text-primary underline">Política de Privacidade</a>.
+      </p>
+      <label class="mt-4 flex items-start gap-3 text-sm">
+        <input type="checkbox" name="accepted" [(ngModel)]="accepted" class="mt-0.5 size-5 shrink-0 accent-[var(--primary)]" />
+        <span>Li e aceito a versão {{ t.version }} do Termo de Uso e da Política de Privacidade</span>
+      </label>
+      <button type="button" class="btn btn-primary mt-5 w-full" (click)="accept()" [disabled]="!accepted || submitting()">
+        {{ submitting() ? 'Salvando...' : 'Aceitar e continuar' }}
+      </button>
+      <button type="button" class="btn btn-ghost mt-2 w-full" (click)="logout()">Não aceito, sair da conta</button>
+      <p class="mt-4 text-xs text-muted-foreground">
+        Se não quiser aceitar, você ainda pode baixar ou excluir seus dados em
+        <a routerLink="/meus-dados" class="underline">Meus dados</a>.
+      </p>
+    } @else if (!error()) {
+      <div class="skeleton mt-5 h-32"></div>
+    }
+  </div>
+</div>
