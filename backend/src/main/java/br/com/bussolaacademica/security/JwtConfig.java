@@ -1,6 +1,7 @@
 package br.com.bussolaacademica.security;
 
 import br.com.bussolaacademica.config.JwtProperties;
+import br.com.bussolaacademica.repository.RevokedTokenRepository;
 import br.com.bussolaacademica.repository.UserRepository;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import org.springframework.context.annotation.Bean;
@@ -42,12 +43,13 @@ public class JwtConfig {
         return new NimbusJwtEncoder(new ImmutableSecret<>(jwtSecretKey));
     }
 
-    /** Além da assinatura e da validade, confere se o usuário ainda existe e se o perfil do token é o atual. */
+    /** Além da assinatura e da validade, confere se o token não foi revogado, se o usuário existe e se o perfil é o atual. */
     @Bean
-    public JwtDecoder jwtDecoder(SecretKey jwtSecretKey, UserRepository userRepository) {
+    public JwtDecoder jwtDecoder(SecretKey jwtSecretKey, UserRepository userRepository,
+                                 RevokedTokenRepository revokedTokenRepository) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtSecretKey).macAlgorithm(MacAlgorithm.HS256).build();
         decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
-                JwtValidators.createDefault(), new UserStateTokenValidator(userRepository)));
+                JwtValidators.createDefault(), new UserStateTokenValidator(userRepository, revokedTokenRepository)));
         return decoder;
     }
 

@@ -17,13 +17,19 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.Period;
+import java.util.List;
 
 /**
  * Registro e consulta dos logs de auditoria.
  *
  * Cada registro é gravado numa transação própria (REQUIRES_NEW): assim uma tentativa de login
  * com senha errada ou um acesso negado ficam registrados mesmo quando a operação principal falha.
+ *
+ * Só ações de segurança, alterações de dados e ações administrativas são registradas (consultas
+ * rotineiras não), e os registros são guardados por 6 meses (Marco Civil da Internet, art. 15).
  */
 @Service
 public class AuditService {
@@ -54,6 +60,41 @@ public class AuditService {
     public void recordForCurrentUser(AuditAction action, String details, boolean success) {
         record(action, currentUser.idIfAuthenticated().orElse(null),
                 currentUser.emailIfAuthenticated().orElse(null), details, success);
+    }
+
+    /**
+     * Senhas erradas para o e-mail dentro da janela, contadas só depois do último login com sucesso
+     * (quem acerta a senha zera a contagem).
+     */
+    @Transactional(readOnly = true)
+    public long countLoginFailuresSinceLastSuccess(String email, Duration window) {
+        LocalDateTime since = LocalDateTime.now(clock).minus(window);
+        LocalDateTime lastSuccess = repository
+                .findFirstByUserEmailAndActionOrderByCreatedAtDesc(email, AuditAction.LOGIN_SUCCESS)
+                .map(AuditLog::getCreatedAt)
+                .orElse(null);
+        if (lastSuccess != null && lastSuccess.isAfter(since)) {
+            since = lastSuccess;
+        }
+        return repository.countByUserEmailAndActionAndCreatedAtAfter(email, AuditAction.LOGIN_FAILURE, since);
+    }
+
+    /** Histórico de ações do próprio titular (usado na exportação dos dados pessoais). */
+    @Transactional(readOnly = true)
+    public List<AuditLogResponse> findByUser(Long userId) {
+        return repository.findByUserIdOrderByCreatedAtDesc(userId).stream().map(AuditLogResponse::from).toList();
+    }
+
+    /** Expurgo: apaga os registros mais antigos que o prazo de guarda e registra quantos foram apagados. */
+    @Transactional
+    public int purgeOlderThan(Period retention) {
+        LocalDateTime limit = LocalDateTime.now(clock).minus(retention);
+        int deleted = repository.deleteOlderThan(limit);
+        if (deleted > 0) {
+            repository.save(new AuditLog(LocalDateTime.now(clock), null, null, AuditAction.AUDIT_LOGS_PURGED,
+                    null, deleted + " registros anteriores a " + limit.toLocalDate() + " apagados", null, true));
+        }
+        return deleted;
     }
 
     @Transactional(readOnly = true)
