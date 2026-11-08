@@ -1,6 +1,7 @@
 package br.com.bussolaacademica.service;
 
 import br.com.bussolaacademica.dto.ResultSummaryResponse;
+import br.com.bussolaacademica.dto.UserDataExportResponse;
 import br.com.bussolaacademica.dto.UserResponse;
 import br.com.bussolaacademica.exception.ResourceNotFoundException;
 import br.com.bussolaacademica.model.AuditAction;
@@ -11,11 +12,13 @@ import br.com.bussolaacademica.security.CurrentUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * Operações do titular sobre os próprios dados (LGPD, art. 18):
- * confirmação e acesso aos dados, e eliminação da conta.
+ * confirmação e acesso aos dados, exportação (portabilidade) e eliminação da conta.
  */
 @Service
 public class UserService {
@@ -24,13 +27,15 @@ public class UserService {
     private final VocationalTestResultRepository resultRepository;
     private final CurrentUser currentUser;
     private final AuditService auditService;
+    private final Clock clock;
 
     public UserService(UserRepository userRepository, VocationalTestResultRepository resultRepository,
-                       CurrentUser currentUser, AuditService auditService) {
+                       CurrentUser currentUser, AuditService auditService, Clock clock) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.currentUser = currentUser;
         this.auditService = auditService;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -40,10 +45,22 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<ResultSummaryResponse> myResults() {
-        auditService.recordForCurrentUser(AuditAction.PERSONAL_DATA_VIEWED, "Histórico de resultados", true);
         return resultRepository.findByUser_IdOrderByCreatedAtDesc(currentUser.id()).stream()
                 .map(ResultSummaryResponse::from)
                 .toList();
+    }
+
+    /** Todos os dados pessoais do titular em um único JSON. A própria exportação fica registrada. */
+    @Transactional(readOnly = true)
+    public UserDataExportResponse exportMyData() {
+        User user = loadCurrent();
+        auditService.record(AuditAction.PERSONAL_DATA_EXPORTED, user.getId(), user.getEmail(),
+                "Exportação dos dados pessoais em JSON", true);
+        return new UserDataExportResponse(LocalDateTime.now(clock), UserResponse.from(user),
+                resultRepository.findByUser_IdOrderByCreatedAtDesc(user.getId()).stream()
+                        .map(UserDataExportResponse.ExportedTestResult::from)
+                        .toList(),
+                auditService.findByUser(user.getId()));
     }
 
     /** Exclui a conta e todos os resultados do teste do usuário. */

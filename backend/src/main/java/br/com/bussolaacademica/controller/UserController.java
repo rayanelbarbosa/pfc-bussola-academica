@@ -1,9 +1,13 @@
 package br.com.bussolaacademica.controller;
 
 import br.com.bussolaacademica.dto.ResultSummaryResponse;
+import br.com.bussolaacademica.dto.UserDataExportResponse;
 import br.com.bussolaacademica.dto.UserResponse;
 import br.com.bussolaacademica.service.UserService;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +35,16 @@ public class UserController {
     @GetMapping("/results")
     public List<ResultSummaryResponse> myResults() {
         return userService.myResults();
+    }
+
+    /** Baixa um arquivo JSON com todos os dados pessoais (portabilidade, LGPD art. 18, V). */
+    @GetMapping("/export")
+    public ResponseEntity<UserDataExportResponse> exportMyData() {
+        ContentDisposition attachment = ContentDisposition.attachment()
+                .filename("meus-dados-bussola-academica.json").build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, attachment.toString())
+                .body(userService.exportMyData());
     }
 
     @DeleteMapping
