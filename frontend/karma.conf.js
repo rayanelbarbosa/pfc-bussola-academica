@@ -26,7 +26,11 @@ module.exports = function (config) {
     coverageReporter: {
       dir: require('path').join(__dirname, './coverage/frontend'),
       subdir: '.',
-      reporters: [{ type: 'html' }, { type: 'text-summary' }]
+      reporters: [{ type: 'html' }, { type: 'text-summary' }],
+      // mesmo critério do JaCoCo no back-end: o build falha se a cobertura cair abaixo do mínimo
+      check: {
+        global: { statements: 80, branches: 70, functions: 75, lines: 80 }
+      }
     },
     reporters: ['progress', 'kjhtml'],
     port: 9876,
