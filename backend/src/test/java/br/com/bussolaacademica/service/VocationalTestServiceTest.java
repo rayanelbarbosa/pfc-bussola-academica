@@ -12,6 +12,7 @@ import br.com.bussolaacademica.model.RiasecCategory;
 import br.com.bussolaacademica.model.Role;
 import br.com.bussolaacademica.model.User;
 import br.com.bussolaacademica.model.VocationalTestResult;
+import br.com.bussolaacademica.repository.CareerRepository;
 import br.com.bussolaacademica.repository.QuestionRepository;
 import br.com.bussolaacademica.repository.UserRepository;
 import br.com.bussolaacademica.repository.VocationalTestResultRepository;
@@ -66,6 +67,9 @@ class VocationalTestServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private CareerRepository careerRepository;
+
+    @Mock
     private CurrentUser currentUser;
 
     @Mock
@@ -76,7 +80,8 @@ class VocationalTestServiceTest {
     @BeforeEach
     void setUp() {
         Clock fixedClock = Clock.fixed(Instant.parse("2026-09-28T12:00:00Z"), ZoneId.of("America/Sao_Paulo"));
-        service = new VocationalTestService(questionRepository, resultRepository, userRepository,
+        service = new VocationalTestService(questionRepository, careerRepository, new CareerRecommender(),
+                resultRepository, userRepository,
                 currentUser, auditService, fixedClock);
     }
 
@@ -267,7 +272,8 @@ class VocationalTestServiceTest {
             scores.put(category, category == RiasecCategory.INVESTIGATIVE ? 9 : 5);
         }
         return new VocationalTestResult(owner, LocalDateTime.of(2026, 9, 28, 9, 0), scores,
-                List.of(RiasecCategory.INVESTIGATIVE), RiasecCategory.INVESTIGATIVE.getRecommendedAreas());
+                List.of(RiasecCategory.INVESTIGATIVE), RiasecCategory.INVESTIGATIVE.getRecommendedAreas(),
+                List.of(br.com.bussolaacademica.model.InterestArea.UNDECIDED));
     }
 
     private static SubmitTestRequest request(int... scores) {
