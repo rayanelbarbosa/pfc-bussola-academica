@@ -1,6 +1,8 @@
 package br.com.bussolaacademica.exception;
 
 import br.com.bussolaacademica.dto.ErrorResponse;
+import br.com.bussolaacademica.model.AuditAction;
+import br.com.bussolaacademica.service.AuditService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -25,6 +27,12 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private final AuditService auditService;
+
+    public GlobalExceptionHandler(AuditService auditService) {
+        this.auditService = auditService;
+    }
 
     @ExceptionHandler(InvalidAnswersException.class)
     public ResponseEntity<ErrorResponse> handleInvalidAnswers(InvalidAnswersException ex) {
@@ -56,9 +64,18 @@ public class GlobalExceptionHandler {
         return respond(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
-    /** Acesso negado dentro dos services (ex.: estudante tentando ver resultado de outra pessoa). */
+    @ExceptionHandler(TooManyLoginAttemptsException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyLoginAttempts(TooManyLoginAttemptsException ex) {
+        return respond(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+    }
+
+    /**
+     * Acesso negado dentro dos services (ex.: estudante tentando ver resultado de outra pessoa).
+     * Registrado na auditoria aqui, num lugar só, como os 403 barrados pela configuração de segurança.
+     */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+        auditService.recordForCurrentUser(AuditAction.ACCESS_DENIED, ex.getMessage(), false);
         return respond(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 

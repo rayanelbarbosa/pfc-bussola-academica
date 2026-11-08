@@ -19,6 +19,11 @@ export class UserService {
     return this.http.get<ResultSummary[]>(`${this.baseUrl}/results`);
   }
 
+  /** Arquivo JSON com todos os dados pessoais (RF10, portabilidade). */
+  exportMyData(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/export`, { responseType: 'blob' });
+  }
+
   deleteMyAccount(): Observable<void> {
     return this.http.delete<void>(this.baseUrl);
   }

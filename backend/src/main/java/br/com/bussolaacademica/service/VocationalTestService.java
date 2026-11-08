@@ -119,10 +119,8 @@ public class VocationalTestService {
         VocationalTestResult result = resultRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Resultado não encontrado: id=" + id));
         if (!currentUser.isAdmin() && !result.belongsTo(currentUser.id())) {
-            auditService.recordForCurrentUser(AuditAction.ACCESS_DENIED, "Resultado de outro usuário: id=" + id, false);
-            throw new AccessDeniedException("Você só pode consultar os seus próprios resultados.");
+            throw new AccessDeniedException("Você só pode consultar os seus próprios resultados (resultado " + id + ").");
         }
-        auditService.recordForCurrentUser(AuditAction.RESULT_VIEWED, "resultadoId=" + id, true);
         return toResponse(result);
     }
 

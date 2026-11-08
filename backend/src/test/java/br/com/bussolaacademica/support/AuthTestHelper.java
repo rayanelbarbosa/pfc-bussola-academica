@@ -24,8 +24,13 @@ public final class AuthTestHelper {
     }
 
     public static String registerJson(String name, String email, String password, boolean acceptedTerms) {
+        return registerJson(name, email, password, true, acceptedTerms);
+    }
+
+    public static String registerJson(String name, String email, String password, boolean ageConfirmed,
+                                      boolean acceptedTerms) {
         return "{\"name\":\"" + name + "\",\"email\":\"" + email + "\",\"password\":\"" + password
-                + "\",\"acceptedTerms\":" + acceptedTerms + "}";
+                + "\",\"ageConfirmed\":" + ageConfirmed + ",\"acceptedTerms\":" + acceptedTerms + "}";
     }
 
     public static String loginJson(String email, String password) {

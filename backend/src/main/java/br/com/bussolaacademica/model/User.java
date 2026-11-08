@@ -68,6 +68,12 @@ public class User {
         this.role = role;
     }
 
+    /** Novo aceite do Termo de Uso e da Política de Privacidade (quando uma versão nova é publicada). */
+    public void acceptTerms(String version, LocalDateTime acceptedAt) {
+        this.termsVersion = version;
+        this.termsAcceptedAt = acceptedAt;
+    }
+
     public boolean isAdmin() {
         return role == Role.ADMIN;
     }

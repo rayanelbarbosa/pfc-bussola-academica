@@ -45,15 +45,18 @@ public class AdminUserService {
     private final CurrentUser currentUser;
     private final AuditService auditService;
     private final Clock clock;
+    private final TermsService termsService;
 
     public AdminUserService(UserRepository userRepository, VocationalTestResultRepository resultRepository,
-                            PasswordEncoder passwordEncoder, CurrentUser currentUser, AuditService auditService, Clock clock) {
+                            PasswordEncoder passwordEncoder, CurrentUser currentUser, AuditService auditService, Clock clock,
+                            TermsService termsService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.passwordEncoder = passwordEncoder;
         this.currentUser = currentUser;
         this.auditService = auditService;
         this.clock = clock;
+        this.termsService = termsService;
     }
 
     @Transactional(readOnly = true)
@@ -80,7 +83,7 @@ public class AdminUserService {
             throw new EmailAlreadyUsedException();
         }
         User admin = userRepository.save(new User(request.name().trim(), email, passwordEncoder.encode(request.password()),
-                Role.ADMIN, LocalDateTime.now(clock), AuthService.CURRENT_TERMS_VERSION));
+                Role.ADMIN, LocalDateTime.now(clock), termsService.currentVersion()));
         auditService.recordForCurrentUser(AuditAction.ADMIN_CREATED, "Cadastrou o administrador " + email, true);
         return AdminUserResponse.from(admin);
     }
