@@ -1,5 +1,15 @@
 package br.com.bussolaacademica.service;
 
+import br.com.bussolaacademica.dto.UserDataExportResponse;
+import br.com.bussolaacademica.model.InterestArea;
+import br.com.bussolaacademica.model.RiasecCategory;
+import br.com.bussolaacademica.model.VocationalTestResult;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.EnumMap;
+import java.util.Map;
+
 import br.com.bussolaacademica.dto.ResultSummaryResponse;
 import br.com.bussolaacademica.dto.UserResponse;
 import br.com.bussolaacademica.exception.ResourceNotFoundException;
@@ -118,6 +128,35 @@ class UserServiceTest {
 
         // Assert
         assertTrue(historico.isEmpty());
-        verify(auditService).recordForCurrentUser(AuditAction.PERSONAL_DATA_VIEWED, "Histórico de resultados", true);
+    }
+
+    @Test
+    void deveExportarCadastroResultadosEHistoricoDoTitular() {
+        // Arrange
+        UserService service = new UserService(userRepository, resultRepository, currentUser, auditService,
+                Clock.fixed(Instant.parse("2026-10-08T15:00:00Z"), ZoneId.of("America/Sao_Paulo")));
+        User user = aluna();
+        Map<RiasecCategory, Integer> scores = new EnumMap<>(RiasecCategory.class);
+        for (RiasecCategory category : RiasecCategory.values()) {
+            scores.put(category, category == RiasecCategory.SOCIAL ? 10 : 4);
+        }
+        VocationalTestResult result = new VocationalTestResult(user, LocalDateTime.of(2026, 10, 1, 9, 0), scores,
+                List.of(RiasecCategory.SOCIAL), List.of("Saúde"), List.of(InterestArea.UNDECIDED));
+        when(currentUser.id()).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(resultRepository.findByUser_IdOrderByCreatedAtDesc(1L)).thenReturn(List.of(result));
+        when(auditService.findByUser(1L)).thenReturn(List.of());
+
+        // Act
+        UserDataExportResponse export = service.exportMyData();
+
+        // Assert
+        assertEquals(LocalDateTime.of(2026, 10, 8, 12, 0), export.exportedAt());
+        assertEquals("aluna@email.com", export.account().email());
+        assertEquals(1, export.vocationalTestResults().size());
+        assertEquals(6, export.vocationalTestResults().get(0).scores().size());
+        assertEquals(List.of(RiasecCategory.SOCIAL.getLabel()), export.vocationalTestResults().get(0).topCategories());
+        verify(auditService).record(eq(AuditAction.PERSONAL_DATA_EXPORTED), eq(1L), eq("aluna@email.com"),
+                anyString(), eq(true));
     }
 }
