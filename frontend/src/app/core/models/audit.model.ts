@@ -29,5 +29,8 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   RESULT_VIEWED: 'Resultado consultado',
   VIDEOS_SEARCHED: 'Busca de vídeos (YouTube)',
   AUDIT_LOG_VIEWED: 'Consulta à auditoria',
-  ACCESS_DENIED: 'Acesso negado'
+  ACCESS_DENIED: 'Acesso negado',
+  ADMISSION_METHOD_CREATED: 'Forma de ingresso incluída',
+  ADMISSION_METHOD_UPDATED: 'Forma de ingresso alterada',
+  ADMISSION_METHOD_STATUS_CHANGED: 'Forma de ingresso ativada/desativada'
 };

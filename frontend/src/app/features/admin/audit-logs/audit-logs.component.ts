@@ -5,15 +5,14 @@ import { FormsModule } from '@angular/forms';
 import { AUDIT_ACTION_LABELS, AuditLog, Page } from '../../../core/models/audit.model';
 import { AuditService } from '../../../core/services/audit.service';
 import { getErrorMessage } from '../../../core/services/api-error';
-import { TopBarComponent } from '../../../shared/components/top-bar/top-bar.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 /** Consulta dos logs de auditoria (somente administrador), com filtros e paginação. */
 @Component({
   selector: 'app-audit-logs',
   standalone: true,
-  imports: [DatePipe, FormsModule, TopBarComponent],
-  templateUrl: './audit-logs.component.html',
-  styleUrl: './audit-logs.component.css'
+  imports: [DatePipe, FormsModule, IconComponent],
+  templateUrl: './audit-logs.component.html'
 })
 export class AuditLogsComponent implements OnInit {
   private readonly auditService = inject(AuditService);

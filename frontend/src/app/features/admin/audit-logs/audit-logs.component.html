@@ -1,16 +1,13 @@
-<main class="page">
-  <app-top-bar />
+<div class="container-page section-y">
+  <div class="mb-6">
+    <h1>Auditoria</h1>
+    <p class="mt-2 max-w-2xl text-muted-foreground">Registro das ações dos usuários e do sistema, do mais recente para o mais antigo.</p>
+  </div>
 
-  <header>
-    <p class="eyebrow">Administração</p>
-    <h1>Logs de auditoria</h1>
-    <p class="subtitle">Registro das ações dos usuários e das operações do sistema, do mais recente para o mais antigo.</p>
-  </header>
-
-  <form class="card filters" (ngSubmit)="search()">
+  <form class="card mb-4 grid gap-4 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end sm:p-4" (ngSubmit)="search()">
     <div class="field">
-      <label for="action">Ação</label>
-      <select id="action" name="action" [(ngModel)]="action">
+      <label for="action" class="field-label">Ação</label>
+      <select id="action" name="action" class="field-input" [(ngModel)]="action">
         <option value="">Todas</option>
         @for (a of actions; track a) {
           <option [value]="a">{{ label(a) }}</option>
@@ -18,68 +15,66 @@
       </select>
     </div>
     <div class="field">
-      <label for="email">E-mail do usuário</label>
-      <input id="email" name="email" type="text" placeholder="Parte do e-mail" [(ngModel)]="email" />
+      <label for="email" class="field-label">E-mail do usuário</label>
+      <input id="email" name="email" type="text" class="field-input" placeholder="Parte do e-mail" [(ngModel)]="email" />
     </div>
-    <div class="filter-actions">
+    <div class="flex gap-2">
       <button type="submit" class="btn btn-primary">Filtrar</button>
       <button type="button" class="btn btn-secondary" (click)="clear()">Limpar</button>
     </div>
   </form>
 
   @if (error()) {
-    <p class="error-message" role="alert">{{ error() }}</p>
+    <div class="alert alert-error mb-4" role="alert"><app-icon name="alert-circle" class="mt-0.5 size-5" />{{ error() }}</div>
   }
 
   @if (page(); as p) {
-    <section class="card table-wrapper">
-      <table>
+    <div class="table-wrap">
+      <table class="table">
+        <caption class="sr-only">Registros de auditoria</caption>
         <thead>
           <tr>
-            <th>Data/hora</th>
-            <th>Usuário</th>
-            <th>Ação</th>
-            <th>Rota</th>
-            <th>Detalhes</th>
-            <th>IP</th>
-            <th>Status</th>
+            <th scope="col">Data/hora</th>
+            <th scope="col">Usuário</th>
+            <th scope="col">Ação</th>
+            <th scope="col">Detalhes</th>
+            <th scope="col">IP</th>
+            <th scope="col">Status</th>
           </tr>
         </thead>
         <tbody>
           @for (log of p.content; track log.id) {
             <tr>
-              <td class="nowrap">{{ log.createdAt | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
-              <td>{{ log.userEmail ?? '—' }}</td>
-              <td class="nowrap">{{ label(log.action) }}</td>
-              <td class="mono">{{ log.resource ?? '—' }}</td>
-              <td>{{ log.details ?? '—' }}</td>
-              <td class="mono">{{ log.ipAddress ?? '—' }}</td>
+              <td class="whitespace-nowrap">{{ log.createdAt | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+              <td>{{ log.userEmail ?? '-' }}</td>
+              <td class="whitespace-nowrap">{{ label(log.action) }}</td>
+              <td class="text-muted-foreground">{{ log.details ?? '-' }}</td>
+              <td class="font-mono text-xs">{{ log.ipAddress ?? '-' }}</td>
               <td>
-                <span class="status" [class.ok]="log.success" [class.fail]="!log.success">
+                <span class="badge" [class.badge-success]="log.success" [class.badge-error]="!log.success">
                   {{ log.success ? 'Sucesso' : 'Falha' }}
                 </span>
               </td>
             </tr>
           } @empty {
-            <tr>
-              <td colspan="7" class="empty">Nenhum registro encontrado.</td>
-            </tr>
+            <tr><td colspan="6" class="py-8 text-center text-muted-foreground">Nenhum registro encontrado.</td></tr>
           }
         </tbody>
       </table>
-    </section>
+    </div>
 
-    <nav class="pagination" aria-label="Paginação">
-      <button type="button" class="btn btn-secondary" (click)="load(p.page - 1)" [disabled]="p.page === 0 || loading()">
-        ← Anterior
-      </button>
-      <span>Página {{ p.page + 1 }} de {{ p.totalPages || 1 }} · {{ p.totalElements }} registros</span>
-      <button type="button" class="btn btn-secondary" (click)="load(p.page + 1)"
-              [disabled]="p.page + 1 >= p.totalPages || loading()">
-        Próxima →
-      </button>
+    <nav class="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row" aria-label="Paginação">
+      <p class="text-sm text-muted-foreground">Página {{ p.page + 1 }} de {{ p.totalPages || 1 }} · {{ p.totalElements }} registros</p>
+      <div class="flex gap-2">
+        <button type="button" class="btn btn-secondary btn-sm" (click)="load(p.page - 1)" [disabled]="p.page === 0 || loading()">
+          <app-icon name="chevron-left" class="size-4" /> Anterior
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="load(p.page + 1)" [disabled]="p.page + 1 >= p.totalPages || loading()">
+          Próxima <app-icon name="chevron-right" class="size-4" />
+        </button>
+      </div>
     </nav>
   } @else if (loading()) {
-    <p class="loading">Carregando logs...</p>
+    <div class="skeleton h-64"></div>
   }
-</main>
+</div>
