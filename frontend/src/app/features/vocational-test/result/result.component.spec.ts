@@ -1,97 +1,81 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
-import { ResultComponent } from './result.component';
-import { VocationalTestService } from '../../../core/services/vocational-test.service';
+import { VocationalTestResult } from '../../../core/models/vocational-test.model';
 import { VideoService } from '../../../core/services/video.service';
-import { provideHttpClient } from '@angular/common/http';
-import { throwError } from 'rxjs';
-import { CategoryScore, VocationalTestResult } from '../../../core/models/vocational-test.model';
+import { VocationalTestService } from '../../../core/services/vocational-test.service';
+import { ResultComponent } from './result.component';
+
+const RESULT: VocationalTestResult = {
+  id: 7,
+  createdAt: '2026-11-07T20:00:00',
+  scores: [
+    { category: 'REALISTIC', label: 'Realista', score: 9 },
+    { category: 'INVESTIGATIVE', label: 'Investigativo', score: 4 },
+    { category: 'ARTISTIC', label: 'Artístico', score: 7 },
+    { category: 'SOCIAL', label: 'Social', score: 6 },
+    { category: 'ENTERPRISING', label: 'Empreendedor', score: 3 },
+    { category: 'CONVENTIONAL', label: 'Convencional', score: 9 }
+  ],
+  topCategories: [
+    { category: 'REALISTIC', label: 'Realista', score: 9 },
+    { category: 'CONVENTIONAL', label: 'Convencional', score: 9 }
+  ],
+  recommendedAreas: ['Engenharias'],
+  interestAreas: [{ value: 'ENGINEERING', label: 'Engenharias' }],
+  careerRecommendations: [{
+    area: 'ENGINEERING', label: 'Engenharias',
+    careers: [{
+      name: 'Engenharia Civil', code: 'RI', compatibility: 22, description: 'Projeta obras.',
+      categories: [{ category: 'REALISTIC', label: 'Realista' }, { category: 'INVESTIGATIVE', label: 'Investigativo' }]
+    }]
+  }]
+};
 
 describe('ResultComponent', () => {
-  let service: jasmine.SpyObj<VocationalTestService>;
+  let fixture: ComponentFixture<ResultComponent>;
   let videoService: jasmine.SpyObj<VideoService>;
 
-  const score = (category: string, label: string, value: number): CategoryScore => ({ category, label, score: value });
-  const scores = [
-    score('REALISTIC', 'Realista', 6),
-    score('INVESTIGATIVE', 'Investigativo', 9),
-    score('ARTISTIC', 'Artístico', 7),
-    score('SOCIAL', 'Social', 8),
-    score('ENTERPRISING', 'Empreendedor', 5),
-    score('CONVENTIONAL', 'Convencional', 4)
-  ];
-
-  async function create(result: VocationalTestResult): Promise<ComponentFixture<ResultComponent>> {
-    service = jasmine.createSpyObj('VocationalTestService', ['getResult']);
-    service.getResult.and.returnValue(of(result));
+  beforeEach(async () => {
+    const testService = jasmine.createSpyObj('VocationalTestService', ['getResult']);
+    testService.getResult.and.returnValue(of(RESULT));
     videoService = jasmine.createSpyObj('VideoService', ['searchByArea']);
-    videoService.searchByArea.and.callFake((area: string) =>
-      area === 'Falha'
-        ? throwError(() => new Error('api fora'))
-        : of([{ videoId: 'v-' + area, title: 'Vídeo ' + area, channelTitle: 'Canal', thumbnailUrl: null, url: 'https://www.youtube.com/watch?v=x' }])
-    );
+    videoService.searchByArea.and.returnValue(throwError(() => new Error('cota')));
     await TestBed.configureTestingModule({
       imports: [ResultComponent],
       providers: [
         provideRouter([]),
-        provideHttpClient(),
-        { provide: VocationalTestService, useValue: service },
+        { provide: VocationalTestService, useValue: testService },
         { provide: VideoService, useValue: videoService }
       ]
     }).compileComponents();
-
-    const fixture = TestBed.createComponent(ResultComponent);
-    fixture.componentRef.setInput('id', String(result.id));
+    fixture = TestBed.createComponent(ResultComponent);
+    fixture.componentRef.setInput('id', '7');
     fixture.detectChanges();
-    return fixture;
-  }
+  });
 
-  it('shows the top profile, the 6 scores and the recommended areas', async () => {
-    const fixture = await create({
-      id: 3,
-      createdAt: '2026-09-28T09:00:00',
-      scores,
-      topCategories: [scores[1]],
-      recommendedAreas: ['Ciências Exatas', 'Ciências Biológicas', 'Medicina']
-    });
+  it('shows the radar chart, the tied main profile with explanations and the careers by area', () => {
     const el: HTMLElement = fixture.nativeElement;
-
-    expect(service.getResult).toHaveBeenCalledWith(3);
-    expect(el.querySelector('h1')?.textContent).toContain('Seu lado Investigativo se destaca');
-    expect(el.querySelector('.top-score')?.textContent).toContain('9 de 10');
-    expect(el.querySelectorAll('.score').length).toBe(6);
-    expect(el.querySelectorAll('.area').length).toBe(3);
-    expect(videoService.searchByArea).toHaveBeenCalledTimes(3);
-    expect(el.querySelectorAll('.video').length).toBe(3);
+    expect(el.querySelector('app-radar-chart svg polygon')).toBeTruthy();
+    expect(el.textContent).toContain('2 tipos tiveram o mesmo maior escore');
+    expect(el.textContent).toContain('Características comuns');
+    expect(el.textContent).toContain('Engenharia Civil');
+    expect(el.textContent).toContain('22 pontos');
   });
 
-  it('keeps showing the result when the YouTube search fails', async () => {
-    const fixture = await create({
-      id: 5,
-      createdAt: '',
-      scores,
-      topCategories: [scores[1]],
-      recommendedAreas: ['Falha']
-    });
-
-    expect(fixture.nativeElement.querySelector('h1')?.textContent).toContain('Investigativo');
-    expect(fixture.nativeElement.querySelector('.videos .error-message')?.textContent).toContain('vídeos');
+  it('loads the videos of each career and keeps the page working when the API is down', () => {
+    expect(videoService.searchByArea).toHaveBeenCalledWith('Engenharia Civil');
+    expect(fixture.nativeElement.textContent).toContain('Vídeos indisponíveis no momento');
   });
 
-  it('handles a tie in the top profile', async () => {
-    const social = score('SOCIAL', 'Social', 9);
-    const fixture = await create({
-      id: 4,
-      createdAt: '',
-      scores,
-      topCategories: [scores[1], social],
-      recommendedAreas: ['Medicina', 'Pedagogia']
-    });
+  it('shows the videos found', () => {
+    videoService.searchByArea.and.returnValue(of([
+      { videoId: 'a1', title: 'Rotina de engenheira civil', channelTitle: 'Canal', thumbnailUrl: null, url: 'https://youtube.com/watch?v=a1' }
+    ]));
+    fixture.componentInstance.loadVideos('Engenharia Civil');
+    fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('h1')?.textContent).toContain(
-      'Seus lados Investigativo e Social se destacam'
-    );
+    expect(fixture.nativeElement.querySelector('a[href="https://youtube.com/watch?v=a1"]')).toBeTruthy();
   });
 });
