@@ -103,7 +103,7 @@ class UserServiceTest {
         // Assert
         assertEquals("Usuário não encontrado", ex.getMessage());
         verify(resultRepository, never()).deleteByUser_Id(anyLong());
-        verify(userRepository, never()).delete(any());
+        verify(userRepository, never()).delete(any(User.class));
         verify(auditService, never()).record(any(), any(), any(), any(), anyBoolean());
     }
 

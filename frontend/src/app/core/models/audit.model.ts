@@ -32,5 +32,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   ACCESS_DENIED: 'Acesso negado',
   ADMISSION_METHOD_CREATED: 'Forma de ingresso incluída',
   ADMISSION_METHOD_UPDATED: 'Forma de ingresso alterada',
-  ADMISSION_METHOD_STATUS_CHANGED: 'Forma de ingresso ativada/desativada'
+  ADMISSION_METHOD_STATUS_CHANGED: 'Forma de ingresso ativada/desativada',
+  ADMIN_CREATED: 'Administrador cadastrado',
+  USER_ROLE_CHANGED: 'Perfil de usuário alterado'
 };
