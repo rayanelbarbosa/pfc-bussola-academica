@@ -1,0 +1,52 @@
+<div class="container-page section-y">
+  <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div>
+      <h1>Meus resultados</h1>
+      <p class="mt-2 text-muted-foreground">Todos os testes que você já fez.</p>
+    </div>
+    <a routerLink="/teste-vocacional" class="btn btn-primary">Fazer novo teste</a>
+  </div>
+
+  @if (loading()) {
+    <div class="space-y-3">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="skeleton h-24"></div>
+      }
+    </div>
+  } @else if (error()) {
+    <div class="alert alert-error" role="alert">
+      <app-icon name="alert-circle" class="mt-0.5 size-5" />
+      <div>
+        <p>{{ error() }}</p>
+        <button type="button" class="btn btn-secondary btn-sm mt-3" (click)="load()">Tentar de novo</button>
+      </div>
+    </div>
+  } @else {
+    <ul class="space-y-3">
+      @for (result of results(); track result.id) {
+        <li class="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm text-muted-foreground">
+              {{ result.createdAt | date: 'dd/MM/yyyy' }} · {{ result.interestAreas.join(', ') }}
+            </p>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              @for (category of result.topCategories; track category) {
+                <span class="badge badge-accent">{{ category }}</span>
+              }
+            </div>
+          </div>
+          <a [routerLink]="['/teste-vocacional/resultado', result.id]" class="btn btn-secondary btn-sm">
+            Ver resultado <app-icon name="arrow-right" class="size-4" />
+          </a>
+        </li>
+      } @empty {
+        <li class="flex flex-col items-center rounded-lg border-2 border-dashed border-border px-6 py-12 text-center">
+          <span class="mb-4 grid size-14 place-items-center rounded-full bg-accent text-primary"><app-icon name="inbox" class="size-7" /></span>
+          <p class="text-xl font-semibold">Você ainda não fez nenhum teste</p>
+          <p class="mt-1 max-w-sm text-sm text-muted-foreground">Leva cerca de 3 minutos para descobrir as carreiras que combinam com você.</p>
+          <a routerLink="/teste-vocacional" class="btn btn-primary mt-5">Fazer o teste</a>
+        </li>
+      }
+    </ul>
+  }
+</div>

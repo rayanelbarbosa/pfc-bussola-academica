@@ -1,15 +1,12 @@
-<main class="page">
-  <app-top-bar />
+<div class="container-page section-y max-w-3xl">
 
-  <article class="card legal">
-    <p class="eyebrow">Documento legal</p>
+  <article class="legal-doc">
     <h1>Termo de Uso</h1>
-    <p class="version">Versão {{ version }} · vigente desde {{ effectiveDate }}</p>
+    <p class="text-sm text-muted-foreground">Versão {{ version }} · vigente desde {{ effectiveDate }}</p>
 
     <p>
       Este Termo de Uso regula o acesso e a utilização da <strong>Bússola Acadêmica</strong>, plataforma web de apoio
-      ao ingresso no ensino superior desenvolvida como Projeto Final de Curso do Bacharelado em Engenharia de Software
-      da Universidade de Mogi das Cruzes (UMC). Ao criar uma conta e marcar a opção de aceite, você declara que leu,
+      ao ingresso no ensino superior. Ao criar uma conta e marcar a opção de aceite, você declara que leu,
       entendeu e concorda com este Termo e com a
       <a routerLink="/politica-de-privacidade" class="link">Política de Privacidade</a>.
     </p>
@@ -64,7 +61,7 @@
 
     <h2>6. Disponibilidade</h2>
     <p>
-      Por se tratar de um projeto acadêmico hospedado em serviços de nuvem gratuitos, a plataforma pode ficar
+      Por ser hospedada em serviços de nuvem com recursos limitados, a plataforma pode ficar
       indisponível temporariamente para manutenção ou por limitações dos provedores, sem aviso prévio.
     </p>
 
@@ -87,4 +84,4 @@
       Geral de Proteção de Dados (Lei nº 13.709/2018) e o Código de Defesa do Consumidor, quando aplicável.
     </p>
   </article>
-</main>
+</div>

@@ -1,21 +1,18 @@
-<main class="page">
-  <app-top-bar />
+<div class="container-page section-y max-w-3xl">
 
-  <article class="card legal">
-    <p class="eyebrow">Documento legal</p>
+  <article class="legal-doc">
     <h1>Política de Privacidade</h1>
-    <p class="version">Versão {{ version }} · vigente desde {{ effectiveDate }}</p>
+    <p class="text-sm text-muted-foreground">Versão {{ version }} · vigente desde {{ effectiveDate }}</p>
 
     <p>
       Esta Política explica, de forma direta, quais dados pessoais a <strong>Bússola Acadêmica</strong> coleta, para
       que eles são usados, como são protegidos e quais são os seus direitos, conforme a Lei Geral de Proteção de Dados
-      Pessoais (LGPD — Lei nº 13.709/2018).
+      Pessoais (LGPD, Lei nº 13.709/2018).
     </p>
 
     <h2>1. Quem é a controladora dos dados</h2>
     <p>
-      A controladora é <strong>Rayane da Luz Barbosa</strong>, responsável pela Bússola Acadêmica, projeto acadêmico
-      do curso de Engenharia de Software da Universidade de Mogi das Cruzes (UMC). Contato para qualquer assunto de
+      A controladora é <strong>Rayane da Luz Barbosa</strong>, responsável pela Bússola Acadêmica. Contato para qualquer assunto de
       privacidade (encarregada): <a class="link" [href]="'mailto:' + contactEmail">{{ contactEmail }}</a>.
     </p>
 
@@ -66,7 +63,7 @@
           <td>Registros de acesso e auditoria: data e hora, endereço IP, ação realizada (ex.: login, teste respondido,
             acesso negado) e rota acessada</td>
           <td>Segurança, prevenção de fraudes e rastreabilidade das operações</td>
-          <td>Cumprimento de obrigação legal (inciso II — Marco Civil da Internet, art. 15) e legítimo interesse
+          <td>Cumprimento de obrigação legal (inciso II, Marco Civil da Internet, art. 15) e legítimo interesse
             (inciso IX)</td>
           <td>Mínimo de 6 meses (exigência legal); são mantidos mesmo após a exclusão da conta até completar esse
             prazo</td>
@@ -138,7 +135,7 @@
         </tr>
         <tr>
           <td>Reclamação à autoridade</td>
-          <td>Autoridade Nacional de Proteção de Dados (ANPD) — www.gov.br/anpd</td>
+          <td>Autoridade Nacional de Proteção de Dados (ANPD): www.gov.br/anpd</td>
         </tr>
       </tbody>
     </table>
@@ -156,4 +153,4 @@
       você fica registrada no seu cadastro. Mudanças relevantes serão informadas na plataforma.
     </p>
   </article>
-</main>
+</div>

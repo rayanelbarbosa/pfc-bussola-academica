@@ -6,15 +6,14 @@ import { ResultSummary, User } from '../../../core/models/auth.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { getErrorMessage } from '../../../core/services/api-error';
-import { TopBarComponent } from '../../../shared/components/top-bar/top-bar.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 /** Meus dados: acesso aos dados pessoais e exclusão da conta (direitos do titular, LGPD art. 18). */
 @Component({
   selector: 'app-my-data',
   standalone: true,
-  imports: [DatePipe, RouterLink, TopBarComponent],
-  templateUrl: './my-data.component.html',
-  styleUrl: './my-data.component.css'
+  imports: [DatePipe, RouterLink, IconComponent],
+  templateUrl: './my-data.component.html'
 })
 export class MyDataComponent implements OnInit {
   private readonly userService = inject(UserService);

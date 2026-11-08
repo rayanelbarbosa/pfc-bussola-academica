@@ -15,7 +15,7 @@ describe('MyDataComponent', () => {
   beforeEach(async () => {
     userService = jasmine.createSpyObj('UserService', ['getMe', 'getMyResults', 'deleteMyAccount']);
     userService.getMe.and.returnValue(of(authResponse().user));
-    userService.getMyResults.and.returnValue(of([{ id: 3, createdAt: '2026-09-27T10:00:00', topCategories: ['Social'] }]));
+    userService.getMyResults.and.returnValue(of([{ id: 3, createdAt: '2026-09-27T10:00:00', topCategories: ['Social'], interestAreas: ['Saúde'] }]));
 
     await TestBed.configureTestingModule({
       imports: [MyDataComponent],
@@ -29,7 +29,7 @@ describe('MyDataComponent', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(el.textContent).toContain('marina@teste.com');
     expect(el.textContent).toContain('Versão 1.0');
-    expect(el.querySelectorAll('.results li').length).toBe(1);
+    expect(el.textContent).toContain('1 teste guardado');
   });
 
   it('asks for confirmation and then deletes the account', () => {

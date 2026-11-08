@@ -1,122 +1,84 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
-import { catchError, forkJoin, map, of } from 'rxjs';
-
-import { MAX_SCORE, VocationalTestResult } from '../../../core/models/vocational-test.model';
 import { Video } from '../../../core/models/video.model';
-import { VideoService } from '../../../core/services/video.service';
-import { getCategoryInfo } from '../../../core/models/riasec-category';
-import { VocationalTestService } from '../../../core/services/vocational-test.service';
+import { VocationalTestResult } from '../../../core/models/vocational-test.model';
+import { getCategoryInfo, riasecClass } from '../../../core/models/riasec-category';
 import { getErrorMessage } from '../../../core/services/api-error';
-import { TopBarComponent } from '../../../shared/components/top-bar/top-bar.component';
+import { VideoService } from '../../../core/services/video.service';
+import { VocationalTestService } from '../../../core/services/vocational-test.service';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { RadarChartComponent } from '../../../shared/components/radar-chart/radar-chart.component';
 
-interface AreaVideos {
-  area: string;
-  videos: Video[];
-  failed: boolean;
-}
+type VideoState = { status: 'loading' } | { status: 'ok'; videos: Video[] } | { status: 'error' };
 
-interface ScoreBar {
-  label: string;
-  score: number;
-  percent: number;
-  color: string;
-}
-
-/** Tela de resultado do teste (protótipo 15 - Resultado). */
+/**
+ * Resultado do teste (RF07, RF08, RF09): radar dos escores, explicação do perfil principal,
+ * carreiras mais compatíveis por área escolhida e vídeos do YouTube de cada carreira.
+ */
 @Component({
   selector: 'app-result',
   standalone: true,
-  imports: [RouterLink, TopBarComponent],
-  templateUrl: './result.component.html',
-  styleUrl: './result.component.css'
+  imports: [DatePipe, RouterLink, IconComponent, RadarChartComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  templateUrl: './result.component.html'
 })
 export class ResultComponent implements OnInit {
-  private readonly service = inject(VocationalTestService);
+  private readonly testService = inject(VocationalTestService);
   private readonly videoService = inject(VideoService);
 
-  /** Vem da rota /teste-vocacional/resultado/:id */
+  /** Id do resultado, vindo da rota (/teste-vocacional/resultado/:id). */
   readonly id = input.required<string>();
 
-  readonly maxScore = MAX_SCORE;
   readonly result = signal<VocationalTestResult | null>(null);
+  readonly loading = signal(true);
   readonly error = signal<string | null>(null);
-  readonly areaVideos = signal<AreaVideos[]>([]);
-  readonly loadingVideos = signal(false);
+  readonly videos = signal<Partial<Record<string, VideoState>>>({});
 
-  readonly topCategories = computed(() => this.result()?.topCategories ?? []);
-  readonly topLabels = computed(() => joinWithAnd(this.topCategories().map((c) => c.label)));
-  readonly isTie = computed(() => this.topCategories().length > 1);
-  readonly topColor = computed(() => getCategoryInfo(this.topCategories()[0]?.category ?? '').color);
-  readonly highestScore = computed(() => this.topCategories()[0]?.score ?? 0);
+  readonly categoryInfo = getCategoryInfo;
+  readonly riasecClass = riasecClass;
 
-  readonly scoreBars = computed<ScoreBar[]>(() =>
-    (this.result()?.scores ?? []).map((s) => ({
-      label: s.label,
-      score: s.score,
-      percent: (s.score / MAX_SCORE) * 100,
-      color: getCategoryInfo(s.category).color
-    }))
+  readonly radarPoints = computed(() =>
+    (this.result()?.scores ?? []).map((score) => ({ label: score.label, value: score.score }))
   );
-
-  readonly title = computed(() =>
-    this.isTie() ? `Seus lados ${this.topLabels()} se destacam` : `Seu lado ${this.topLabels()} se destaca`
-  );
-
-  readonly description = computed(() => {
-    const points = `(${this.highestScore()} de ${MAX_SCORE})`;
-    if (this.isTie()) {
-      return `${this.topLabels()} empataram com a maior pontuação ${points} entre as 6 categorias do modelo RIASEC.`;
-    }
-    const top = this.topCategories()[0];
-    return top
-      ? `${top.label} teve a maior pontuação ${points} entre as 6 categorias do modelo RIASEC — ${getCategoryInfo(top.category).description}`
-      : '';
-  });
-
-  /** Integração com a API externa: vídeos do YouTube para cada área recomendada. */
-  private loadVideos(areas: string[]): void {
-    if (areas.length === 0) {
-      return;
-    }
-    this.loadingVideos.set(true);
-    forkJoin(
-      areas.map((area) =>
-        this.videoService.searchByArea(area).pipe(
-          map((videos): AreaVideos => ({ area, videos, failed: false })),
-          catchError(() => of<AreaVideos>({ area, videos: [], failed: true }))
-        )
-      )
-    ).subscribe((groups) => {
-      this.areaVideos.set(groups);
-      this.loadingVideos.set(false);
-    });
-  }
-
-  readonly allVideosFailed = computed(
-    () => this.areaVideos().length > 0 && this.areaVideos().every((group) => group.failed)
-  );
+  readonly hasTie = computed(() => (this.result()?.topCategories.length ?? 0) > 1);
 
   ngOnInit(): void {
-    const id = Number(this.id());
-    if (!Number.isInteger(id) || id <= 0) {
-      this.error.set('Resultado inválido.');
-      return;
-    }
-    this.service.getResult(id).subscribe({
+    this.testService.getResult(Number(this.id())).subscribe({
       next: (result) => {
         this.result.set(result);
-        this.loadVideos(result.recommendedAreas);
+        this.loading.set(false);
+        result.careerRecommendations.forEach((group) => group.careers.forEach((career) => this.loadVideos(career.name)));
       },
-      error: (err) => this.error.set(getErrorMessage(err, 'Não foi possível carregar o resultado.'))
+      error: (err) => {
+        this.error.set(getErrorMessage(err, 'Não foi possível carregar o resultado.'));
+        this.loading.set(false);
+      }
     });
   }
-}
 
-function joinWithAnd(items: string[]): string {
-  if (items.length <= 1) {
-    return items.join('');
+  letter(category: string): string {
+    return getCategoryInfo(category)?.letter ?? '?';
   }
-  return `${items.slice(0, -1).join(', ')} e ${items[items.length - 1]}`;
+
+  /**
+   * Busca os vídeos de cada carreira (o back-end guarda as buscas em cache por 24 h, então cada carreira
+   * consome a cota da API do YouTube no máximo uma vez por dia).
+   */
+  loadVideos(career: string): void {
+    const current = this.videos()[career];
+    if (current && current.status !== 'error') {
+      return;
+    }
+    this.setVideos(career, { status: 'loading' });
+    this.videoService.searchByArea(career).subscribe({
+      next: (videos) => this.setVideos(career, { status: 'ok', videos }),
+      error: () => this.setVideos(career, { status: 'error' })
+    });
+  }
+
+  private setVideos(career: string, state: VideoState): void {
+    this.videos.update((all) => ({ ...all, [career]: state }));
+  }
 }

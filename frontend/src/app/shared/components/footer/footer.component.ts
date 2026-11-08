@@ -1,45 +1,24 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-/** Rodapé presente em todas as telas: Termo de Uso e Política de Privacidade sempre acessíveis (LGPD). */
+/** Rodapé com os links institucionais (inclui o Termo de Uso e a Política de Privacidade, LGPD). */
 @Component({
   selector: 'app-footer',
   standalone: true,
   imports: [RouterLink],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <footer class="footer">
-      <span>© 2026 Bússola Acadêmica · Projeto Final de Curso — UMC</span>
-      <nav aria-label="Documentos legais">
-        <a routerLink="/termos-de-uso">Termo de Uso</a>
-        <a routerLink="/politica-de-privacidade">Política de Privacidade</a>
-      </nav>
+    <footer class="mt-auto border-t border-border bg-background">
+      <div class="container-page flex flex-col gap-4 py-6 md:flex-row md:items-center md:justify-between">
+        <span class="font-semibold">Bússola Acadêmica</span>
+        <nav aria-label="Rodapé" class="flex flex-wrap gap-x-5 gap-y-3 text-sm text-muted-foreground">
+          <a routerLink="/" fragment="formas-de-ingresso" class="hover:text-primary">Formas de ingresso</a>
+          <a routerLink="/teste-vocacional" class="hover:text-primary">Teste vocacional</a>
+          <a routerLink="/termos-de-uso" class="hover:text-primary">Termo de Uso</a>
+          <a routerLink="/politica-de-privacidade" class="hover:text-primary">Política de Privacidade</a>
+        </nav>
+      </div>
     </footer>
-  `,
-  styles: `
-    .footer {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 20px var(--page-padding);
-      border-top: 1px solid var(--color-border);
-      background: var(--color-surface);
-      font-size: 13px;
-      color: var(--color-text-muted);
-    }
-    nav {
-      display: flex;
-      gap: 20px;
-    }
-    a {
-      color: var(--color-primary);
-      font-weight: 500;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
   `
 })
 export class FooterComponent {}

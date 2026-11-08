@@ -1,73 +1,82 @@
-<main class="auth-page">
-  <section class="auth-brand">
-    <p class="eyebrow">Bússola Acadêmica</p>
-    <p class="tagline">Seu futuro começa com autoconhecimento</p>
-    <h1>Crie sua conta e guarde seus resultados.</h1>
-    <p>Pedimos só o necessário: nome, e-mail e senha. Seus dados são usados apenas para o funcionamento da plataforma.</p>
-  </section>
+<div class="flex flex-1 items-center justify-center bg-muted px-4 py-8">
+  <div class="w-full max-w-[400px] rounded-lg border border-border bg-card p-6">
+    <h1>Criar conta</h1>
+    <p class="mt-2 text-sm text-muted-foreground">Crie sua conta gratuita para fazer o teste vocacional.</p>
 
-  <section class="auth-panel">
-    <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-      <p class="eyebrow">Cadastro</p>
-      <h2>Criar conta</h2>
+    @if (error()) {
+      <div class="alert alert-error mt-5" role="alert"><app-icon name="alert-circle" class="mt-0.5 size-5" />{{ error() }}</div>
+    }
 
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="mt-6 flex flex-col gap-4">
       <div class="field">
-        <label for="name">Nome</label>
-        <input id="name" type="text" formControlName="name" placeholder="Seu nome" autocomplete="name"
-               [class.invalid]="isInvalid('name')" />
+        <label for="name" class="field-label">Nome completo</label>
+        <input id="name" formControlName="name" autocomplete="name" class="field-input" [class.is-invalid]="isInvalid('name')" />
         @if (isInvalid('name')) {
-          <span class="field-error">Informe seu nome (até 100 caracteres).</span>
+          <p class="field-error" role="alert">Informe seu nome.</p>
         }
       </div>
-
       <div class="field">
-        <label for="email">E-mail</label>
-        <input id="email" type="email" formControlName="email" placeholder="voce@exemplo.com" autocomplete="email"
-               [class.invalid]="isInvalid('email')" />
+        <label for="email" class="field-label">E-mail</label>
+        <input id="email" type="email" formControlName="email" autocomplete="email" class="field-input" [class.is-invalid]="isInvalid('email')" />
         @if (isInvalid('email')) {
-          <span class="field-error">Informe um e-mail válido.</span>
+          <p class="field-error" role="alert">Digite um e-mail válido.</p>
         }
       </div>
-
       <div class="field">
-        <label for="password">Senha</label>
-        <input id="password" type="password" formControlName="password" placeholder="Mínimo 8 caracteres"
-               autocomplete="new-password" [class.invalid]="isInvalid('password')" />
+        <label for="password" class="field-label">Senha</label>
+        <input id="password" type="password" formControlName="password" autocomplete="new-password" class="field-input"
+          [class.is-invalid]="isInvalid('password')" aria-describedby="password-hint" />
+        <div class="mt-1" aria-live="polite">
+          <div class="flex gap-1">
+            @for (level of [1, 2, 3, 4]; track level) {
+              <span class="h-1.5 flex-1 rounded-full"
+                [class]="level <= passwordStrength ? (passwordStrength >= 3 ? 'bg-success' : passwordStrength === 2 ? 'bg-warning' : 'bg-destructive') : 'bg-muted'"></span>
+            }
+          </div>
+          <p id="password-hint" class="field-hint mt-1">
+            Força da senha: <strong>{{ strengthLabels[passwordStrength] }}</strong>. Mínimo de 8 caracteres, com letras e números.
+          </p>
+        </div>
         @if (isInvalid('password')) {
-          <span class="field-error">A senha deve ter pelo menos 8 caracteres, com letras e números.</span>
+          <p class="field-error" role="alert">A senha precisa ter no mínimo 8 caracteres, com letras e números.</p>
         }
       </div>
-
       <div class="field">
-        <label for="confirmPassword">Confirmar senha</label>
-        <input id="confirmPassword" type="password" formControlName="confirmPassword" placeholder="Repita a senha"
-               autocomplete="new-password" [class.invalid]="isInvalid('confirmPassword') || passwordsMismatch" />
-        @if (passwordsMismatch) {
-          <span class="field-error">As senhas não conferem.</span>
+        <label for="confirmPassword" class="field-label">Confirmar senha</label>
+        <input id="confirmPassword" type="password" formControlName="confirmPassword" autocomplete="new-password" class="field-input"
+          [class.is-invalid]="isInvalid('confirmPassword') || passwordsMismatch" />
+        @if (isInvalid('confirmPassword')) {
+          <p class="field-error" role="alert">Confirme sua senha.</p>
+        } @else if (passwordsMismatch) {
+          <p class="field-error" role="alert">As senhas não coincidem.</p>
         }
       </div>
-
-      <label class="checkbox">
-        <input type="checkbox" formControlName="acceptedTerms" />
-        <span>
-          Li e aceito o <a routerLink="/termos-de-uso" target="_blank" class="link">Termo de Uso</a> e a
-          <a routerLink="/politica-de-privacidade" target="_blank" class="link">Política de Privacidade</a>
-          (versão {{ legalVersion }}).
-        </span>
-      </label>
-      @if (isInvalid('acceptedTerms')) {
-        <span class="field-error">Para criar a conta é preciso aceitar os dois documentos.</span>
-      }
-
-      @if (error()) {
-        <p class="error-message" role="alert">{{ error() }}</p>
-      }
-
-      <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+      <div>
+        <label class="flex cursor-pointer items-start gap-3 text-sm">
+          <input type="checkbox" formControlName="ageConfirmed" class="mt-0.5 size-5 shrink-0 accent-[var(--primary)]" />
+          <span>Tenho 16 anos ou mais</span>
+        </label>
+        @if (isInvalid('ageConfirmed')) {
+          <p class="field-error ml-8 mt-1" role="alert">É preciso ter 16 anos ou mais.</p>
+        }
+      </div>
+      <div>
+        <label class="flex cursor-pointer items-start gap-3 text-sm">
+          <input type="checkbox" formControlName="acceptedTerms" class="mt-0.5 size-5 shrink-0 accent-[var(--primary)]" />
+          <span>Li e aceito o <a routerLink="/termos-de-uso" target="_blank" class="font-semibold text-primary underline">Termo de Uso</a>
+            e a <a routerLink="/politica-de-privacidade" target="_blank" class="font-semibold text-primary underline">Política de Privacidade</a>
+            (versão {{ legalVersion }})</span>
+        </label>
+        @if (isInvalid('acceptedTerms')) {
+          <p class="field-error ml-8 mt-1" role="alert">Aceite o Termo de Uso e a Política de Privacidade.</p>
+        }
+      </div>
+      <button type="submit" class="btn btn-primary w-full" [disabled]="submitting()">
         {{ submitting() ? 'Criando conta...' : 'Criar conta' }}
       </button>
-
-      <p class="auth-switch">Já tem conta? <a routerLink="/login" class="link">Entrar</a></p>
+      <p class="text-center text-sm text-muted-foreground">
+        Já tem conta? <a routerLink="/login" class="font-semibold text-primary underline underline-offset-4">Entrar</a>
+      </p>
     </form>
-  </section>
-</main>
+  </div>
+</div>
