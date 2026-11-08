@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
  *   <li>O escore de cada categoria é a soma das notas das perguntas daquela categoria
  *       (2 perguntas por categoria, logo de 2 a 10 pontos).</li>
  *   <li>A(s) categoria(s) com maior escore formam o perfil predominante (empates são mantidos).</li>
- *   <li>As áreas recomendadas são a união das áreas das categorias predominantes.</li>
  *   <li>O estudante escolhe de 1 a 3 áreas de interesse ("Ainda não sei" não combina com outras);
  *       as carreiras de cada área são ranqueadas pelo {@link CareerRecommender}.</li>
  * </ol>
