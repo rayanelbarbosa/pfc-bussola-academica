@@ -59,7 +59,7 @@
           <label [for]="'t-' + tab()" class="field-label">
             Texto {{ tab() === 'termsOfUse' ? 'do Termo de Uso' : 'da Política de Privacidade' }}
           </label>
-          <textarea [id]="'t-' + tab()" [formControlName]="tab()" rows="18" class="field-input font-mono text-sm"
+          <textarea [id]="'t-' + tab()" [formControl]="form.controls[tab()]" rows="18" class="field-input font-mono text-sm"
             [class.is-invalid]="isInvalid(tab())" [attr.aria-invalid]="isInvalid(tab())"></textarea>
           @if (isInvalid(tab())) {
             <p class="field-error" role="alert">O texto é obrigatório (até 20.000 caracteres).</p>

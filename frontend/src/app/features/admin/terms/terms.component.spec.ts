@@ -43,6 +43,21 @@ describe('TermsComponent (admin)', () => {
     expect(form.privacyPolicy).toBe('## 1. Política atual');
   });
 
+  it('edits the privacy policy (not the terms) after switching tabs', () => {
+    const component = fixture.componentInstance;
+    component.tab.set('privacyPolicy');
+    fixture.detectChanges();
+
+    const textarea: HTMLTextAreaElement = fixture.nativeElement.querySelector('textarea');
+    expect(textarea.value).toBe('## 1. Política atual');
+
+    textarea.value = '## 1. Política nova';
+    textarea.dispatchEvent(new Event('input'));
+
+    expect(component.form.controls.privacyPolicy.value).toBe('## 1. Política nova');
+    expect(component.form.controls.termsOfUse.value).toBe('## 1. Termo atual');
+  });
+
   it('publishes the edited texts and sends the admin to accept them', () => {
     const component = fixture.componentInstance;
     component.form.patchValue({ summary: 'Novo prazo', termsOfUse: '## 1. Termo novo' });
