@@ -11,7 +11,7 @@ export interface AdmissionMethod {
   schedule: string;
   cost: string;
   tips: string | null;
-  officialUrl: string;
+  officialUrl: string | null;
   active: boolean;
   updatedAt: string;
 }

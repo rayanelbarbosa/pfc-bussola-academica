@@ -53,7 +53,7 @@ export class AdmissionMethodsComponent implements OnInit {
     schedule: ['', [Validators.required, Validators.maxLength(500)]],
     cost: ['', [Validators.required, Validators.maxLength(500)]],
     tips: ['', Validators.maxLength(1000)],
-    officialUrl: ['', [Validators.required, Validators.maxLength(300), Validators.pattern(URL_PATTERN)]],
+    officialUrl: ['', [Validators.maxLength(300), Validators.pattern(URL_PATTERN)]],
     active: [true]
   });
 
@@ -103,7 +103,7 @@ export class AdmissionMethodsComponent implements OnInit {
       schedule: method.schedule,
       cost: method.cost,
       tips: method.tips ?? '',
-      officialUrl: method.officialUrl,
+      officialUrl: method.officialUrl ?? '',
       active: method.active
     });
     this.formError.set(null);
