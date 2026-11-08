@@ -96,8 +96,11 @@ class AccessControlIntegrationTest {
     void videosEndpointReportsWhenYouTubeIsNotConfigured() throws Exception {
         String token = registerStudent(mockMvc, uniqueEmail());
 
-        mockMvc.perform(get("/api/videos").param("area", "Medicina").header("Authorization", bearer(token)))
+        mockMvc.perform(get("/api/videos").param("career", "Medicina").header("Authorization", bearer(token)))
                 .andExpect(status().isBadGateway());
+
+        mockMvc.perform(get("/api/videos").param("career", "qualquer coisa").header("Authorization", bearer(token)))
+                .andExpect(status().isBadRequest());
 
         mockMvc.perform(get("/api/videos").header("Authorization", bearer(token)))
                 .andExpect(status().isBadRequest());
