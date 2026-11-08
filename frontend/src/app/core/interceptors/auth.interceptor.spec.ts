@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 
 import { authInterceptor } from './auth.interceptor';
 import { AuthService } from '../services/auth.service';
@@ -55,5 +55,23 @@ describe('authInterceptor', () => {
 
     controller.expectOne(`${environment.apiUrl}/users/me`).flush({}, { status: 401, statusText: 'Unauthorized' });
     expect(auth.logout).toHaveBeenCalledWith(true);
+  });
+
+  it('sends the user to the new terms acceptance when the API answers 428', () => {
+    loginAsStudent();
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.resolveTo(true);
+    http.get(`${environment.apiUrl}/users/me`).subscribe({ error: () => undefined });
+
+    controller.expectOne(`${environment.apiUrl}/users/me`).flush({}, { status: 428, statusText: 'Precondition Required' });
+    expect(router.navigate).toHaveBeenCalledWith(['/novo-aceite']);
+  });
+
+  it('does not log out on 401 when there is no session', () => {
+    spyOn(auth, 'logout');
+    http.get(`${environment.apiUrl}/users/me`).subscribe({ error: () => undefined });
+
+    controller.expectOne(`${environment.apiUrl}/users/me`).flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(auth.logout).not.toHaveBeenCalled();
   });
 });

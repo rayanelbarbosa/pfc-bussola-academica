@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 
 import { AdmissionMethod } from '../../../core/models/admission-method.model';
 import { AdmissionMethodService } from '../../../core/services/admission-method.service';
@@ -66,5 +67,72 @@ describe('AdmissionMethodsComponent', () => {
     fixture.componentInstance.confirmStatusChange();
 
     expect(service.changeStatus).toHaveBeenCalledWith(1, false);
+  });
+
+  const fail = () => throwError(() => new HttpErrorResponse({ status: 500 }));
+
+  it('creates a new method without official link and shows a notice', () => {
+    const component = fixture.componentInstance;
+    component.openEdit({ ...ENEM, officialUrl: null });
+    component.editingId.set(0);
+    service.create.and.returnValue(of({ ...ENEM, id: 2, name: 'Novo' }));
+
+    component.save();
+
+    expect(service.create).toHaveBeenCalledWith(jasmine.objectContaining({ officialUrl: '' }));
+    expect(component.notice()).toContain('incluída');
+    expect(component.editingId()).toBeNull();
+  });
+
+  it('keeps the form open with an error when saving fails', () => {
+    const component = fixture.componentInstance;
+    component.openEdit(ENEM);
+    service.update.and.returnValue(fail());
+
+    component.save();
+
+    expect(component.formError()).toBeTruthy();
+    expect(component.saving()).toBeFalse();
+    expect(component.editingId()).toBe(1);
+    component.closeForm();
+    expect(component.editingId()).toBeNull();
+  });
+
+  it('shows an error when the list or the status change fails', () => {
+    const component = fixture.componentInstance;
+    service.search.and.returnValue(fail());
+    component.load(0);
+    expect(component.error()).toBeTruthy();
+    expect(component.loading()).toBeFalse();
+
+    service.changeStatus.and.returnValue(fail());
+    component.confirming.set(ENEM);
+    component.confirmStatusChange();
+    expect(component.error()).toContain('status');
+  });
+
+  it('does nothing when there is no method to confirm', () => {
+    fixture.componentInstance.confirming.set(null);
+    fixture.componentInstance.confirmStatusChange();
+    expect(service.changeStatus).not.toHaveBeenCalled();
+  });
+
+  it('clears the filters and reloads the first page', () => {
+    const component = fixture.componentInstance;
+    component.filterName = 'Enem';
+    component.filterType = 'NATIONAL_EXAM';
+    component.filterActive = 'true';
+    service.search.calls.reset();
+
+    component.clearFilters();
+
+    expect(component.filterName).toBe('');
+    expect(service.search).toHaveBeenCalledWith(jasmine.objectContaining({ name: '', type: '', active: '', page: 0 }));
+  });
+
+  it('counts the characters typed in a field', () => {
+    const component = fixture.componentInstance;
+    component.form.controls.summary.setValue('abc');
+    expect(component.length('summary')).toBe(3);
   });
 });
