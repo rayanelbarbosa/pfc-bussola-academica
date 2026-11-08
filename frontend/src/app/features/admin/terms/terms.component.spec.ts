@@ -87,4 +87,25 @@ describe('TermsComponent (admin)', () => {
     expect(nextVersion('2')).toBe('2.1');
     expect(nextVersion('1.9')).toBe('1.10');
   });
+
+  it('keeps the form with an error when publishing fails', () => {
+    const component = fixture.componentInstance;
+    component.form.patchValue({ summary: 'Novo prazo' });
+    component.askConfirmation();
+    expect(component.confirming()).toBeTrue();
+
+    component.publish();
+    http.expectOne(`${environment.apiUrl}/admin/terms`).flush({}, { status: 500, statusText: 'Erro' });
+
+    expect(component.error()).toBeTruthy();
+    expect(component.publishing()).toBeFalse();
+    expect(component.confirming()).toBeFalse();
+  });
+
+  it('shows an error when the versions cannot be loaded', () => {
+    const other = TestBed.createComponent(TermsComponent);
+    other.detectChanges();
+    http.expectOne(`${environment.apiUrl}/admin/terms`).flush({}, { status: 500, statusText: 'Erro' });
+    expect(other.componentInstance.error()).toBeTruthy();
+  });
 });

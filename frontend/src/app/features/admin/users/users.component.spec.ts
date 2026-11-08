@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 
 import { AdminUser, AdminUserService } from '../../../core/services/admin-user.service';
 import { authResponse } from '../../../core/testing/auth-fixtures';
@@ -67,5 +68,64 @@ describe('UsersComponent', () => {
     component.form.setValue({ name: 'Nova', email: 'nova@teste.com', password: 'Admin2026x' });
     component.saveAdmin();
     expect(service.createAdmin).toHaveBeenCalledWith({ name: 'Nova', email: 'nova@teste.com', password: 'Admin2026x' });
+  });
+
+  const fail = () => throwError(() => new HttpErrorResponse({ status: 500 }));
+
+  it('creates a new admin with the name trimmed and shows a notice', () => {
+    const component = fixture.componentInstance;
+    service.createAdmin.and.returnValue(of({ ...STUDENT, id: 3, email: 'nova@teste.com', role: 'ADMIN' }));
+    component.openCreate();
+    component.form.setValue({ name: ' Nova Admin ', email: 'nova@teste.com', password: 'Senha@2026' });
+
+    component.saveAdmin();
+
+    expect(service.createAdmin).toHaveBeenCalledWith({ name: 'Nova Admin', email: 'nova@teste.com', password: 'Senha@2026' });
+    expect(component.creating()).toBeFalse();
+    expect(component.notice()).toContain('nova@teste.com');
+  });
+
+  it('keeps the form open with an error when creating fails', () => {
+    const component = fixture.componentInstance;
+    service.createAdmin.and.returnValue(fail());
+    component.openCreate();
+    component.form.setValue({ name: 'Nova', email: 'nova@teste.com', password: 'Senha@2026' });
+
+    component.saveAdmin();
+
+    expect(component.formError()).toBeTruthy();
+    expect(component.saving()).toBeFalse();
+    expect(component.creating()).toBeTrue();
+  });
+
+  it('shows errors when loading, changing the role or deleting fails', () => {
+    const component = fixture.componentInstance;
+    service.search.and.returnValue(fail());
+    component.load(0);
+    expect(component.error()).toContain('usuários');
+
+    service.changeRole.and.returnValue(fail());
+    component.confirming.set(STUDENT);
+    component.confirmRoleChange();
+    expect(component.error()).toContain('perfil');
+
+    service.deleteUser.and.returnValue(fail());
+    component.deleting.set(STUDENT);
+    component.confirmDelete();
+    expect(component.error()).toContain('excluir');
+  });
+
+  it('ignores confirmations without a selected user and clears the filters', () => {
+    const component = fixture.componentInstance;
+    component.confirmRoleChange();
+    component.confirmDelete();
+    expect(service.changeRole).not.toHaveBeenCalled();
+    expect(service.deleteUser).not.toHaveBeenCalled();
+
+    component.search = 'ana';
+    component.role = 'ADMIN';
+    service.search.calls.reset();
+    component.clearFilters();
+    expect(service.search).toHaveBeenCalledWith(jasmine.objectContaining({ search: '', role: '', page: 0 }));
   });
 });

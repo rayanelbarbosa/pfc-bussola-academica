@@ -6,6 +6,7 @@ import { Router, provideRouter } from '@angular/router';
 import { TermsUpdateComponent } from './terms-update.component';
 import { environment } from '../../../../environments/environment';
 import { authResponse } from '../../../core/testing/auth-fixtures';
+import { AuthService } from '../../../core/services/auth.service';
 
 describe('TermsUpdateComponent', () => {
   let fixture: ComponentFixture<TermsUpdateComponent>;
@@ -52,5 +53,26 @@ describe('TermsUpdateComponent', () => {
     req.flush(authResponse());
 
     expect(router.navigateByUrl).toHaveBeenCalledWith('/');
+  });
+
+  it('shows an error when the acceptance fails and lets the user log out', () => {
+    const component = fixture.componentInstance;
+    component.accepted = true;
+    component.accept();
+    http.expectOne(`${environment.apiUrl}/terms/accept`).flush({}, { status: 500, statusText: 'Erro' });
+    expect(component.error()).toBeTruthy();
+    expect(component.submitting()).toBeFalse();
+
+    const auth = TestBed.inject(AuthService);
+    spyOn(auth, 'logout');
+    component.logout();
+    expect(auth.logout).toHaveBeenCalled();
+  });
+
+  it('shows an error when the current terms cannot be loaded', () => {
+    const other = TestBed.createComponent(TermsUpdateComponent);
+    other.detectChanges();
+    http.expectOne(`${environment.apiUrl}/terms/current`).flush({}, { status: 500, statusText: 'Erro' });
+    expect(other.componentInstance.error()).toBeTruthy();
   });
 });

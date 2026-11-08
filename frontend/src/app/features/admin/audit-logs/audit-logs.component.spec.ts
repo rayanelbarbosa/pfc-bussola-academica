@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 
 import { AuditLogsComponent } from './audit-logs.component';
 import { AuditService } from '../../../core/services/audit.service';
@@ -54,5 +55,20 @@ describe('AuditLogsComponent', () => {
     fixture.componentInstance.search();
 
     expect(auditService.search).toHaveBeenCalledWith({ action: 'LOGIN_FAILURE', email: 'aluna', page: 0, size: 20 });
+  });
+
+  it('clears the filters and shows an error when loading fails', () => {
+    const component = fixture.componentInstance;
+    component.action = 'LOGIN_FAILURE';
+    component.email = 'a@b.com';
+    component.clear();
+    expect(component.action).toBe('');
+    expect(auditService.search).toHaveBeenCalledWith(jasmine.objectContaining({ action: '', email: '', page: 0 }));
+
+    auditService.search.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    component.search();
+    expect(component.error()).toBeTruthy();
+    expect(component.loading()).toBeFalse();
+    expect(component.label('UNKNOWN_ACTION')).toBe('UNKNOWN_ACTION');
   });
 });
