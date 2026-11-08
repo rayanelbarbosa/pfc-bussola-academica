@@ -11,7 +11,7 @@ br.com.bussolaacademica
 ├── dto          objetos de entrada/saída da API
 ├── exception    exceções de negócio + tratamento global de erros
 ├── security     Spring Security, JWT, respostas 401/403
-├── integration  clientes de APIs externas (YouTube)
+├── integration  clientes de APIs externas (YouTube e Resend)
 └── config       propriedades, administrador inicial e beans de configuração
 ```
 
@@ -48,17 +48,36 @@ Relatório de cobertura: `target/site/jacoco/index.html`.
 
 | Método | Rota | Acesso | Descrição |
 | --- | --- | --- | --- |
-| POST | `/api/auth/register` | público | cadastro (exige aceite do Termo e da Política) → JWT |
-| POST | `/api/auth/login` | público | login → JWT |
+| POST | `/api/auth/register` | público | cadastro (idade mínima e aceite dos termos) → JWT |
+| POST | `/api/auth/login` | público | login → JWT (bloqueio após 5 falhas em 15 min) |
+| POST | `/api/auth/logout` | autenticado | revoga o token atual |
+| POST | `/api/auth/password/forgot` | público | envia o link de redefinição por e-mail (resposta sempre igual) |
+| POST | `/api/auth/password/reset/validate` | público | confere se o link ainda é válido |
+| POST | `/api/auth/password/reset` | público | define a nova senha (link de uso único, 30 min) |
+| GET | `/api/terms/current` | público | versão vigente do Termo de Uso e da Política de Privacidade |
+| POST | `/api/terms/accept` | autenticado | aceita a versão vigente |
+| GET | `/api/admission-methods` | público | formas de ingresso ativas (filtro `type`) |
+| GET | `/api/admission-methods/types` | público | tipos de forma de ingresso |
 | GET | `/api/users/me` | autenticado | dados do próprio usuário |
-| GET | `/api/users/me/results` | autenticado | histórico de resultados do usuário |
-| DELETE | `/api/users/me` | autenticado | exclui a conta e os resultados (LGPD) |
-| GET | `/api/vocational-test/questions` | autenticado | lista as 12 perguntas do questionário |
-| POST | `/api/vocational-test/results` | autenticado | recebe as 12 respostas, calcula e salva o resultado (201) |
-| GET | `/api/vocational-test/results/{id}` | dono ou admin | consulta um resultado salvo |
-| GET | `/api/videos?area=` | autenticado | vídeos do YouTube sobre a área |
-| GET | `/api/admin/audit-logs` | admin | logs de auditoria (filtros `action`, `email`, `page`, `size`) |
-| GET | `/actuator/health` | público | health check usado no servidor |
+| GET | `/api/users/me/results` | autenticado | histórico de resultados |
+| GET | `/api/users/me/export` | autenticado | exporta os dados pessoais em JSON |
+| DELETE | `/api/users/me` | autenticado | exclui a conta e os resultados |
+| GET | `/api/vocational-test/questions` | autenticado | as 12 afirmações do questionário |
+| GET | `/api/vocational-test/interest-areas` | autenticado | áreas de interesse disponíveis |
+| POST | `/api/vocational-test/results` | autenticado | calcula e salva o resultado (201) |
+| GET | `/api/vocational-test/results/{id}` | dono ou admin | consulta um resultado |
+| GET | `/api/videos?career=` | autenticado | vídeos do YouTube de uma carreira cadastrada |
+| GET/POST | `/api/admin/admission-methods` | admin | consulta paginada e inclusão de formas de ingresso |
+| GET/PUT | `/api/admin/admission-methods/{id}` | admin | consulta e alteração |
+| PATCH | `/api/admin/admission-methods/{id}/status` | admin | ativa ou desativa |
+| GET/POST | `/api/admin/users` | admin | lista usuários (busca e perfil) e cadastra administrador |
+| PATCH | `/api/admin/users/{id}/role` | admin | promove ou rebaixa (exceto a si mesmo) |
+| DELETE | `/api/admin/users/{id}` | admin | exclui a conta de outro usuário |
+| GET/POST | `/api/admin/terms` | admin | lista e publica versões dos termos |
+| GET | `/api/admin/audit-logs` | admin | auditoria (filtros `action`, `email`, `page`, `size`) |
+| GET | `/api/admin/audit-logs/actions` | admin | ações disponíveis no filtro |
+| GET | `/api/admin/dashboard?days=` | admin | métricas de uso (7, 30 ou 90 dias) |
+| GET | `/actuator/health` | público | health check |
 
 Autenticação: enviar o token no cabeçalho `Authorization: Bearer <token>`.
 
