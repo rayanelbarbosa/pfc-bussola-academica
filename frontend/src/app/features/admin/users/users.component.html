@@ -1,0 +1,161 @@
+<div class="container-page section-y">
+  <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div>
+      <h1>Usuários</h1>
+      <p class="mt-2 max-w-2xl text-muted-foreground">Contas cadastradas e perfis de acesso. A sua própria conta não pode ser alterada nem excluída por aqui.</p>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="openCreate()"><app-icon name="plus" class="size-4" /> Novo administrador</button>
+  </div>
+
+  @if (notice()) {
+    <div class="alert alert-success mb-4" role="status">
+      <app-icon name="check" class="mt-0.5 size-5" /><span class="flex-1">{{ notice() }}</span>
+      <button type="button" aria-label="Fechar aviso" (click)="notice.set(null)"><app-icon name="x" class="size-4" /></button>
+    </div>
+  }
+
+  <form class="card mb-4 grid gap-4 p-4 sm:p-4 md:grid-cols-[2fr_1fr_auto] md:items-end" (ngSubmit)="load(0)">
+    <div class="field">
+      <label for="u-search" class="field-label">Buscar por nome ou e-mail</label>
+      <input id="u-search" name="search" class="field-input" [(ngModel)]="search" />
+    </div>
+    <div class="field">
+      <label for="u-role" class="field-label">Perfil</label>
+      <select id="u-role" name="role" class="field-input" [(ngModel)]="role">
+        <option value="">Todos</option>
+        <option value="STUDENT">Estudante</option>
+        <option value="ADMIN">Administrador</option>
+      </select>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">Filtrar</button>
+      <button type="button" class="btn btn-secondary" (click)="clearFilters()">Limpar</button>
+    </div>
+  </form>
+
+  @if (error()) {
+    <div class="alert alert-error mb-4" role="alert"><app-icon name="alert-circle" class="mt-0.5 size-5" />{{ error() }}</div>
+  }
+
+  @if (page(); as p) {
+    <div class="table-wrap">
+      <table class="table">
+        <caption class="sr-only">Usuários cadastrados</caption>
+        <thead>
+          <tr>
+            <th scope="col">Nome</th>
+            <th scope="col">E-mail</th>
+            <th scope="col">Perfil</th>
+            <th scope="col">Cadastrado em</th>
+            <th scope="col" class="text-right">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of p.content; track user.id) {
+            <tr>
+              <td class="font-medium">{{ user.name }} @if (user.id === myId()) { <span class="text-xs text-muted-foreground">(você)</span> }</td>
+              <td>{{ user.email }}</td>
+              <td><span class="badge" [class.badge-accent]="user.role === 'ADMIN'">{{ roleLabels[user.role] }}</span></td>
+              <td class="whitespace-nowrap">{{ user.createdAt | date: 'dd/MM/yyyy' }}</td>
+              <td class="whitespace-nowrap text-right">
+                @if (user.id === myId()) {
+                  <span class="text-xs text-muted-foreground" title="Para a plataforma nunca ficar sem administrador, ninguém altera o próprio perfil.">
+                    Sua conta: use Meus dados
+                  </span>
+                } @else {
+                  <div class="flex items-center justify-end gap-1">
+                  <button type="button" class="btn btn-ghost btn-sm" (click)="confirming.set(user)">
+                    {{ user.role === 'ADMIN' ? 'Remover administrador' : 'Tornar administrador' }}
+                  </button>
+                  <button type="button" class="btn btn-ghost btn-sm text-destructive hover:bg-destructive-soft" (click)="deleting.set(user)">
+                    <app-icon name="trash" class="size-4" /> Excluir
+                  </button>
+                  </div>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="5" class="py-8 text-center text-muted-foreground">Nenhum usuário encontrado.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <nav class="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row" aria-label="Paginação">
+      <p class="text-sm text-muted-foreground">Página {{ p.page + 1 }} de {{ p.totalPages || 1 }} · {{ p.totalElements }} usuários</p>
+      <div class="flex gap-2">
+        <button type="button" class="btn btn-secondary btn-sm" (click)="load(p.page - 1)" [disabled]="p.page === 0 || loading()">Anterior</button>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="load(p.page + 1)" [disabled]="p.page + 1 >= p.totalPages || loading()">Próxima</button>
+      </div>
+    </nav>
+  } @else if (loading()) {
+    <div class="skeleton h-64"></div>
+  }
+</div>
+
+@if (confirming(); as user) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" (click)="confirming.set(null)">
+    <div role="dialog" aria-modal="true" aria-labelledby="role-title" class="w-full max-w-md rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()">
+      <h2 id="role-title" class="text-xl">{{ user.role === 'ADMIN' ? 'Remover administrador?' : 'Tornar administrador?' }}</h2>
+      <p class="mt-3 text-sm text-muted-foreground">
+        @if (user.role === 'ADMIN') {
+          {{ user.name }} perde o acesso à área administrativa e passa a ser estudante. A sessão atual dessa pessoa é encerrada.
+        } @else {
+          {{ user.name }} ganha acesso ao dashboard, à gestão de formas de ingresso, de usuários e à auditoria.
+        }
+      </p>
+      <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button type="button" class="btn btn-ghost" (click)="confirming.set(null)">Cancelar</button>
+        <button type="button" class="btn" [class.btn-danger]="user.role === 'ADMIN'" [class.btn-primary]="user.role !== 'ADMIN'" (click)="confirmRoleChange()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (deleting(); as user) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" (click)="deleting.set(null)">
+    <div role="dialog" aria-modal="true" aria-labelledby="delete-title" class="w-full max-w-md rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()">
+      <h2 id="delete-title" class="text-xl">Excluir a conta de {{ user.name }}?</h2>
+      <p class="mt-3 text-sm text-muted-foreground">
+        O cadastro e todos os resultados de teste de {{ user.email }} são apagados definitivamente. Essa ação não pode ser desfeita
+        e fica registrada na auditoria.
+      </p>
+      <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button type="button" class="btn btn-ghost" (click)="deleting.set(null)">Cancelar</button>
+        <button type="button" class="btn btn-danger" (click)="confirmDelete()">Excluir conta</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (creating()) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" (click)="creating.set(false)">
+    <div role="dialog" aria-modal="true" aria-labelledby="new-admin-title" class="w-full max-w-md rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()">
+      <h2 id="new-admin-title" class="text-xl">Novo administrador</h2>
+      @if (formError()) {
+        <div class="alert alert-error mt-4" role="alert"><app-icon name="alert-circle" class="mt-0.5 size-5" />{{ formError() }}</div>
+      }
+      <form [formGroup]="form" (ngSubmit)="saveAdmin()" novalidate class="mt-4 flex flex-col gap-4">
+        <div class="field">
+          <label for="a-name" class="field-label">Nome</label>
+          <input id="a-name" formControlName="name" class="field-input" [class.is-invalid]="isInvalid('name')" />
+          @if (isInvalid('name')) { <p class="field-error">Informe o nome.</p> }
+        </div>
+        <div class="field">
+          <label for="a-email" class="field-label">E-mail</label>
+          <input id="a-email" type="email" formControlName="email" class="field-input" [class.is-invalid]="isInvalid('email')" />
+          @if (isInvalid('email')) { <p class="field-error">Digite um e-mail válido.</p> }
+        </div>
+        <div class="field">
+          <label for="a-password" class="field-label">Senha inicial</label>
+          <input id="a-password" type="password" formControlName="password" autocomplete="new-password" class="field-input" [class.is-invalid]="isInvalid('password')" />
+          <p class="field-hint">Mínimo de 8 caracteres, com letras e números. Passe a senha à pessoa por um canal seguro.</p>
+          @if (isInvalid('password')) { <p class="field-error">A senha precisa ter no mínimo 8 caracteres, com letras e números.</p> }
+        </div>
+        <div class="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" class="btn btn-ghost" (click)="creating.set(false)">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Cadastrar' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
