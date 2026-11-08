@@ -72,7 +72,7 @@ export class ResultComponent implements OnInit {
       return;
     }
     this.setVideos(career, { status: 'loading' });
-    this.videoService.searchByArea(career).subscribe({
+    this.videoService.searchByCareer(career).subscribe({
       next: (videos) => this.setVideos(career, { status: 'ok', videos }),
       error: () => this.setVideos(career, { status: 'error' })
     });

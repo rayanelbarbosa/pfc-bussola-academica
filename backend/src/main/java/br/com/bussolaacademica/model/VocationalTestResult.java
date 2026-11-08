@@ -18,7 +18,7 @@ import java.util.Map;
 
 /**
  * Resultado persistido de uma aplicação do teste vocacional: o escore de cada
- * categoria RIASEC, a(s) categoria(s) predominante(s), as áreas recomendadas e as áreas de interesse escolhidas.
+ * categoria RIASEC, a(s) categoria(s) predominante(s) e as áreas de interesse escolhidas.
  */
 @Entity
 @Table(name = "vocational_test_result")
