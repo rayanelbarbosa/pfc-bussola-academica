@@ -19,15 +19,17 @@ public record AdmissionMethodRequest(
         @NotBlank(message = "informe quando acontece") @Size(max = 500, message = "máximo de 500 caracteres") String schedule,
         @NotBlank(message = "informe quanto custa") @Size(max = 500, message = "máximo de 500 caracteres") String cost,
         @Size(max = 1000, message = "máximo de 1000 caracteres") String tips,
-        @NotBlank(message = "informe o link oficial") @Size(max = 300, message = "máximo de 300 caracteres")
-        @URL(message = "link inválido") @Pattern(regexp = "^https?://.+", message = "o link deve começar com http:// ou https://")
+        // opcional: quando informado, precisa ser um link http:// ou https://
+        @Size(max = 300, message = "máximo de 300 caracteres")
+        @URL(message = "link inválido") @Pattern(regexp = "^$|^https?://.+", message = "o link deve começar com http:// ou https://")
         String officialUrl,
         Boolean active) {
 
     public AdmissionMethodContent toContent() {
         return new AdmissionMethodContent(name.trim(), type, summary.trim(), description.trim(), howItWorks.trim(),
                 eligibility.trim(), schedule.trim(), cost.trim(),
-                tips == null || tips.isBlank() ? null : tips.trim(), officialUrl.trim());
+                tips == null || tips.isBlank() ? null : tips.trim(),
+                officialUrl == null || officialUrl.isBlank() ? null : officialUrl.trim());
     }
 
     public boolean activeOrDefault() {
