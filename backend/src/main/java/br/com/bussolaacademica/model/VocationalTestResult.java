@@ -60,9 +60,6 @@ public class VocationalTestResult {
     @Column(name = "top_categories", nullable = false, length = 100)
     private String topCategories;
 
-    @Column(name = "recommended_areas", nullable = false, length = 500)
-    private String recommendedAreas;
-
     /** Áreas de interesse escolhidas antes do teste, ex.: "HEALTH;ENGINEERING". Nulo = "Ainda não sei". */
     @Column(name = "interest_areas", length = 200)
     private String interestAreas;
@@ -72,8 +69,7 @@ public class VocationalTestResult {
     }
 
     public VocationalTestResult(User user, LocalDateTime createdAt, Map<RiasecCategory, Integer> scores,
-                                List<RiasecCategory> topCategories, List<String> recommendedAreas,
-                                List<InterestArea> interestAreas) {
+                                List<RiasecCategory> topCategories, List<InterestArea> interestAreas) {
         this.user = user;
         this.createdAt = createdAt;
         this.realisticScore = scores.get(RiasecCategory.REALISTIC);
@@ -83,7 +79,6 @@ public class VocationalTestResult {
         this.enterprisingScore = scores.get(RiasecCategory.ENTERPRISING);
         this.conventionalScore = scores.get(RiasecCategory.CONVENTIONAL);
         this.topCategories = String.join(SEPARATOR, topCategories.stream().map(Enum::name).toList());
-        this.recommendedAreas = String.join(SEPARATOR, recommendedAreas);
         this.interestAreas = String.join(SEPARATOR, interestAreas.stream().map(Enum::name).toList());
     }
 
@@ -101,10 +96,6 @@ public class VocationalTestResult {
 
     public List<RiasecCategory> getTopCategories() {
         return Arrays.stream(topCategories.split(SEPARATOR)).map(RiasecCategory::valueOf).toList();
-    }
-
-    public List<String> getRecommendedAreas() {
-        return Arrays.asList(recommendedAreas.split(SEPARATOR));
     }
 
     public List<InterestArea> getInterestAreas() {
