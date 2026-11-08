@@ -21,6 +21,19 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/register/register.component').then((m) => m.RegisterComponent)
   },
   {
+    path: 'esqueci-senha',
+    title: 'Esqueci minha senha | Bússola Acadêmica',
+    canActivate: [guestGuard],
+    loadComponent: () =>
+      import('./features/auth/forgot-password/forgot-password.component').then((m) => m.ForgotPasswordComponent)
+  },
+  {
+    path: 'redefinir-senha',
+    title: 'Criar nova senha | Bússola Acadêmica',
+    loadComponent: () =>
+      import('./features/auth/reset-password/reset-password.component').then((m) => m.ResetPasswordComponent)
+  },
+  {
     path: 'novo-aceite',
     title: 'Termos atualizados | Bússola Acadêmica',
     canActivate: [authGuard],

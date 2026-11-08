@@ -36,6 +36,21 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.baseUrl}/register`, request).pipe(tap((res) => this.store(res)));
   }
 
+  /** Pede o link de redefinição de senha. A resposta é sempre a mesma, exista ou não a conta. */
+  forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/password/forgot`, { email });
+  }
+
+  /** Confere se o link de redefinição ainda vale (204) ou não (422). */
+  validateResetToken(token: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/password/reset/validate`, { token });
+  }
+
+  /** Cria a nova senha com o token recebido por e-mail. */
+  resetPassword(token: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/password/reset`, { token, newPassword });
+  }
+
   /** Versão vigente do Termo/Política (rota pública). */
   currentTerms(): Observable<TermsVersion> {
     return this.http.get<TermsVersion>(`${environment.apiUrl}/terms/current`);

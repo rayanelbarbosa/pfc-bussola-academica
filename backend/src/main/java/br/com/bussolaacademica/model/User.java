@@ -48,6 +48,10 @@ public class User {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    /** Última troca de senha: tokens JWT emitidos antes disso deixam de valer. */
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
+
     protected User() {
         // exigido pelo JPA
     }
@@ -66,6 +70,12 @@ public class User {
     /** Promove ou rebaixa o perfil de acesso (regras no AdminUserService). */
     public void changeRole(Role role) {
         this.role = role;
+    }
+
+    /** Troca a senha (já em hash BCrypt) e registra quando, para encerrar as sessões abertas. */
+    public void changePassword(String newPasswordHash, LocalDateTime changedAt) {
+        this.passwordHash = newPasswordHash;
+        this.passwordChangedAt = changedAt;
     }
 
     /** Novo aceite do Termo de Uso e da Política de Privacidade (quando uma versão nova é publicada). */
@@ -108,5 +118,9 @@ public class User {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDateTime getPasswordChangedAt() {
+        return passwordChangedAt;
     }
 }

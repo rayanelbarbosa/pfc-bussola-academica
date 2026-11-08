@@ -25,6 +25,8 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   LOGIN_FAILURE: 'Login recusado',
   LOGIN_BLOCKED: 'Login bloqueado (muitas tentativas)',
   LOGOUT: 'Saiu da conta',
+  PASSWORD_RESET_REQUESTED: 'Pedido de nova senha',
+  PASSWORD_RESET_COMPLETED: 'Senha redefinida por e-mail',
   ACCOUNT_DELETED: 'Conta excluída',
   PERSONAL_DATA_EXPORTED: 'Exportação dos dados pessoais',
   TERMS_ACCEPTED: 'Aceite dos termos',
