@@ -41,7 +41,6 @@ export interface VocationalTestResult {
   createdAt: string;
   scores: CategoryScore[];
   topCategories: CategoryScore[];
-  recommendedAreas: string[];
   interestAreas: { value: string; label: string }[];
   careerRecommendations: AreaRecommendation[];
 }

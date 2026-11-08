@@ -57,7 +57,8 @@ class VocationalTestIntegrationTest {
 
         mockMvc.perform(get("/api/vocational-test/results/" + id).header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.recommendedAreas", hasSize(3)));
+                .andExpect(jsonPath("$.careerRecommendations").isArray())
+                .andExpect(jsonPath("$.recommendedAreas").doesNotExist());
     }
 
     /** Nota 5 nas perguntas de Realista (1 e 2) e Investigativo (3 e 4), 2 nas demais. */

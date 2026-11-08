@@ -1,5 +1,6 @@
 package br.com.bussolaacademica.integration;
 
+import br.com.bussolaacademica.model.RiasecCategory;
 import br.com.bussolaacademica.model.VocationalTestResult;
 import br.com.bussolaacademica.repository.VocationalTestResultRepository;
 import com.jayway.jsonpath.JsonPath;
@@ -19,7 +20,6 @@ import static br.com.bussolaacademica.support.AuthTestHelper.registerStudent;
 import static br.com.bussolaacademica.support.AuthTestHelper.uniqueEmail;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -94,6 +94,6 @@ class UserAccountIntegrationTest {
         Long userId = ((Number) JsonPath.read(me, "$.id")).longValue();
         List<VocationalTestResult> salvos = resultRepository.findByUser_IdOrderByCreatedAtDesc(userId);
         assertEquals(1, salvos.size());
-        assertTrue(salvos.get(0).getRecommendedAreas().contains("Medicina"));
+        assertEquals(List.of(RiasecCategory.INVESTIGATIVE), salvos.get(0).getTopCategories());
     }
 }

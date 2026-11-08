@@ -141,7 +141,7 @@ class UserServiceTest {
             scores.put(category, category == RiasecCategory.SOCIAL ? 10 : 4);
         }
         VocationalTestResult result = new VocationalTestResult(user, LocalDateTime.of(2026, 10, 1, 9, 0), scores,
-                List.of(RiasecCategory.SOCIAL), List.of("Saúde"), List.of(InterestArea.UNDECIDED));
+                List.of(RiasecCategory.SOCIAL), List.of(InterestArea.UNDECIDED));
         when(currentUser.id()).thenReturn(1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(resultRepository.findByUser_IdOrderByCreatedAtDesc(1L)).thenReturn(List.of(result));

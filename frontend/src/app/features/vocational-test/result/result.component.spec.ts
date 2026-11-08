@@ -22,7 +22,6 @@ const RESULT: VocationalTestResult = {
     { category: 'REALISTIC', label: 'Realista', score: 9 },
     { category: 'CONVENTIONAL', label: 'Convencional', score: 9 }
   ],
-  recommendedAreas: ['Engenharias'],
   interestAreas: [{ value: 'ENGINEERING', label: 'Engenharias' }],
   careerRecommendations: [{
     area: 'ENGINEERING', label: 'Engenharias',
