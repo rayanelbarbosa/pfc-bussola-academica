@@ -19,7 +19,7 @@ public record UserDataExportResponse(
 ) {
 
     public record ExportedTestResult(Long id, LocalDateTime createdAt, List<CategoryScoreResponse> scores,
-                                     List<String> topCategories, List<String> recommendedAreas,
+                                     List<String> topCategories,
                                      List<String> interestAreas) {
 
         public static ExportedTestResult from(VocationalTestResult result) {
@@ -28,7 +28,6 @@ public record UserDataExportResponse(
                             .map(entry -> CategoryScoreResponse.of(entry.getKey(), entry.getValue()))
                             .toList(),
                     result.getTopCategories().stream().map(RiasecCategory::getLabel).toList(),
-                    result.getRecommendedAreas(),
                     result.getInterestAreas().stream().map(InterestArea::getLabel).toList());
         }
     }

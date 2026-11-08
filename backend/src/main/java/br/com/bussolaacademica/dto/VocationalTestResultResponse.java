@@ -11,15 +11,14 @@ import java.util.Map;
 
 /**
  * Resultado do teste vocacional: escore de cada categoria RIASEC (na ordem R, I, A, S, E, C),
- * a(s) categoria(s) de maior escore, as áreas recomendadas pelo perfil, as áreas de interesse
- * escolhidas e as carreiras recomendadas em cada uma delas.
+ * a(s) categoria(s) de maior escore, as áreas de interesse escolhidas e as carreiras
+ * recomendadas em cada uma delas.
  */
 public record VocationalTestResultResponse(
         Long id,
         LocalDateTime createdAt,
         List<CategoryScoreResponse> scores,
         List<CategoryScoreResponse> topCategories,
-        List<String> recommendedAreas,
         List<OptionResponse> interestAreas,
         List<AreaRecommendationResponse> careerRecommendations
 ) {
@@ -36,7 +35,6 @@ public record VocationalTestResultResponse(
                 result.getTopCategories().stream()
                         .map(category -> CategoryScoreResponse.of(category, scores.get(category)))
                         .toList(),
-                result.getRecommendedAreas(),
                 result.getInterestAreas().stream()
                         .map(area -> new OptionResponse(area.name(), area.getLabel()))
                         .toList(),

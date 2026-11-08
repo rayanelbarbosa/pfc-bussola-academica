@@ -103,12 +103,11 @@ public class VocationalTestService {
 
         Map<RiasecCategory, Integer> scores = calculateScores(request.answers(), questions);
         List<RiasecCategory> topCategories = findTopCategories(scores);
-        List<String> areas = mergeRecommendedAreas(topCategories);
 
         User owner = userRepository.findById(currentUser.id())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
         VocationalTestResult result = resultRepository.save(
-                new VocationalTestResult(owner, LocalDateTime.now(clock), scores, topCategories, areas, interestAreas));
+                new VocationalTestResult(owner, LocalDateTime.now(clock), scores, topCategories, interestAreas));
         auditService.record(AuditAction.TEST_SUBMITTED, owner.getId(), owner.getEmail(),
                 "resultadoId=" + result.getId() + ", perfil=" + topCategories + ", areas=" + interestAreas, true);
         return toResponse(result);
@@ -191,9 +190,4 @@ public class VocationalTestService {
                 .toList();
     }
 
-    private List<String> mergeRecommendedAreas(List<RiasecCategory> topCategories) {
-        Set<String> areas = new LinkedHashSet<>();
-        topCategories.forEach(category -> areas.addAll(category.getRecommendedAreas()));
-        return List.copyOf(areas);
-    }
 }

@@ -115,13 +115,12 @@ class VocationalTestServiceTest {
                         tuple("Empreendedor", 5),
                         tuple("Convencional", 4));
         assertThat(result.topCategories()).extracting(CategoryScoreResponse::category).containsExactly("INVESTIGATIVE");
-        assertThat(result.recommendedAreas()).containsExactly("Ciências Exatas", "Ciências Biológicas", "Medicina");
         assertThat(result.createdAt()).isEqualTo("2026-09-28T09:00:00");
         verify(resultRepository).save(any(VocationalTestResult.class));
     }
 
     @Test
-    void shouldKeepAllTiedCategoriesAndMergeTheirAreas() {
+    void shouldKeepAllTiedCategories() {
         loggedAs(1L);
         when(questionRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(QUESTIONS);
         when(resultRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -131,8 +130,6 @@ class VocationalTestServiceTest {
 
         assertThat(result.topCategories()).extracting(CategoryScoreResponse::label)
                 .containsExactly("Social", "Empreendedor");
-        assertThat(result.recommendedAreas()).containsExactly(
-                "Pedagogia", "Psicologia", "Enfermagem", "Administração", "Direito", "Economia");
     }
 
     @Test
@@ -192,7 +189,8 @@ class VocationalTestServiceTest {
         when(currentUser.isAdmin()).thenReturn(false);
         when(currentUser.id()).thenReturn(1L);
 
-        assertThat(service.findResult(10L).recommendedAreas()).contains("Medicina");
+        assertThat(service.findResult(10L).topCategories()).extracting(CategoryScoreResponse::category)
+                .containsExactly("INVESTIGATIVE");
     }
 
     @Test
@@ -228,7 +226,7 @@ class VocationalTestServiceTest {
         ArgumentCaptor<VocationalTestResult> salvo = ArgumentCaptor.forClass(VocationalTestResult.class);
         verify(resultRepository).save(salvo.capture());
         assertEquals(1L, salvo.getValue().getUser().getId());
-        assertEquals(List.of("Ciências Contábeis", "Gestão Pública", "Biblioteconomia"), result.recommendedAreas());
+        assertThat(result.topCategories()).extracting(CategoryScoreResponse::category).containsExactly("CONVENTIONAL");
         verify(auditService).record(eq(AuditAction.TEST_SUBMITTED), eq(1L), eq("aluna1@teste.com"),
                 anyString(), eq(true));
     }
@@ -263,7 +261,6 @@ class VocationalTestServiceTest {
         // Assert
         assertThat(result.scores()).extracting(CategoryScoreResponse::score).containsOnly(escoreEsperado);
         assertEquals(6, result.topCategories().size());
-        assertEquals(18, result.recommendedAreas().size());
     }
 
     private static VocationalTestResult savedResultOf(User owner) {
@@ -272,7 +269,7 @@ class VocationalTestServiceTest {
             scores.put(category, category == RiasecCategory.INVESTIGATIVE ? 9 : 5);
         }
         return new VocationalTestResult(owner, LocalDateTime.of(2026, 9, 28, 9, 0), scores,
-                List.of(RiasecCategory.INVESTIGATIVE), RiasecCategory.INVESTIGATIVE.getRecommendedAreas(),
+                List.of(RiasecCategory.INVESTIGATIVE),
                 List.of(br.com.bussolaacademica.model.InterestArea.UNDECIDED));
     }
 
