@@ -124,7 +124,7 @@ public class VocationalTestService {
 
     private VocationalTestResultResponse toResponse(VocationalTestResult result) {
         return VocationalTestResultResponse.from(result, careerRecommender.recommend(
-                result.getInterestAreas(), careerRepository.findAll(), result.getScores()));
+                result.getInterestAreas(), careerRepository.findByActiveTrue(), result.getScores()));
     }
 
     /** Sem áreas = "Ainda não sei"; remove repetidas; no máximo 3; "Ainda não sei" sozinha. */
