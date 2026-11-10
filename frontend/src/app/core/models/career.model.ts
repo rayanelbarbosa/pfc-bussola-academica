@@ -12,6 +12,8 @@ export interface Career {
   tertiaryCategory: string | null;
   tertiaryCategoryLabel: string | null;
   code: string;
+  /** Ocupação do O*NET usada como referência do código e do perfil (ex.: "29-1216.00"); null se cadastrada sem. */
+  onetCode: string | null;
   description: string;
   active: boolean;
   updatedAt: string;
