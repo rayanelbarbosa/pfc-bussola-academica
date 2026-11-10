@@ -113,6 +113,34 @@ class CareerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"\",\"area\":\"HEALTH\"}"))
                 .andExpect(status().isBadRequest());
+        // 3º tipo repetindo o principal ou o secundário
+        mockMvc.perform(post("/api/admin/careers")
+                        .header("Authorization", bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Terceiro repetido","area":"HEALTH","primaryCategory":"SOCIAL",
+                                 "secondaryCategory":"INVESTIGATIVE","tertiaryCategory":"SOCIAL","description":"d"}"""))
+                .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void careerWithThirdTypeHasThreeLetterCode() throws Exception {
+        String admin = login(mockMvc, ADMIN_EMAIL, ADMIN_PASSWORD);
+        String name = "Bioinformática " + UUID.randomUUID().toString().substring(0, 6);
+        mockMvc.perform(post("/api/admin/careers")
+                        .header("Authorization", bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"%s","area":"HEALTH","primaryCategory":"INVESTIGATIVE",
+                                 "secondaryCategory":"CONVENTIONAL","tertiaryCategory":"REALISTIC","description":"d"}"""
+                                .formatted(name)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.code").value("ICR"))
+                .andExpect(jsonPath("$.tertiaryCategoryLabel").value("Realista"));
+
+        // as carreiras iniciais também ganharam o 3º tipo (V17)
+        mockMvc.perform(get("/api/admin/careers").param("name", "Medicina Veterinária").header("Authorization", bearer(admin)))
+                .andExpect(jsonPath("$.content[0].code").value("RIC"));
     }
 
     @Test
