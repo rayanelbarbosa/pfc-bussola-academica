@@ -140,7 +140,8 @@ class CareerIntegrationTest {
 
         // as carreiras iniciais também ganharam o 3º tipo (V17)
         mockMvc.perform(get("/api/admin/careers").param("name", "Medicina Veterinária").header("Authorization", bearer(admin)))
-                .andExpect(jsonPath("$.content[0].code").value("RIC"));
+                .andExpect(jsonPath("$.content[0].code").value("RIC"))
+                .andExpect(jsonPath("$.content[0].onetCode").value("29-1131.00"));
     }
 
     @Test
@@ -188,6 +189,29 @@ class CareerIntegrationTest {
         mockMvc.perform(get("/api/admin/audit-logs").param("action", "CAREER_STATUS_CHANGED")
                         .header("Authorization", bearer(admin)))
                 .andExpect(jsonPath("$.totalElements", greaterThanOrEqualTo(1)));
+    }
+
+    /**
+     * Com os dados reais (V16 a V18): perfil R = 10, I = 8, C = 8 e o resto 2. As 5 engenharias RIC empatam em 28;
+     * antes o desempate era pela ordem alfabética e Mecânica, de Computação e Química nunca apareciam.
+     * Com o perfil completo do O*NET, são justamente as 3 mais parecidas com esse aluno.
+     */
+    @Test
+    void sameCodeCareersAreRankedByTheFullOnetProfile() throws Exception {
+        String student = registerStudent(mockMvc, uniqueEmail());
+        int[] answers = {5, 5, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4};
+        String body = IntStream.rangeClosed(1, 12)
+                .mapToObj(id -> "{\"questionId\":" + id + ",\"score\":" + answers[id - 1] + "}")
+                .collect(Collectors.joining(",", "{\"answers\":[", "],\"interestAreas\":[\"ENGINEERING\"]}"));
+
+        mockMvc.perform(post("/api/vocational-test/results")
+                        .header("Authorization", bearer(student))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.careerRecommendations[0].careers", hasSize(3)))
+                .andExpect(jsonPath("$.careerRecommendations[0].careers[*].name",
+                        org.hamcrest.Matchers.contains("Engenharia Mecânica", "Engenharia de Computação", "Engenharia Química")));
     }
 
     @Test

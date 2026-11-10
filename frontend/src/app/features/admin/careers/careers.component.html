@@ -4,8 +4,9 @@
       <h1>Carreiras</h1>
       <p class="mt-2 max-w-2xl text-muted-foreground">
         Carreiras usadas na recomendação do teste e na busca de vídeos. Cada uma tem uma área e um código RIASEC
-        de Holland: a compatibilidade soma 2 vezes o escore do tipo principal com o escore do secundário, e o 3º tipo
-        (opcional) desempata. O teste mostra as 3 carreiras mais compatíveis de cada área.
+        de Holland: a compatibilidade soma 2 vezes o escore do tipo principal com o escore do secundário. Empates são
+        decididos pelo perfil completo da profissão no O*NET (6 notas) e, sem ele, pelo 3º tipo. O teste mostra as 3
+        carreiras mais compatíveis de cada área.
       </p>
     </div>
     <button type="button" class="btn btn-primary" (click)="openCreate()"><app-icon name="plus" class="size-4" /> Nova carreira</button>
@@ -67,7 +68,12 @@
         <tbody>
           @for (career of p.content; track career.id) {
             <tr>
-              <td class="font-medium">{{ career.name }}</td>
+              <td>
+                <span class="font-medium">{{ career.name }}</span>
+                @if (career.onetCode) {
+                  <span class="block text-xs text-muted-foreground">O*NET {{ career.onetCode }}</span>
+                }
+              </td>
               <td>{{ career.areaLabel }}</td>
               <td>
                 <span class="flex gap-1" [attr.title]="career.primaryCategoryLabel + ' + ' + career.secondaryCategoryLabel + (career.tertiaryCategoryLabel ? ' + ' + career.tertiaryCategoryLabel : '')">
@@ -187,7 +193,7 @@
           <p class="self-end text-sm leading-relaxed text-muted-foreground">
             Código <strong class="text-foreground">{{ codePreview() }}</strong>: compatibilidade = 2 × escore
             {{ codePreview().charAt(0) }} + escore {{ codePreview().charAt(1) }} (6 a 30).
-            @if (codePreview().length === 3) { Empate: vence quem tem maior escore {{ codePreview().charAt(2) }}. }
+            Empate: vence a carreira com o perfil O*NET mais parecido com o do estudante@if (codePreview().length === 3) {; sem perfil O*NET, o maior escore {{ codePreview().charAt(2) }}}.
           </p>
         }
         <div class="field sm:col-span-2">

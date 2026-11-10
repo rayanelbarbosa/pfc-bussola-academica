@@ -51,6 +51,31 @@ public class Career {
     @Column(name = "tertiary_category", length = 20)
     private RiasecCategory tertiaryCategory;
 
+    /**
+     * Ocupação do O*NET usada como referência (ex.: "29-1216.00") e as 6 notas de interesse dela (escala OI, 1 a 7).
+     * Opcionais: carreiras cadastradas pela tela podem não ter. Usadas só para desempatar a recomendação.
+     */
+    @Column(name = "onet_code", length = 10)
+    private String onetCode;
+
+    @Column(name = "onet_realistic")
+    private Double onetRealistic;
+
+    @Column(name = "onet_investigative")
+    private Double onetInvestigative;
+
+    @Column(name = "onet_artistic")
+    private Double onetArtistic;
+
+    @Column(name = "onet_social")
+    private Double onetSocial;
+
+    @Column(name = "onet_enterprising")
+    private Double onetEnterprising;
+
+    @Column(name = "onet_conventional")
+    private Double onetConventional;
+
     @Column(nullable = false, length = 300)
     private String description;
 
@@ -113,6 +138,34 @@ public class Career {
     public RiasecCategory getPrimaryCategory() { return primaryCategory; }
     public RiasecCategory getSecondaryCategory() { return secondaryCategory; }
     public RiasecCategory getTertiaryCategory() { return tertiaryCategory; }
+    public String getOnetCode() { return onetCode; }
+
+    /** As 6 notas do O*NET na ordem R, I, A, S, E, C, ou null se a carreira não tiver o perfil completo. */
+    public double[] getInterestProfile() {
+        Double[] values = {onetRealistic, onetInvestigative, onetArtistic, onetSocial, onetEnterprising, onetConventional};
+        double[] profile = new double[values.length];
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] == null) {
+                return null;
+            }
+            profile[i] = values[i];
+        }
+        return profile;
+    }
+
+    /** Define o perfil do O*NET (as cargas iniciais vêm da migration V18; aqui é usado nos testes). */
+    public void setInterestProfile(String onetCode, double... profile) {
+        if (profile.length != 6) {
+            throw new IllegalArgumentException("O perfil precisa de 6 notas (R, I, A, S, E, C)");
+        }
+        this.onetCode = onetCode;
+        this.onetRealistic = profile[0];
+        this.onetInvestigative = profile[1];
+        this.onetArtistic = profile[2];
+        this.onetSocial = profile[3];
+        this.onetEnterprising = profile[4];
+        this.onetConventional = profile[5];
+    }
     public String getDescription() { return description; }
     public boolean isActive() { return active; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

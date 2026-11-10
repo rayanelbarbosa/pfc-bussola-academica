@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 /** Carreira na tela de gestão do administrador. */
 public record CareerResponse(Integer id, String name, String area, String areaLabel, String primaryCategory,
                              String primaryCategoryLabel, String secondaryCategory, String secondaryCategoryLabel,
-                             String tertiaryCategory, String tertiaryCategoryLabel, String code, String description,
-                             boolean active, LocalDateTime updatedAt) {
+                             String tertiaryCategory, String tertiaryCategoryLabel, String code, String onetCode,
+                             String description, boolean active, LocalDateTime updatedAt) {
 
     public static CareerResponse from(Career career) {
         return new CareerResponse(career.getId(), career.getName(), career.getArea().name(),
@@ -17,7 +17,7 @@ public record CareerResponse(Integer id, String name, String area, String areaLa
                 career.getSecondaryCategory().getLabel(),
                 career.getTertiaryCategory() == null ? null : career.getTertiaryCategory().name(),
                 career.getTertiaryCategory() == null ? null : career.getTertiaryCategory().getLabel(),
-                career.getCode(), career.getDescription(),
+                career.getCode(), career.getOnetCode(), career.getDescription(),
                 career.isActive(), career.getUpdatedAt());
     }
 }

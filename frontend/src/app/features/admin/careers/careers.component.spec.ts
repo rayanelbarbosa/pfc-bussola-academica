@@ -10,7 +10,7 @@ import { CareersComponent } from './careers.component';
 const MEDICINA: Career = {
   id: 1, name: 'Medicina', area: 'HEALTH', areaLabel: 'Saúde', primaryCategory: 'INVESTIGATIVE',
   primaryCategoryLabel: 'Investigativo', secondaryCategory: 'SOCIAL', secondaryCategoryLabel: 'Social',
-  tertiaryCategory: 'REALISTIC', tertiaryCategoryLabel: 'Realista', code: 'ISR',
+  tertiaryCategory: 'REALISTIC', tertiaryCategoryLabel: 'Realista', code: 'ISR', onetCode: '29-1216.00',
   description: 'Cuida da saúde.', active: true, updatedAt: '2026-11-10T10:00:00'
 };
 
@@ -35,6 +35,7 @@ describe('CareersComponent', () => {
     const table = fixture.nativeElement.querySelector('tbody').textContent;
     expect(table).toContain('Medicina');
     expect(table).toContain('Saúde');
+    expect(table).toContain('O*NET 29-1216.00');
     expect(table).toContain('I');
   });
 
@@ -59,7 +60,7 @@ describe('CareersComponent', () => {
     component.form.patchValue({ tertiaryCategory: 'REALISTIC' });
     fixture.detectChanges();
     expect(component.codePreview()).toBe('ISR');
-    expect(fixture.nativeElement.textContent).toContain('Empate: vence quem tem maior escore R');
+    expect(fixture.nativeElement.textContent).toContain('sem perfil O*NET, o maior escore R');
   });
 
   it('creates a career and shows the RIASEC code preview', () => {
