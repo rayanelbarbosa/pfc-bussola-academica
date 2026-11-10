@@ -24,8 +24,11 @@
       </div>
       <div class="field">
         <label for="password" class="field-label">Senha</label>
-        <input id="password" type="password" formControlName="password" autocomplete="new-password" class="field-input"
-          [class.is-invalid]="isInvalid('password')" aria-describedby="password-hint" />
+        <div class="relative">
+          <input #pwd id="password" type="password" formControlName="password" autocomplete="new-password" class="field-input pr-11"
+            [class.is-invalid]="isInvalid('password')" aria-describedby="password-hint" />
+          <app-password-toggle [target]="pwd" />
+        </div>
         <div class="mt-1" aria-live="polite">
           <div class="flex gap-1">
             @for (level of [1, 2, 3, 4]; track level) {
@@ -43,8 +46,11 @@
       </div>
       <div class="field">
         <label for="confirmPassword" class="field-label">Confirmar senha</label>
-        <input id="confirmPassword" type="password" formControlName="confirmPassword" autocomplete="new-password" class="field-input"
-          [class.is-invalid]="isInvalid('confirmPassword') || passwordsMismatch" />
+        <div class="relative">
+          <input #confirmPwd id="confirmPassword" type="password" formControlName="confirmPassword" autocomplete="new-password" class="field-input pr-11"
+            [class.is-invalid]="isInvalid('confirmPassword') || passwordsMismatch" />
+          <app-password-toggle [target]="confirmPwd" />
+        </div>
         @if (isInvalid('confirmPassword')) {
           <p class="field-error" role="alert">Confirme sua senha.</p>
         } @else if (passwordsMismatch) {

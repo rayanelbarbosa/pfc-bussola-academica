@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PASSWORD_PATTERN } from '../register/register.component';
+import { PasswordToggleComponent } from '../../../shared/components/password-toggle/password-toggle.component';
 
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {
   const password = group.get('password')?.value;
@@ -21,7 +22,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, IconComponent],
+  imports: [ReactiveFormsModule, RouterLink, IconComponent, PasswordToggleComponent],
   templateUrl: './reset-password.component.html'
 })
 export class ResetPasswordComponent implements OnInit {

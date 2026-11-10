@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 
 import { Video } from '../../../core/models/video.model';
 import { VocationalTestResult } from '../../../core/models/vocational-test.model';
-import { getCategoryInfo, riasecClass } from '../../../core/models/riasec-category';
+import { getCategoryInfo, riasecClass, riasecColor } from '../../../core/models/riasec-category';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { VideoService } from '../../../core/services/video.service';
 import { VocationalTestService } from '../../../core/services/vocational-test.service';
@@ -38,11 +38,17 @@ export class ResultComponent implements OnInit {
 
   readonly categoryInfo = getCategoryInfo;
   readonly riasecClass = riasecClass;
+  readonly riasecColor = riasecColor;
 
   readonly radarPoints = computed(() =>
-    (this.result()?.scores ?? []).map((score) => ({ label: score.label, value: score.score }))
+    (this.result()?.scores ?? []).map((score) => ({ label: score.label, value: score.score, color: riasecColor(score.category) }))
   );
   readonly hasTie = computed(() => (this.result()?.topCategories.length ?? 0) > 1);
+  /** "Investigativo" ou, com empate, "Investigativo e Social". */
+  readonly profileName = computed(() => {
+    const names = (this.result()?.topCategories ?? []).map((top) => top.label);
+    return names.length > 1 ? names.slice(0, -1).join(', ') + ' e ' + names.at(-1) : names[0] ?? '';
+  });
 
   ngOnInit(): void {
     this.testService.getResult(Number(this.id())).subscribe({
