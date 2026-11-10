@@ -55,12 +55,12 @@ public class VideoService {
         return videos;
     }
 
-    /** Aceita só carreiras cadastradas e devolve o nome oficial (usado na busca e no cache). */
+    /** Aceita só carreiras cadastradas e ativas e devolve o nome oficial (usado na busca e no cache). */
     private String findRegisteredCareer(String careerName) {
         if (careerName == null || careerName.isBlank()) {
             throw new IllegalArgumentException("Informe a carreira para buscar vídeos.");
         }
-        return careerRepository.findFirstByNameIgnoreCase(careerName.trim())
+        return careerRepository.findFirstByNameIgnoreCaseAndActiveTrue(careerName.trim())
                 .map(Career::getName)
                 .orElseThrow(() -> new IllegalArgumentException("Carreira não encontrada."));
     }

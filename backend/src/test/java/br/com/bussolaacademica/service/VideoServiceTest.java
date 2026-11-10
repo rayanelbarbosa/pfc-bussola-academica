@@ -50,7 +50,7 @@ class VideoServiceTest {
     private void registered(String name) {
         Career career = new Career(1, name, InterestArea.HEALTH, RiasecCategory.INVESTIGATIVE,
                 RiasecCategory.SOCIAL, "descrição");
-        when(careerRepository.findFirstByNameIgnoreCase(anyString())).thenReturn(Optional.of(career));
+        when(careerRepository.findFirstByNameIgnoreCaseAndActiveTrue(anyString())).thenReturn(Optional.of(career));
     }
 
     @Test
@@ -67,7 +67,7 @@ class VideoServiceTest {
 
     @Test
     void shouldRejectUnregisteredCareerWithoutCallingYouTube() {
-        when(careerRepository.findFirstByNameIgnoreCase("Astronauta")).thenReturn(Optional.empty());
+        when(careerRepository.findFirstByNameIgnoreCaseAndActiveTrue("Astronauta")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service(CONFIGURED).searchByCareer("Astronauta"))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -99,6 +99,6 @@ class VideoServiceTest {
     void shouldRejectBlankCareer() {
         assertThatThrownBy(() -> service(CONFIGURED).searchByCareer("  "))
                 .isInstanceOf(IllegalArgumentException.class);
-        verify(careerRepository, never()).findFirstByNameIgnoreCase(anyString());
+        verify(careerRepository, never()).findFirstByNameIgnoreCaseAndActiveTrue(anyString());
     }
 }
