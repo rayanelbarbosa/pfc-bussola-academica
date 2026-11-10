@@ -1,9 +1,11 @@
 # Bússola Acadêmica
 
-Projeto Final de Curso (PFC) — Bacharelado em Engenharia de Software (UMC), por Rayane da Luz
+Projeto Final de Curso (PFC) do Bacharelado em Engenharia de Software (UMC), por Rayane da Luz
 Barbosa. Plataforma web que centraliza informações sobre as formas de ingresso no ensino superior
 (Enem/Sisu, Prouni, Fies e vestibulares) e oferece orientação vocacional inicial a estudantes
 concluintes do ensino médio.
+
+**Sistema publicado:** https://www.bussolaacademica.com.br (API em https://api.bussolaacademica.com.br)
 
 ## Arquitetura
 
@@ -11,8 +13,8 @@ Monólito em camadas (Controller → Service → Repository), com:
 
 | Parte | Tecnologia | Hospedagem |
 | --- | --- | --- |
-| Front-end | Angular 18 | AWS S3 + CloudFront |
-| Back-end | Spring Boot 3.3 (Java 21), Docker | AWS EC2 + nginx (HTTPS) |
+| Front-end | Angular 18 | AWS EC2, servido pelo nginx (HTTPS) |
+| Back-end | Spring Boot 3.3 (Java 21), Docker | AWS EC2, atrás do nginx (proxy reverso) |
 | Banco | PostgreSQL + Flyway | Neon |
 
 Protótipo: [Figma](https://www.figma.com/design/TcdjgXfxrIpZVJAwjXlsDy/Prot%C3%B3tipo-B%C3%BAssola-Acad%C3%AAmica)
@@ -82,15 +84,16 @@ cd frontend && npm test    # Jasmine/Karma
 
 ## Deploy
 
-A implantação na AWS está prevista para a entrega de 23/11. Os workflows já estão prontos e, depois de
-configurados os secrets, todo merge na `main` publica automaticamente pelo GitHub Actions:
+O front-end e a API rodam na mesma instância EC2 (us-east-2). O nginx serve os arquivos do Angular em
+`www.bussolaacademica.com.br`, faz proxy reverso da API em `api.bussolaacademica.com.br`, termina o HTTPS
+(certificado com renovação automática) e aplica HSTS, CSP e limite de requisições (ver
+`infra/nginx`). Todo merge na `main` publica automaticamente pelo GitHub Actions:
 
 - `deploy-backend.yml`: gera a imagem Docker do back-end, publica no GitHub Container Registry e
-  atualiza o container na EC2 (atrás do nginx com HTTPS — ver `infra/nginx`).
-- `deploy-frontend.yml`: faz o build de produção do Angular, envia para o S3 e invalida o cache do
-  CloudFront.
+  atualiza o container na EC2.
+- `deploy-frontend.yml`: faz o build de produção do Angular, envia para a EC2 e troca a pasta publicada
+  de uma vez, sem deixar o site pela metade.
 
-Secrets necessários no repositório: `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY`, `AWS_ACCESS_KEY_ID`,
-`AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET` e `AWS_CLOUDFRONT_DISTRIBUTION_ID`. Enquanto
-não existem, os workflows de deploy são pulados. Na EC2, as variáveis da API (banco e CORS) ficam em
-`/opt/bussola/.env` (as mesmas do `backend/.env.example`, com `SPRING_PROFILES_ACTIVE=prod`).
+Secrets necessários no repositório: `EC2_HOST`, `EC2_USER` e `EC2_SSH_KEY`. Na EC2, as variáveis da API
+(banco e CORS) ficam em `/opt/bussola/.env` (as mesmas do `backend/.env.example`, com
+`SPRING_PROFILES_ACTIVE=prod`).
