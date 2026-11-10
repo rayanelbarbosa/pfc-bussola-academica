@@ -86,6 +86,12 @@ export const routes: Routes = [
       import('./features/admin/admission-methods/admission-methods.component').then((m) => m.AdmissionMethodsComponent)
   },
   {
+    path: 'admin/carreiras',
+    title: 'Carreiras | Administração',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/admin/careers/careers.component').then((m) => m.CareersComponent)
+  },
+  {
     path: 'admin/usuarios',
     title: 'Usuários | Administração',
     canActivate: [adminGuard],

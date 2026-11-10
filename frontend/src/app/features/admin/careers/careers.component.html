@@ -1,0 +1,194 @@
+<div class="container-page section-y">
+  <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div>
+      <h1>Carreiras</h1>
+      <p class="mt-2 max-w-2xl text-muted-foreground">
+        Carreiras usadas na recomendação do teste e na busca de vídeos. Cada uma tem uma área e um código RIASEC
+        de 2 letras: a compatibilidade soma 2 vezes o escore do tipo principal com o escore do secundário.
+      </p>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="openCreate()"><app-icon name="plus" class="size-4" /> Nova carreira</button>
+  </div>
+
+  @if (notice()) {
+    <div class="alert alert-success mb-4" role="status">
+      <app-icon name="check" class="mt-0.5 size-5" /><span class="flex-1">{{ notice() }}</span>
+      <button type="button" aria-label="Fechar aviso" (click)="notice.set(null)"><app-icon name="x" class="size-4" /></button>
+    </div>
+  }
+
+  <form class="card mb-4 grid gap-4 p-4 sm:p-4 md:grid-cols-[2fr_1fr_1fr_auto] md:items-end" (ngSubmit)="load(0)">
+    <div class="field">
+      <label for="f-name" class="field-label">Buscar por nome</label>
+      <input id="f-name" name="filterName" class="field-input" placeholder="Ex.: Medicina" [(ngModel)]="filterName" />
+    </div>
+    <div class="field">
+      <label for="f-area" class="field-label">Área</label>
+      <select id="f-area" name="filterArea" class="field-input" [(ngModel)]="filterArea">
+        <option value="">Todas</option>
+        @for (area of areas(); track area.value) {
+          <option [value]="area.value">{{ area.label }}</option>
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-active" class="field-label">Status</label>
+      <select id="f-active" name="filterActive" class="field-input" [(ngModel)]="filterActive">
+        <option value="">Todos</option>
+        <option value="true">Ativa</option>
+        <option value="false">Inativa</option>
+      </select>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">Filtrar</button>
+      <button type="button" class="btn btn-secondary" (click)="clearFilters()">Limpar</button>
+    </div>
+  </form>
+
+  @if (error()) {
+    <div class="alert alert-error mb-4" role="alert"><app-icon name="alert-circle" class="mt-0.5 size-5" />{{ error() }}</div>
+  }
+
+  @if (page(); as p) {
+    <div class="table-wrap">
+      <table class="table">
+        <caption class="sr-only">Carreiras cadastradas</caption>
+        <thead>
+          <tr>
+            <th scope="col">Nome</th>
+            <th scope="col">Área</th>
+            <th scope="col">Código RIASEC</th>
+            <th scope="col">Status</th>
+            <th scope="col">Atualizado em</th>
+            <th scope="col" class="text-right">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (career of p.content; track career.id) {
+            <tr>
+              <td class="font-medium">{{ career.name }}</td>
+              <td>{{ career.areaLabel }}</td>
+              <td>
+                <span class="flex gap-1" [attr.title]="career.primaryCategoryLabel + ' + ' + career.secondaryCategoryLabel">
+                  <span class="grid size-7 place-items-center rounded-md riasec-tint text-xs font-semibold" [class]="riasecClass(career.primaryCategory)">{{ career.code.charAt(0) }}</span>
+                  <span class="grid size-7 place-items-center rounded-md riasec-tint text-xs font-semibold" [class]="riasecClass(career.secondaryCategory)">{{ career.code.charAt(1) }}</span>
+                </span>
+              </td>
+              <td>
+                <span class="badge" [class.badge-success]="career.active">{{ career.active ? 'Ativa' : 'Inativa' }}</span>
+              </td>
+              <td class="whitespace-nowrap">{{ career.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td class="whitespace-nowrap text-right">
+                <button type="button" class="btn btn-ghost btn-sm" (click)="openEdit(career)"><app-icon name="pencil" class="size-4" /> Editar</button>
+                <button type="button" class="btn btn-ghost btn-sm" (click)="confirming.set(career)">{{ career.active ? 'Desativar' : 'Reativar' }}</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="py-8 text-center text-muted-foreground">Nenhuma carreira encontrada.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (p.totalPages > 1) {
+      <nav class="mt-4 flex items-center justify-between gap-3" aria-label="Paginação">
+        <p class="text-sm text-muted-foreground">Página {{ p.page + 1 }} de {{ p.totalPages }}</p>
+        <div class="flex gap-2">
+          <button type="button" class="btn btn-secondary btn-sm" (click)="load(p.page - 1)" [disabled]="p.page === 0">Anterior</button>
+          <button type="button" class="btn btn-secondary btn-sm" (click)="load(p.page + 1)" [disabled]="p.page + 1 >= p.totalPages">Próxima</button>
+        </div>
+      </nav>
+    }
+  } @else if (loading()) {
+    <div class="skeleton h-64"></div>
+  }
+</div>
+
+@if (confirming(); as career) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" (click)="confirming.set(null)">
+    <div role="dialog" aria-modal="true" aria-labelledby="confirm-title" class="w-full max-w-md rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()">
+      <h2 id="confirm-title" class="text-xl">{{ career.active ? 'Desativar' : 'Reativar' }} "{{ career.name }}"?</h2>
+      <p class="mt-3 text-sm text-muted-foreground">
+        {{ career.active ? 'Ela deixa de ser recomendada no teste, mas continua guardada e pode ser reativada.' : 'Ela volta a ser recomendada no teste.' }}
+      </p>
+      <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button type="button" class="btn btn-ghost" (click)="confirming.set(null)">Cancelar</button>
+        <button type="button" class="btn" [class.btn-danger]="career.active" [class.btn-primary]="!career.active" (click)="confirmStatusChange()">
+          {{ career.active ? 'Desativar' : 'Reativar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (editingId() !== null) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" (click)="closeForm()">
+    <div role="dialog" aria-modal="true" aria-labelledby="form-title"
+      class="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()">
+      <div class="mb-4 flex items-start justify-between gap-4">
+        <h2 id="form-title" class="text-2xl">{{ editingId() ? 'Editar carreira' : 'Nova carreira' }}</h2>
+        <button type="button" aria-label="Fechar" class="rounded-md p-1 text-muted-foreground hover:bg-accent" (click)="closeForm()"><app-icon name="x" class="size-5" /></button>
+      </div>
+      @if (formError()) {
+        <div class="alert alert-error mb-4" role="alert"><app-icon name="alert-circle" class="mt-0.5 size-5" />{{ formError() }}</div>
+      }
+      <form [formGroup]="form" (ngSubmit)="save()" novalidate class="grid gap-4 sm:grid-cols-2">
+        <div class="field">
+          <label for="name" class="field-label">Nome</label>
+          <input id="name" formControlName="name" class="field-input" placeholder="Ex.: Engenharia de Prompt" [class.is-invalid]="isInvalid('name')" />
+          @if (isInvalid('name')) { <p class="field-error">Informe o nome (até 100 caracteres).</p> }
+        </div>
+        <div class="field">
+          <label for="area" class="field-label">Área de interesse</label>
+          <select id="area" formControlName="area" class="field-input" [class.is-invalid]="isInvalid('area')">
+            <option value="">Selecione</option>
+            @for (area of areas(); track area.value) {
+              <option [value]="area.value">{{ area.label }}</option>
+            }
+          </select>
+          @if (isInvalid('area')) { <p class="field-error">Selecione a área.</p> }
+        </div>
+        <div class="field">
+          <label for="primaryCategory" class="field-label">Tipo principal (peso 2)</label>
+          <select id="primaryCategory" formControlName="primaryCategory" class="field-input" [class.is-invalid]="isInvalid('primaryCategory')">
+            <option value="">Selecione</option>
+            @for (category of categories(); track category.value) {
+              <option [value]="category.value">{{ category.label }}</option>
+            }
+          </select>
+          @if (isInvalid('primaryCategory')) { <p class="field-error">Selecione o tipo principal.</p> }
+        </div>
+        <div class="field">
+          <label for="secondaryCategory" class="field-label">Tipo secundário (peso 1)</label>
+          <select id="secondaryCategory" formControlName="secondaryCategory" class="field-input"
+            [class.is-invalid]="isInvalid('secondaryCategory') || sameType">
+            <option value="">Selecione</option>
+            @for (category of categories(); track category.value) {
+              <option [value]="category.value">{{ category.label }}</option>
+            }
+          </select>
+          @if (isInvalid('secondaryCategory')) { <p class="field-error">Selecione o tipo secundário.</p> }
+          @if (sameType) { <p class="field-error">Escolha um tipo diferente do principal.</p> }
+        </div>
+        @if (codePreview().length === 2 && !form.hasError('sameType')) {
+          <p class="text-sm text-muted-foreground sm:col-span-2">
+            Código RIASEC: <strong class="text-foreground">{{ codePreview() }}</strong>. Compatibilidade = 2 × escore
+            {{ codePreview().charAt(0) }} + escore {{ codePreview().charAt(1) }} (de 6 a 30 pontos).
+          </p>
+        }
+        <div class="field sm:col-span-2">
+          <label for="description" class="field-label">Descrição</label>
+          <textarea id="description" formControlName="description" class="field-input" [class.is-invalid]="isInvalid('description')"></textarea>
+          <p class="field-hint">{{ length('description') }}/300. Aparece no cartão da carreira no resultado do teste.</p>
+          @if (isInvalid('description')) { <p class="field-error">Informe a descrição (até 300 caracteres).</p> }
+        </div>
+        <label class="flex cursor-pointer items-center gap-3 text-sm sm:col-span-2">
+          <input type="checkbox" formControlName="active" class="size-5 accent-[var(--primary)]" /> Ativa (entra na recomendação do teste)
+        </label>
+        <div class="mt-2 flex flex-col-reverse gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
+          <button type="button" class="btn btn-ghost" (click)="closeForm()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Salvar' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
