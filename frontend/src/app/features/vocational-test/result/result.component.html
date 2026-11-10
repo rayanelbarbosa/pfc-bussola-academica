@@ -94,14 +94,12 @@
     <section class="mb-8">
       <h2 class="text-xl">Carreiras mais compatíveis</h2>
       <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-        A compatibilidade soma 2 vezes o seu escore no 1º tipo da carreira com o escore no 2º tipo.
+        Mostramos as 3 carreiras mais compatíveis de cada área. A compatibilidade soma 2 vezes o seu escore no 1º tipo
+        da carreira com o escore no 2º tipo; se duas carreiras empatarem, vence a que tem o 3º tipo mais forte em você.
       </p>
       @for (group of r.careerRecommendations; track group.area) {
         <div class="mt-6">
           <h3 class="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-base text-accent-foreground">{{ group.label }}</h3>
-          @if (group.careers.length > 3) {
-            <p class="mt-1 text-sm text-muted-foreground">Incluímos as carreiras empatadas na terceira posição.</p>
-          }
           <div class="mt-3 grid items-stretch gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))]">
             @for (career of group.careers; track career.name) {
               <div class="card card-hover flex flex-col overflow-hidden p-0 sm:p-0">

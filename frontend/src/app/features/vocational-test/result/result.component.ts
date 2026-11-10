@@ -50,6 +50,14 @@ export class ResultComponent implements OnInit {
     return names.length > 1 ? names.slice(0, -1).join(', ') + ' e ' + names.at(-1) : names[0] ?? '';
   });
 
+  /** Os 2 tipos de maior escore do estudante: o back-end usa para ordenar os vídeos (ranking), não para buscar. */
+  readonly videoProfile = computed(() =>
+    [...(this.result()?.scores ?? [])]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 2)
+      .map((score) => score.category)
+  );
+
   ngOnInit(): void {
     this.testService.getResult(Number(this.id())).subscribe({
       next: (result) => {
@@ -69,8 +77,8 @@ export class ResultComponent implements OnInit {
   }
 
   /**
-   * Busca os vídeos de cada carreira (o back-end guarda as buscas em cache por 24 h, então cada carreira
-   * consome a cota da API do YouTube no máximo uma vez por dia).
+   * Busca os vídeos de cada carreira. O back-end guarda os candidatos em cache por 24 h (cada carreira consome a
+   * cota do YouTube no máximo uma vez por dia) e reordena os vídeos pelo perfil do estudante.
    */
   loadVideos(career: string): void {
     const current = this.videos()[career];
@@ -78,7 +86,7 @@ export class ResultComponent implements OnInit {
       return;
     }
     this.setVideos(career, { status: 'loading' });
-    this.videoService.searchByCareer(career).subscribe({
+    this.videoService.searchByCareer(career, this.videoProfile()).subscribe({
       next: (videos) => this.setVideos(career, { status: 'ok', videos }),
       error: () => this.setVideos(career, { status: 'error' })
     });
