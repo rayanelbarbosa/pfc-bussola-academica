@@ -60,7 +60,8 @@ describe('ResultComponent', () => {
     expect(el.textContent).toContain('2 tipos tiveram o mesmo maior escore');
     expect(el.textContent).toContain('Características comuns');
     expect(el.textContent).toContain('Engenharia Civil');
-    expect(el.textContent).toContain('22 pontos');
+    expect(el.textContent).toContain('22 de 30 pontos');
+    expect(el.textContent).toContain('Seu perfil é Realista e Convencional');
   });
 
   it('loads the videos of each career and keeps the page working when the API is down', () => {

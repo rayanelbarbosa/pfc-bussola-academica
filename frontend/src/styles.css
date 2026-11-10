@@ -4,13 +4,13 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
+  --background: #f7f5fb;
   --foreground: #111111;
   --card: #ffffff;
   --primary: #7c3aed;
   --primary-foreground: #ffffff;
   --primary-soft: #5b21b6;
-  --muted: #fafafa;
+  --muted: #f3f0f8;
   --muted-foreground: #6b6b6b;
   --accent: #f3eeff;
   --accent-foreground: #5b21b6;
@@ -31,7 +31,7 @@
   --riasec-i: #2563eb;
   --riasec-a: #db2777;
   --riasec-s: #16a34a;
-  --riasec-e: #ca8a04;
+  --riasec-e: #a16207;
   --riasec-c: #7c3aed;
 }
 
@@ -63,13 +63,19 @@
       transition-all duration-200 disabled:pointer-events-none disabled:opacity-50;
   }
   .btn-sm { @apply h-10 px-3; }
-  .btn-primary { @apply bg-primary text-primary-foreground hover:bg-primary-soft; }
+  .btn-primary { @apply bg-primary text-primary-foreground shadow-md shadow-primary/25 hover:bg-primary-soft hover:shadow-lg; }
+  .btn-light { @apply bg-white text-primary-soft shadow-md hover:bg-accent; }
+  .btn-outline-light { @apply border border-white/40 bg-white/10 text-white hover:bg-white/20; }
   .btn-secondary { @apply border border-border bg-card text-foreground hover:bg-muted; }
   .btn-ghost { @apply bg-transparent text-primary hover:bg-accent; }
   .btn-danger { @apply bg-destructive text-white hover:opacity-90; }
   .btn-link { @apply h-auto rounded-none px-0 py-1 text-muted-foreground hover:text-primary hover:underline; }
 
-  .card { @apply rounded-lg border border-border bg-card p-5 sm:p-6; }
+  .card { @apply rounded-xl border border-border bg-card p-5 shadow-[0_1px_2px_rgba(30,16,60,0.04),0_8px_24px_rgba(30,16,60,0.05)] sm:p-6; }
+  .card-hover { @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_2px_4px_rgba(30,16,60,0.06),0_14px_32px_rgba(91,33,182,0.12)]; }
+  /* Faixa de destaque em violeta escuro (hero da home, topo do resultado, chamadas) */
+  .hero-violet { background: radial-gradient(120% 140% at 85% 0%, #7c3aed 0%, #4c1d95 45%, #2e1065 100%); color: #fff; }
+  .hero-violet .text-muted-foreground { color: #ddd6fe; }
   .chip {
     @apply rounded-full border border-border bg-card px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted;
   }
@@ -99,7 +105,7 @@
 
   .skeleton { @apply rounded-md bg-muted; animation: shimmer 1.4s ease-in-out infinite; }
 
-  .table-wrap { @apply overflow-x-auto rounded-lg border border-border bg-card; }
+  .table-wrap { @apply overflow-x-auto rounded-xl border border-border bg-card shadow-sm; }
   .table { @apply w-full min-w-[640px] text-left text-sm; }
   .table th { @apply whitespace-nowrap bg-muted px-4 py-3 font-semibold; }
   .table td { @apply border-t border-border px-4 py-3 align-middle; }
@@ -119,6 +125,26 @@
 .riasec-s { color: var(--riasec-s); }
 .riasec-e { color: var(--riasec-e); }
 .riasec-c { color: var(--riasec-c); }
+
+/* Escala Likert do teste: vermelho = rejeição, cinza = neutro, verde = afinidade. */
+.likert { --likert: var(--foreground-rgb); border: 1px solid rgb(var(--likert) / 0.3); background: rgb(var(--likert) / 0.05);
+  color: rgb(var(--likert)); font-weight: 600; }
+.likert:hover { background: rgb(var(--likert) / 0.12); }
+.likert.is-selected { background: rgb(var(--likert)); border-color: rgb(var(--likert)); color: #fff;
+  box-shadow: 0 4px 12px rgb(var(--likert) / 0.3); transform: translateY(-1px); }
+.likert-1, .likert-2 { --likert: var(--destructive-rgb); }
+.likert-2:not(.is-selected) { background: rgb(var(--likert) / 0.025); border-color: rgb(var(--likert) / 0.2); }
+.likert-2.is-selected { background: rgb(var(--likert) / 0.75); }
+.likert-3 { --likert: 107 107 107; }
+.likert-4, .likert-5 { --likert: var(--success-rgb); }
+.likert-4:not(.is-selected) { background: rgb(var(--likert) / 0.025); border-color: rgb(var(--likert) / 0.2); }
+.likert-4.is-selected { background: rgb(var(--likert) / 0.75); }
+
+/* Identidade visual: as 6 cores RIASEC aparecem como faixa e como fundo suave das letras dos tipos. */
+.riasec-tint { background: color-mix(in srgb, currentColor 12%, transparent); }
+.riasec-stripe { height: 3px; background: linear-gradient(90deg,
+  var(--riasec-r) 0 16.66%, var(--riasec-i) 16.66% 33.33%, var(--riasec-a) 33.33% 50%,
+  var(--riasec-s) 50% 66.66%, var(--riasec-e) 66.66% 83.33%, var(--riasec-c) 83.33% 100%); }
 
 .compass-spin { animation: compass-swing 6s ease-in-out infinite; transform-origin: 120px 120px; }
 
