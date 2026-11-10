@@ -28,7 +28,7 @@ describe('CareerService', () => {
   });
 
   it('calls the admin endpoints', () => {
-    const body = { name: 'X', area: 'HEALTH', primaryCategory: 'SOCIAL', secondaryCategory: 'INVESTIGATIVE', description: 'D', active: true };
+    const body = { name: 'X', area: 'HEALTH', primaryCategory: 'SOCIAL', secondaryCategory: 'INVESTIGATIVE', tertiaryCategory: null, description: 'D', active: true };
     service.areas().subscribe();
     http.expectOne(`${url}/areas`).flush([]);
     service.categories().subscribe();

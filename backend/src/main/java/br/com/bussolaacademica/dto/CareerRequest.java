@@ -13,11 +13,13 @@ public record CareerRequest(
         @NotNull(message = "informe a área") InterestArea area,
         @NotNull(message = "informe o tipo principal") RiasecCategory primaryCategory,
         @NotNull(message = "informe o tipo secundário") RiasecCategory secondaryCategory,
+        // opcional: 3º tipo do código de Holland, usado só para desempatar
+        RiasecCategory tertiaryCategory,
         @NotBlank(message = "informe a descrição") @Size(max = 300, message = "máximo de 300 caracteres") String description,
         Boolean active) {
 
     public CareerContent toContent() {
-        return new CareerContent(name.trim(), area, primaryCategory, secondaryCategory, description.trim());
+        return new CareerContent(name.trim(), area, primaryCategory, secondaryCategory, tertiaryCategory, description.trim());
     }
 
     public boolean activeOrDefault() {

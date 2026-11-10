@@ -45,6 +45,12 @@ public class Career {
     @Column(name = "secondary_category", nullable = false, length = 20)
     private RiasecCategory secondaryCategory;
 
+    /** 3º tipo do código de Holland: só desempata carreiras com a mesma compatibilidade (opcional). */
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "tertiary_category", length = 20)
+    private RiasecCategory tertiaryCategory;
+
     @Column(nullable = false, length = 300)
     private String description;
 
@@ -68,6 +74,12 @@ public class Career {
         this.description = description;
     }
 
+    public Career(Integer id, String name, InterestArea area, RiasecCategory primaryCategory,
+                  RiasecCategory secondaryCategory, RiasecCategory tertiaryCategory, String description) {
+        this(id, name, area, primaryCategory, secondaryCategory, description);
+        this.tertiaryCategory = tertiaryCategory;
+    }
+
     /** Nova carreira cadastrada pelo administrador (o id vem da sequence career_seq). */
     public Career(CareerContent content, boolean active, LocalDateTime updatedAt) {
         update(content, active, updatedAt);
@@ -78,6 +90,7 @@ public class Career {
         this.area = content.area();
         this.primaryCategory = content.primaryCategory();
         this.secondaryCategory = content.secondaryCategory();
+        this.tertiaryCategory = content.tertiaryCategory();
         this.description = content.description();
         this.active = active;
         this.updatedAt = updatedAt;
@@ -88,9 +101,10 @@ public class Career {
         this.updatedAt = updatedAt;
     }
 
-    /** Código de 2 letras, ex.: "IR" (Investigativo + Realista). */
+    /** Código de Holland, ex.: "IR" ou, com o 3º tipo, "IRC" (Investigativo + Realista + Convencional). */
     public String getCode() {
-        return primaryCategory.name().substring(0, 1) + secondaryCategory.name().substring(0, 1);
+        String code = primaryCategory.name().substring(0, 1) + secondaryCategory.name().substring(0, 1);
+        return tertiaryCategory == null ? code : code + tertiaryCategory.name().charAt(0);
     }
 
     public Integer getId() { return id; }
@@ -98,6 +112,7 @@ public class Career {
     public InterestArea getArea() { return area; }
     public RiasecCategory getPrimaryCategory() { return primaryCategory; }
     public RiasecCategory getSecondaryCategory() { return secondaryCategory; }
+    public RiasecCategory getTertiaryCategory() { return tertiaryCategory; }
     public String getDescription() { return description; }
     public boolean isActive() { return active; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

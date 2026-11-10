@@ -29,7 +29,8 @@ import java.util.List;
  * <ul>
  *   <li>Cada carreira tem uma área de interesse e um código RIASEC de 2 letras (tipo principal + secundário),
  *       que alimentam a recomendação (compatibilidade = 2 × principal + secundário).</li>
- *   <li>Os dois tipos precisam ser diferentes e a área não pode ser "Ainda não sei".</li>
+ *   <li>Os tipos precisam ser diferentes entre si e a área não pode ser "Ainda não sei". O 3º tipo é opcional e
+ *       só desempata carreiras com a mesma compatibilidade.</li>
  *   <li>O nome é único dentro da área (sem diferenciar maiúsculas de minúsculas).</li>
  *   <li>Não há exclusão: a carreira é desativada e deixa de aparecer na recomendação e na busca de vídeos.</li>
  *   <li>Toda alteração é registrada na auditoria.</li>
@@ -129,6 +130,10 @@ public class CareerService {
         }
         if (content.primaryCategory() == content.secondaryCategory()) {
             throw new BusinessRuleException("O tipo principal e o secundário precisam ser diferentes");
+        }
+        if (content.tertiaryCategory() != null && (content.tertiaryCategory() == content.primaryCategory()
+                || content.tertiaryCategory() == content.secondaryCategory())) {
+            throw new BusinessRuleException("O 3º tipo precisa ser diferente do principal e do secundário");
         }
         return content;
     }

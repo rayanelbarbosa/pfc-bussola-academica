@@ -21,7 +21,7 @@ public record YouTubeSearchResponse(List<Item> items) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Snippet(String title, String channelTitle, Thumbnails thumbnails) {
+    public record Snippet(String title, String description, String channelTitle, Thumbnails thumbnails) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

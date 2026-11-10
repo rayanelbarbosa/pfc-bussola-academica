@@ -65,7 +65,9 @@ describe('ResultComponent', () => {
   });
 
   it('loads the videos of each career and keeps the page working when the API is down', () => {
-    expect(videoService.searchByCareer).toHaveBeenCalledWith('Engenharia Civil');
+    expect(videoService.searchByCareer).toHaveBeenCalledWith('Engenharia Civil', jasmine.any(Array));
+    // perfil = 2 tipos de maior escore, mandados para o ranking dos vídeos
+    expect(fixture.componentInstance.videoProfile()).toEqual(['REALISTIC', 'CONVENTIONAL']);
     expect(fixture.nativeElement.textContent).toContain('Vídeos indisponíveis no momento');
   });
 

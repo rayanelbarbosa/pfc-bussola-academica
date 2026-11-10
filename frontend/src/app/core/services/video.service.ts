@@ -11,7 +11,13 @@ export class VideoService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/videos`;
 
-  searchByCareer(career: string): Observable<Video[]> {
-    return this.http.get<Video[]>(this.baseUrl, { params: new HttpParams().set('career', career) });
+  /**
+   * {@code profile} = tipos RIASEC principais do estudante (ex.: ['SOCIAL', 'INVESTIGATIVE']). O back-end usa o
+   * perfil só para ordenar os vídeos (ranking); a busca no YouTube continua a mesma e fica em cache.
+   */
+  searchByCareer(career: string, profile: string[] = []): Observable<Video[]> {
+    let params = new HttpParams().set('career', career);
+    if (profile.length) params = params.set('profile', profile.join(','));
+    return this.http.get<Video[]>(this.baseUrl, { params });
   }
 }

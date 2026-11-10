@@ -68,20 +68,36 @@ class CareerRecommenderTest {
     }
 
     @Test
-    void keepsAllCareersTiedInThirdPlace() {
+    void breaksTiesWithTheThirdTypeAndShowsExactlyThree() {
+        // A, B, C e D empatam em 2 × 9 + 4 = 22 (código RI); o 3º tipo decide: C=9 > A=7 > S=6 > sem 3º tipo
         List<Career> careers = List.of(
-                career(1, "A", InterestArea.HEALTH, REALISTIC, CONVENTIONAL),     // 27
-                career(2, "B", InterestArea.HEALTH, CONVENTIONAL, REALISTIC),     // 27
-                career(3, "C", InterestArea.HEALTH, SOCIAL, REALISTIC),           // 21
-                career(4, "D", InterestArea.HEALTH, SOCIAL, CONVENTIONAL),        // 21
-                career(5, "E", InterestArea.HEALTH, ENTERPRISING, INVESTIGATIVE)); // 10
+                new Career(1, "Sem terceiro", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, "d"),
+                new Career(2, "Social", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, SOCIAL, "d"),
+                new Career(3, "Artistico", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, ARTISTIC, "d"),
+                new Career(4, "Convencional", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, CONVENTIONAL, "d"),
+                new Career(5, "Longe", InterestArea.ENGINEERING, ENTERPRISING, INVESTIGATIVE, "d"));
 
-        List<RankedCareer> top = recommender.recommend(List.of(InterestArea.HEALTH), careers, scores())
-                .get(InterestArea.HEALTH);
+        List<RankedCareer> top = recommender.recommend(List.of(InterestArea.ENGINEERING), careers, scores())
+                .get(InterestArea.ENGINEERING);
 
-        assertThat(top).extracting(ranked -> ranked.career().getName()).containsExactly("A", "B", "C", "D");
+        assertThat(top).extracting(ranked -> ranked.career().getName())
+                .containsExactly("Convencional", "Artistico", "Social");
+        assertThat(top).extracting(RankedCareer::compatibility).containsOnly(22);
+        assertThat(top.get(0).career().getCode()).isEqualTo("RIC");
     }
 
+    @Test
+    void sameFullCodeFallsBackToAlphabeticalOrder() {
+        List<Career> careers = List.of(
+                new Career(1, "Zootecnia", InterestArea.HEALTH, SOCIAL, REALISTIC, ARTISTIC, "d"),
+                new Career(2, "Biologia", InterestArea.HEALTH, SOCIAL, REALISTIC, ARTISTIC, "d"));
+
+        assertThat(recommender.recommend(List.of(InterestArea.HEALTH), careers, scores()).get(InterestArea.HEALTH))
+                .extracting(ranked -> ranked.career().getName())
+                .containsExactly("Biologia", "Zootecnia");
+    }
+
+    /** "Ainda não sei" mostra até 5 carreiras de todas as áreas (aqui só existem 4). */
     @Test
     void undecidedRanksCareersFromAllAreasAndKeepsChosenOrder() {
         List<Career> careers = List.of(
@@ -93,7 +109,7 @@ class CareerRecommenderTest {
         assertThat(recommender.recommend(List.of(InterestArea.UNDECIDED), careers, scores())
                 .get(InterestArea.UNDECIDED))
                 .extracting(ranked -> ranked.career().getName())
-                .containsExactly("Contabilidade", "Engenharia Civil", "Pedagogia");
+                .containsExactly("Contabilidade", "Engenharia Civil", "Pedagogia", "Marketing");
 
         assertThat(recommender.recommend(List.of(InterestArea.EDUCATION, InterestArea.BUSINESS), careers, scores()))
                 .containsOnlyKeys(InterestArea.EDUCATION, InterestArea.BUSINESS)
