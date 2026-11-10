@@ -11,6 +11,17 @@ describe('VideoService', () => {
     TestBed.inject(VideoService).searchByCareer('Medicina').subscribe();
     const req = http.expectOne((r) => r.url === `${environment.apiUrl}/videos`);
     expect(req.request.params.get('career')).toBe('Medicina');
+    expect(req.request.params.has('profile')).toBeFalse();
+    req.flush([]);
+    http.verify();
+  });
+
+  it('sends the student profile so the back-end can rank the videos', () => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    const http = TestBed.inject(HttpTestingController);
+    TestBed.inject(VideoService).searchByCareer('Medicina', ['SOCIAL', 'INVESTIGATIVE']).subscribe();
+    const req = http.expectOne((r) => r.url === `${environment.apiUrl}/videos`);
+    expect(req.request.params.get('profile')).toBe('SOCIAL,INVESTIGATIVE');
     req.flush([]);
     http.verify();
   });

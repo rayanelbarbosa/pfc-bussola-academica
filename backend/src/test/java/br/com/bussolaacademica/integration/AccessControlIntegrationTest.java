@@ -104,6 +104,14 @@ class AccessControlIntegrationTest {
 
         mockMvc.perform(get("/api/videos").header("Authorization", bearer(token)))
                 .andExpect(status().isBadRequest());
+
+        // perfil RIASEC é opcional; quando vem, cada valor precisa ser um tipo válido
+        mockMvc.perform(get("/api/videos").param("career", "Medicina").param("profile", "SOCIAL,INVESTIGATIVE")
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isBadGateway());
+        mockMvc.perform(get("/api/videos").param("career", "Medicina").param("profile", "XYZ")
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isBadRequest());
     }
 
     private Integer submitTest(String token) throws Exception {

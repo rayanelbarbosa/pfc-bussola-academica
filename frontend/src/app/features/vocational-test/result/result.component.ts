@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 
 import { Video } from '../../../core/models/video.model';
 import { VocationalTestResult } from '../../../core/models/vocational-test.model';
-import { getCategoryInfo, riasecClass } from '../../../core/models/riasec-category';
+import { getCategoryInfo, riasecClass, riasecColor } from '../../../core/models/riasec-category';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { VideoService } from '../../../core/services/video.service';
 import { VocationalTestService } from '../../../core/services/vocational-test.service';
@@ -38,11 +38,25 @@ export class ResultComponent implements OnInit {
 
   readonly categoryInfo = getCategoryInfo;
   readonly riasecClass = riasecClass;
+  readonly riasecColor = riasecColor;
 
   readonly radarPoints = computed(() =>
-    (this.result()?.scores ?? []).map((score) => ({ label: score.label, value: score.score }))
+    (this.result()?.scores ?? []).map((score) => ({ label: score.label, value: score.score, color: riasecColor(score.category) }))
   );
   readonly hasTie = computed(() => (this.result()?.topCategories.length ?? 0) > 1);
+  /** "Investigativo" ou, com empate, "Investigativo e Social". */
+  readonly profileName = computed(() => {
+    const names = (this.result()?.topCategories ?? []).map((top) => top.label);
+    return names.length > 1 ? names.slice(0, -1).join(', ') + ' e ' + names.at(-1) : names[0] ?? '';
+  });
+
+  /** Os 2 tipos de maior escore do estudante: o back-end usa para ordenar os vídeos (ranking), não para buscar. */
+  readonly videoProfile = computed(() =>
+    [...(this.result()?.scores ?? [])]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 2)
+      .map((score) => score.category)
+  );
 
   ngOnInit(): void {
     this.testService.getResult(Number(this.id())).subscribe({
@@ -63,8 +77,8 @@ export class ResultComponent implements OnInit {
   }
 
   /**
-   * Busca os vídeos de cada carreira (o back-end guarda as buscas em cache por 24 h, então cada carreira
-   * consome a cota da API do YouTube no máximo uma vez por dia).
+   * Busca os vídeos de cada carreira. O back-end guarda os candidatos em cache por 24 h (cada carreira consome a
+   * cota do YouTube no máximo uma vez por dia) e reordena os vídeos pelo perfil do estudante.
    */
   loadVideos(career: string): void {
     const current = this.videos()[career];
@@ -72,7 +86,7 @@ export class ResultComponent implements OnInit {
       return;
     }
     this.setVideos(career, { status: 'loading' });
-    this.videoService.searchByCareer(career).subscribe({
+    this.videoService.searchByCareer(career, this.videoProfile()).subscribe({
       next: (videos) => this.setVideos(career, { status: 'ok', videos }),
       error: () => this.setVideos(career, { status: 'error' })
     });

@@ -9,6 +9,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent)
   },
   {
+    path: 'formas-de-ingresso',
+    title: 'Formas de ingresso | Bússola Acadêmica',
+    loadComponent: () => import('./features/home/admission-guide.component').then((m) => m.AdmissionGuideComponent)
+  },
+  {
+    path: 'como-funciona',
+    title: 'Como funciona o teste | Bússola Acadêmica',
+    loadComponent: () => import('./features/home/how-it-works.component').then((m) => m.HowItWorksComponent)
+  },
+  {
     path: 'login',
     title: 'Entrar | Bússola Acadêmica',
     canActivate: [guestGuard],
@@ -84,6 +94,12 @@ export const routes: Routes = [
     canActivate: [adminGuard],
     loadComponent: () =>
       import('./features/admin/admission-methods/admission-methods.component').then((m) => m.AdmissionMethodsComponent)
+  },
+  {
+    path: 'admin/carreiras',
+    title: 'Carreiras | Administração',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/admin/careers/careers.component').then((m) => m.CareersComponent)
   },
   {
     path: 'admin/usuarios',

@@ -8,11 +8,20 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.HtmlUtils;
 
+import java.time.Duration;
+import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
- * Cliente HTTP da YouTube Data API v3 (endpoint GET /search).
- * Só este componente conhece o formato da API externa; o resto do sistema usa {@link VideoResponse}.
+ * Cliente HTTP da YouTube Data API v3.
+ * <ol>
+ *   <li>GET /search (100 unidades da cota): os candidatos para a busca, com título e descrição.</li>
+ *   <li>GET /videos (1 unidade): visualizações, curtidas e duração de todos os candidatos de uma vez.</li>
+ * </ol>
+ * Só este componente conhece o formato da API externa; o resto do sistema usa {@link VideoCandidate}.
  */
 @Component
 public class YouTubeClient {
@@ -27,7 +36,7 @@ public class YouTubeClient {
         this.properties = properties;
     }
 
-    public List<VideoResponse> searchVideos(String query) {
+    public List<VideoCandidate> searchCandidates(String query) {
         try {
             YouTubeSearchResponse response = restClient.get()
                     .uri(uri -> uri.path("/search")
@@ -45,16 +54,41 @@ public class YouTubeClient {
             if (response == null || response.items() == null) {
                 return List.of();
             }
-            return response.items().stream()
+            List<YouTubeSearchResponse.Item> items = response.items().stream()
                     .filter(item -> item.id() != null && item.id().videoId() != null && item.snippet() != null)
-                    .map(YouTubeClient::toVideo)
+                    .toList();
+            if (items.isEmpty()) {
+                return List.of();
+            }
+            Map<String, YouTubeVideosResponse.Item> details = fetchDetails(items);
+            return items.stream()
+                    .map(item -> toCandidate(item, details.get(item.id().videoId())))
                     .toList();
         } catch (RestClientException ex) {
             throw new ExternalServiceException("Não foi possível buscar vídeos no YouTube agora.", ex);
         }
     }
 
-    private static VideoResponse toVideo(YouTubeSearchResponse.Item item) {
+    /** Uma única chamada para todos os ids (a API aceita até 50 por vez). */
+    private Map<String, YouTubeVideosResponse.Item> fetchDetails(List<YouTubeSearchResponse.Item> items) {
+        String ids = items.stream().map(item -> item.id().videoId()).collect(Collectors.joining(","));
+        YouTubeVideosResponse response = restClient.get()
+                .uri(uri -> uri.path("/videos")
+                        .queryParam("part", "statistics,contentDetails")
+                        .queryParam("id", ids)
+                        .queryParam("key", properties.apiKey())
+                        .build())
+                .retrieve()
+                .body(YouTubeVideosResponse.class);
+        if (response == null || response.items() == null) {
+            return Map.of();
+        }
+        return response.items().stream()
+                .filter(item -> item.id() != null)
+                .collect(Collectors.toMap(YouTubeVideosResponse.Item::id, Function.identity(), (first, second) -> first));
+    }
+
+    private static VideoCandidate toCandidate(YouTubeSearchResponse.Item item, YouTubeVideosResponse.Item details) {
         YouTubeSearchResponse.Snippet snippet = item.snippet();
         String thumbnail = null;
         if (snippet.thumbnails() != null) {
@@ -63,7 +97,45 @@ public class YouTubeClient {
             thumbnail = chosen == null ? null : chosen.url();
         }
         // A API devolve títulos com entidades HTML (ex.: &quot;), por isso o unescape
-        return new VideoResponse(item.id().videoId(), HtmlUtils.htmlUnescape(snippet.title()),
+        VideoResponse video = new VideoResponse(item.id().videoId(), HtmlUtils.htmlUnescape(snippet.title()),
                 snippet.channelTitle(), thumbnail, WATCH_URL + item.id().videoId());
+        String description = snippet.description() == null ? "" : HtmlUtils.htmlUnescape(snippet.description());
+        long views = 0;
+        long likes = 0;
+        long seconds = 0;
+        if (details != null) {
+            if (details.statistics() != null) {
+                views = parseCount(details.statistics().viewCount());
+                likes = parseCount(details.statistics().likeCount());
+            }
+            if (details.contentDetails() != null) {
+                seconds = parseDuration(details.contentDetails().duration());
+            }
+        }
+        return new VideoCandidate(video, description, views, likes, seconds);
+    }
+
+    /** Contador ausente (ex.: curtidas ocultas pelo canal) ou inválido vale 0. */
+    static long parseCount(String value) {
+        if (value == null || value.isBlank()) {
+            return 0;
+        }
+        try {
+            return Long.parseLong(value.trim());
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
+    }
+
+    /** Duração ISO 8601 em segundos ("PT8M15S" = 495); ausente ou inválida vale 0 (desconhecida). */
+    static long parseDuration(String value) {
+        if (value == null || value.isBlank()) {
+            return 0;
+        }
+        try {
+            return Duration.parse(value.trim()).getSeconds();
+        } catch (DateTimeParseException ex) {
+            return 0;
+        }
     }
 }

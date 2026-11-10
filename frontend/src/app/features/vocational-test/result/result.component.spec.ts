@@ -60,11 +60,14 @@ describe('ResultComponent', () => {
     expect(el.textContent).toContain('2 tipos tiveram o mesmo maior escore');
     expect(el.textContent).toContain('Características comuns');
     expect(el.textContent).toContain('Engenharia Civil');
-    expect(el.textContent).toContain('22 pontos');
+    expect(el.textContent).toContain('22 de 30 pontos');
+    expect(el.textContent).toContain('Seu perfil é Realista e Convencional');
   });
 
   it('loads the videos of each career and keeps the page working when the API is down', () => {
-    expect(videoService.searchByCareer).toHaveBeenCalledWith('Engenharia Civil');
+    expect(videoService.searchByCareer).toHaveBeenCalledWith('Engenharia Civil', jasmine.any(Array));
+    // perfil = 2 tipos de maior escore, mandados para o ranking dos vídeos
+    expect(fixture.componentInstance.videoProfile()).toEqual(['REALISTIC', 'CONVENTIONAL']);
     expect(fixture.nativeElement.textContent).toContain('Vídeos indisponíveis no momento');
   });
 

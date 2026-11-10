@@ -1,25 +1,21 @@
-<section class="border-b border-border bg-muted">
-  <div class="container-page grid items-center gap-8 py-10 md:grid-cols-[1fr_220px] md:py-12">
+<section class="hero-violet">
+  <div class="container-page grid items-center gap-8 py-12 md:grid-cols-[1fr_240px] md:py-16">
     <div class="max-w-2xl">
-      <h1>Como entrar na faculdade e descobrir qual curso combina com você</h1>
-      <p class="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
-        As formas de ingresso no ensino superior explicadas de forma simples, em um só lugar. E um teste vocacional
-        gratuito para conhecer seus interesses.
-      </p>
-      <div class="mt-6 flex flex-wrap gap-3">
-        <a routerLink="/teste-vocacional" class="btn btn-primary">Fazer o teste vocacional <app-icon name="arrow-right" class="size-4" /></a>
-        <a routerLink="/" fragment="formas-de-ingresso" class="btn btn-secondary">Ver formas de ingresso</a>
+      <h1 class="text-[32px] font-bold leading-tight text-white sm:text-[44px]">Como entrar na faculdade e descobrir qual curso combina com você</h1>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a routerLink="/teste-vocacional" class="btn btn-light h-12 px-6 text-base font-semibold">Fazer o teste vocacional <app-icon name="arrow-right" class="size-4" /></a>
+        <a routerLink="/formas-de-ingresso" class="btn btn-outline-light h-12 px-6 text-base">Ver formas de ingresso</a>
       </div>
     </div>
-    <app-compass-rose class="hidden size-52 justify-self-end md:inline-flex" />
+    <app-compass-rose class="hidden size-60 justify-self-end drop-shadow-2xl md:inline-flex" />
   </div>
 </section>
 
-<section class="container-page py-7">
+<section class="container-page relative z-10 -mt-8 pb-7">
   <div class="grid gap-3 md:grid-cols-3">
     @for (card of contextCards; track card.title) {
-      <div class="card p-4 sm:p-4">
-        <app-icon [name]="card.icon" class="mb-3 size-5 text-muted-foreground" />
+      <div class="card card-hover p-5 sm:p-5">
+        <span class="mb-3 grid size-9 place-items-center rounded-lg bg-accent text-primary"><app-icon [name]="card.icon" class="size-5" /></span>
         <h2 class="text-base">{{ card.title }}</h2>
         <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ card.text }}</p>
       </div>
@@ -27,117 +23,33 @@
   </div>
 </section>
 
-<section id="formas-de-ingresso" class="container-page scroll-mt-24 pb-10 pt-4">
-  <h2>Formas de ingresso</h2>
-  <p class="mt-2 text-base text-muted-foreground">Compare os caminhos e veja os requisitos de cada um.</p>
-
-  @if (loading()) {
-    <div class="mt-5 space-y-3" aria-busy="true">
-      @for (i of [1, 2, 3, 4]; track i) {
-        <div class="skeleton h-20"></div>
-      }
-    </div>
-  } @else if (error()) {
-    <div class="alert alert-error mt-5" role="alert">
-      <app-icon name="alert-circle" class="mt-0.5 size-5" />
-      <div class="flex-1">
-        <p class="font-semibold">Não foi possível carregar</p>
-        <p class="text-foreground/85">{{ error() }}</p>
-        <button type="button" class="btn btn-secondary btn-sm mt-3" (click)="load()">Tentar de novo</button>
+<section class="container-page pb-12 pt-4">
+  <div class="grid gap-5 md:grid-cols-2">
+    <a routerLink="/formas-de-ingresso" class="card card-hover group flex flex-col gap-4 p-6 sm:p-7">
+      <span class="grid size-12 place-items-center rounded-xl bg-accent text-primary"><app-icon name="book-open" class="size-6" /></span>
+      <div>
+        <h2 class="text-xl">Formas de ingresso</h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">O que é, como funciona, para quem é e quanto custa cada caminho para entrar na faculdade.</p>
       </div>
-    </div>
-  } @else {
-    <div class="my-5 flex flex-wrap gap-2" role="group" aria-label="Filtrar por tipo">
-      <button type="button" class="chip" [class.chip-active]="!selectedType()" [attr.aria-pressed]="!selectedType()"
-        (click)="selectedType.set('')">Todos</button>
-      @for (type of types(); track type.value) {
-        <button type="button" class="chip" [class.chip-active]="selectedType() === type.value"
-          [attr.aria-pressed]="selectedType() === type.value" (click)="selectedType.set(type.value)">{{ type.label }}</button>
-      }
-    </div>
-
-    <div class="divide-y divide-border overflow-hidden rounded-lg border border-border">
-      @for (method of filtered(); track method.id) {
-        <details class="group">
-          <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 hover:bg-muted sm:px-5">
-            <div class="min-w-0">
-              <div class="flex flex-wrap items-center gap-2.5">
-                <h3 class="text-base">{{ method.name }}</h3>
-                <span class="badge">{{ method.typeLabel }}</span>
-              </div>
-              <p class="mt-1.5 text-sm text-muted-foreground">{{ method.summary }}</p>
-            </div>
-            <app-icon name="chevron-down" class="size-5 text-muted-foreground transition-transform group-open:rotate-180" />
-          </summary>
-          <div class="border-t border-border px-4 pb-5 pt-4 sm:px-5">
-            <div class="grid gap-x-10 gap-y-5 md:grid-cols-2">
-              <div class="md:col-span-2">
-                <h4 class="font-semibold">O que é</h4>
-                <p class="mt-2 max-w-4xl text-sm leading-relaxed text-muted-foreground">{{ method.description }}</p>
-              </div>
-              <div>
-                <h4 class="font-semibold">Como funciona</h4>
-                <ol class="mt-2 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-muted-foreground">
-                  @for (step of method.howItWorks; track $index) {
-                    <li>{{ step }}</li>
-                  }
-                </ol>
-              </div>
-              <div>
-                <h4 class="font-semibold">Quem pode participar</h4>
-                <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ method.eligibility }}</p>
-              </div>
-              <div>
-                <h4 class="font-semibold">Quando acontece</h4>
-                <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ method.schedule }}</p>
-              </div>
-              <div>
-                <h4 class="font-semibold">Quanto custa</h4>
-                <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ method.cost }}</p>
-              </div>
-              @if (method.tips) {
-                <div>
-                  <h4 class="font-semibold">Dicas</h4>
-                  <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ method.tips }}</p>
-                </div>
-              }
-            </div>
-            <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-              <span class="text-xs text-muted-foreground">Atualizado em {{ method.updatedAt | date: 'dd/MM/yyyy' }}</span>
-              @if (method.officialUrl) {
-                <a [href]="method.officialUrl" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
-                  Site oficial <app-icon name="external-link" class="size-3.5" /><span class="sr-only">(abre em nova aba)</span>
-                </a>
-              }
-            </div>
-          </div>
-        </details>
-      } @empty {
-        <p class="px-5 py-8 text-center text-sm text-muted-foreground">Nenhuma forma de ingresso deste tipo.</p>
-      }
-    </div>
-  }
-</section>
-
-<section id="sobre-o-teste" class="scroll-mt-24 border-t border-border bg-muted">
-  <div class="container-page py-9">
-    <h2>Sobre o teste vocacional</h2>
-    <p class="mt-3 max-w-3xl text-base leading-relaxed text-muted-foreground">
-      O modelo RIASEC, criado pelo psicólogo John Holland, organiza os interesses profissionais em seis tipos. Suas
-      respostas ajudam a identificar quais deles se aproximam mais de você.
-    </p>
-    <ul class="my-6 grid gap-x-8 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
-      @for (type of riasec; track type.key) {
-        <li class="flex items-start gap-3">
-          <span class="grid size-7 shrink-0 place-items-center rounded-md bg-background text-sm font-semibold" [class]="riasecClass(type.key)">{{ type.letter }}</span>
-          <div>
-            <h3 class="text-sm">{{ type.name }}</h3>
-            <p class="mt-1 text-sm text-muted-foreground">{{ type.short }}</p>
-          </div>
-        </li>
-      }
-    </ul>
-    <p class="mb-5 text-sm text-muted-foreground">O resultado é uma orientação inicial, não uma decisão sobre o seu futuro.</p>
-    <a routerLink="/teste-vocacional" class="btn btn-primary">Fazer o teste <app-icon name="arrow-right" class="size-4" /></a>
+      <div class="flex flex-wrap gap-2">
+        @for (name of highlights; track name) {
+          <span class="badge badge-accent">{{ name }}</span>
+        }
+      </div>
+      <span class="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold text-primary">Comparar os caminhos <app-icon name="arrow-right" class="size-4 transition-transform group-hover:translate-x-1" /></span>
+    </a>
+    <a routerLink="/como-funciona" class="card card-hover group flex flex-col gap-4 p-6 sm:p-7">
+      <span class="grid size-12 place-items-center rounded-xl bg-accent text-primary"><app-icon name="circle-help" class="size-6" /></span>
+      <div>
+        <h2 class="text-xl">Teste vocacional RIASEC</h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">12 afirmações, uns 3 minutos. Descubra seu perfil entre os 6 tipos de interesse e as carreiras que mais combinam com você.</p>
+      </div>
+      <div class="flex gap-1.5" aria-hidden="true">
+        @for (type of riasec; track type.key) {
+          <span class="grid size-8 place-items-center rounded-lg text-sm font-bold text-white" [style.background]="'var(--riasec-' + type.letter.toLowerCase() + ')'">{{ type.letter }}</span>
+        }
+      </div>
+      <span class="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold text-primary">Entender como funciona <app-icon name="arrow-right" class="size-4 transition-transform group-hover:translate-x-1" /></span>
+    </a>
   </div>
 </section>

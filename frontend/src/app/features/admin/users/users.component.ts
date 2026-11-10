@@ -9,6 +9,7 @@ import { getErrorMessage } from '../../../core/services/api-error';
 import { AuthService } from '../../../core/services/auth.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PASSWORD_PATTERN } from '../../auth/register/register.component';
+import { PasswordToggleComponent } from '../../../shared/components/password-toggle/password-toggle.component';
 
 /**
  * Gestão de usuários (RF12): lista paginada com busca e filtro, cadastro de administrador e
@@ -17,7 +18,7 @@ import { PASSWORD_PATTERN } from '../../auth/register/register.component';
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [DatePipe, FormsModule, ReactiveFormsModule, IconComponent],
+  imports: [DatePipe, FormsModule, ReactiveFormsModule, IconComponent, PasswordToggleComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './users.component.html'
 })

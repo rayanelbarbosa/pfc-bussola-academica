@@ -14,38 +14,58 @@
     </div>
   }
   @if (result(); as r) {
-    <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-      <div>
-        <h1>Seu resultado</h1>
-        <p class="mt-2 text-muted-foreground">{{ r.createdAt | date: "dd/MM/yyyy 'às' HH:mm" }}</p>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <a routerLink="/teste-vocacional" class="btn btn-primary"><app-icon name="rotate-ccw" class="size-4" /> Refazer o teste</a>
-        <a routerLink="/meus-resultados" class="btn btn-secondary"><app-icon name="history" class="size-4" /> Ver histórico</a>
+    <div class="hero-violet mb-6 overflow-hidden rounded-2xl px-5 py-4 shadow-lg shadow-primary/20 sm:px-6 sm:py-5">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-violet-200">Seu resultado · {{ r.createdAt | date: "dd/MM/yyyy 'às' HH:mm" }}</p>
+          <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h1 class="text-[22px] font-bold leading-tight text-white sm:text-[26px]">
+            Seu perfil é {{ profileName() }}
+          </h1>
+          <div class="flex flex-wrap items-center gap-2">
+            @for (top of r.topCategories; track top.category) {
+              <span class="inline-flex items-center gap-2 rounded-full bg-white/15 py-1 pl-1 pr-3 text-sm font-semibold text-white">
+                <span class="grid size-7 place-items-center rounded-full text-sm font-bold text-white" [style.background]="riasecColor(top.category)">{{ letter(top.category) }}</span>
+                {{ top.label }} · {{ top.score }}/10
+              </span>
+            }
+          </div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <a routerLink="/teste-vocacional" class="btn btn-light"><app-icon name="rotate-ccw" class="size-4" /> Refazer o teste</a>
+          <a routerLink="/meus-resultados" class="btn btn-outline-light"><app-icon name="history" class="size-4" /> Ver histórico</a>
+        </div>
       </div>
     </div>
 
-    <section class="border-y border-border py-6">
+    <section class="card mb-8">
       <h2 class="text-xl">Seus escores RIASEC</h2>
-      <p class="mt-1 text-sm text-muted-foreground">Cada escore é a soma de duas respostas, de 2 a 10 pontos.</p>
+      <p class="mt-1 text-sm text-muted-foreground">Cada escore é a soma de duas respostas, de 2 a 10 pontos. O gráfico segue a ordem do hexágono de Holland.</p>
       <div class="mt-4 grid items-center gap-6 md:grid-cols-2">
         <div class="flex justify-center"><app-radar-chart [points]="radarPoints()" /></div>
         <ul class="space-y-3">
           @for (score of r.scores; track score.category) {
-            <li class="flex items-center justify-between gap-4 border-b border-border pb-3">
-              <span class="flex items-center gap-3">
-                <span class="grid size-7 place-items-center rounded-md bg-muted text-sm font-semibold" [class]="riasecClass(score.category)">{{ letter(score.category) }}</span>
-                {{ score.label }}
-              </span>
-              <strong class="font-semibold">{{ score.score }}/10</strong>
+            <li class="border-b border-border pb-3 last:border-b-0">
+              <div class="flex items-center justify-between gap-4">
+                <span class="flex items-center gap-3">
+                  <span class="grid size-8 place-items-center rounded-lg text-sm font-bold text-white" [style.background]="riasecColor(score.category)">{{ letter(score.category) }}</span>
+                  <span class="font-medium">{{ score.label }}</span>
+                </span>
+                <strong class="font-semibold">{{ score.score }}/10</strong>
+              </div>
+              <div class="mt-2 h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                <div class="h-full rounded-full transition-[width] duration-500" [style.width.%]="score.score * 10"
+                  [style.background]="riasecColor(score.category)"></div>
+              </div>
             </li>
           }
         </ul>
       </div>
     </section>
 
-    <section class="py-7">
-      <h2 class="text-xl">Seu perfil principal</h2>
+    <section class="mb-8">
+      <h2 class="text-xl">O que o seu perfil significa</h2>
       @if (hasTie()) {
         <p class="mt-2 text-sm text-muted-foreground">
           {{ r.topCategories.length }} tipos tiveram o mesmo maior escore. Todos fazem parte do seu perfil principal.
@@ -54,8 +74,12 @@
       <div class="mt-4 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
         @for (top of r.topCategories; track top.category) {
           @if (categoryInfo(top.category); as info) {
-            <div class="card p-5 sm:p-5">
-              <h3 class="text-lg" [class]="riasecClass(top.category)">{{ info.name }} <span class="text-sm font-normal text-muted-foreground">({{ top.score }}/10)</span></h3>
+            <div class="card p-5 sm:p-6" [style.border-top]="'4px solid ' + riasecColor(top.category)">
+              <h3 class="flex items-center gap-3 text-lg">
+                <span class="grid size-9 place-items-center rounded-lg text-base font-bold text-white" [style.background]="riasecColor(top.category)">{{ info.letter }}</span>
+                <span [class]="riasecClass(top.category)">{{ info.name }}</span>
+                <span class="text-sm font-normal text-muted-foreground">({{ top.score }}/10)</span>
+              </h3>
               <p class="mt-3 text-sm leading-relaxed text-muted-foreground">{{ info.meaning }}</p>
               <h4 class="mt-4 text-sm font-semibold">Características comuns</h4>
               <p class="mt-1 text-sm leading-relaxed text-muted-foreground">{{ info.traits }}</p>
@@ -67,29 +91,30 @@
       </div>
     </section>
 
-    <section class="border-t border-border py-7">
+    <section class="mb-8">
       <h2 class="text-xl">Carreiras mais compatíveis</h2>
       <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-        A compatibilidade soma 2 vezes o seu escore no 1º tipo da carreira com o escore no 2º tipo.
+        Mostramos as 3 carreiras mais compatíveis de cada área. A compatibilidade soma 2 vezes o seu escore no 1º tipo
+        da carreira com o escore no 2º tipo; se duas carreiras empatarem, vence a que tem o perfil completo (os 6 tipos)
+        mais parecido com o seu.
       </p>
       @for (group of r.careerRecommendations; track group.area) {
         <div class="mt-6">
-          <h3 class="text-lg">{{ group.label }}</h3>
-          @if (group.careers.length > 3) {
-            <p class="mt-1 text-sm text-muted-foreground">Incluímos as carreiras empatadas na terceira posição.</p>
-          }
+          <h3 class="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-base text-accent-foreground">{{ group.label }}</h3>
           <div class="mt-3 grid items-stretch gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))]">
             @for (career of group.careers; track career.name) {
-              <div class="card flex flex-col p-5 sm:p-5">
-                <h4 class="font-semibold">{{ career.name }}</h4>
+              <div class="card card-hover flex flex-col overflow-hidden p-0 sm:p-0">
+                <div class="h-1.5" [style.background]="'linear-gradient(90deg,' + riasecColor(career.categories[0].category) + ',' + riasecColor(career.categories[1].category) + ')'"></div>
+                <div class="flex flex-1 flex-col p-5">
+                <h4 class="text-lg font-semibold">{{ career.name }}</h4>
                 <div class="mt-3 flex items-center justify-between gap-2">
                   <span class="flex gap-1">
                     @for (type of career.categories; track $index) {
-                      <span class="grid size-7 place-items-center rounded-md bg-muted text-xs font-semibold" [class]="riasecClass(type.category)"
+                      <span class="grid size-7 place-items-center rounded-md text-xs font-bold text-white" [style.background]="riasecColor(type.category)"
                         [attr.title]="type.label">{{ letter(type.category) }}</span>
                     }
                   </span>
-                  <span class="text-sm font-medium">{{ career.compatibility }} pontos</span>
+                  <span class="rounded-full bg-accent px-2.5 py-1 text-sm font-semibold text-accent-foreground">{{ career.compatibility }} de 30 pontos</span>
                 </div>
                 <p class="mt-3 text-sm leading-relaxed text-muted-foreground">{{ career.description }}</p>
                 <div class="mt-auto pt-4">
@@ -123,6 +148,7 @@
                     }
                   }
                 </div>
+                </div>
               </div>
             }
           </div>
@@ -130,7 +156,7 @@
       }
     </section>
 
-    <p class="border-t border-border pt-5 text-sm leading-relaxed text-muted-foreground">
+    <p class="alert alert-info text-sm leading-relaxed">
       O teste é uma orientação inicial. Vale conversar com professores, profissionais da área e visitar faculdades antes de decidir.
     </p>
   }

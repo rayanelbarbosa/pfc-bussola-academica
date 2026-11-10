@@ -3,6 +3,7 @@ package br.com.bussolaacademica.service;
 import br.com.bussolaacademica.config.YouTubeProperties;
 import br.com.bussolaacademica.dto.VideoResponse;
 import br.com.bussolaacademica.exception.ExternalServiceException;
+import br.com.bussolaacademica.integration.youtube.VideoCandidate;
 import br.com.bussolaacademica.integration.youtube.YouTubeClient;
 import br.com.bussolaacademica.model.Career;
 import br.com.bussolaacademica.model.InterestArea;
@@ -18,6 +19,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,9 +33,7 @@ import static org.mockito.Mockito.when;
 class VideoServiceTest {
 
     private static final YouTubeProperties CONFIGURED =
-            new YouTubeProperties("chave-teste", "https://www.googleapis.com/youtube/v3", 3, 6);
-    private static final VideoResponse VIDEO = new VideoResponse("abc123", "Como é cursar Medicina",
-            "Canal", "https://i.ytimg.com/vi/abc123/mqdefault.jpg", "https://www.youtube.com/watch?v=abc123");
+            new YouTubeProperties("chave-teste", "https://www.googleapis.com/youtube/v3", 15, 6);
 
     @Mock
     private YouTubeClient client;
@@ -44,61 +44,84 @@ class VideoServiceTest {
     private final Clock clock = Clock.fixed(Instant.parse("2026-09-27T12:00:00Z"), ZoneOffset.UTC);
 
     private VideoService service(YouTubeProperties properties) {
-        return new VideoService(client, careerRepository, properties, clock);
+        return new VideoService(client, careerRepository, properties, new VideoRanker(), clock);
     }
 
     private void registered(String name) {
         Career career = new Career(1, name, InterestArea.HEALTH, RiasecCategory.INVESTIGATIVE,
                 RiasecCategory.SOCIAL, "descrição");
-        when(careerRepository.findFirstByNameIgnoreCase(anyString())).thenReturn(Optional.of(career));
+        when(careerRepository.findFirstByNameIgnoreCaseAndActiveTrue(anyString())).thenReturn(Optional.of(career));
+    }
+
+    private static VideoCandidate candidate(String id, String title, String description) {
+        return new VideoCandidate(new VideoResponse(id, title, "Canal", null, "https://www.youtube.com/watch?v=" + id),
+                description, 10_000, 500, 600);
     }
 
     @Test
-    void shouldSearchOnYouTubeAndCacheByCareer() {
+    void shouldSearchOnceCacheTheCandidatesAndReturnTheTopThree() {
         registered("Medicina");
-        when(client.searchVideos("Medicina carreira profissão")).thenReturn(List.of(VIDEO));
+        List<VideoCandidate> pool = IntStream.rangeClosed(1, 6)
+                .mapToObj(i -> candidate("v" + i, "Medicina profissão " + i, "rotina"))
+                .toList();
+        when(client.searchCandidates("Medicina carreira profissão")).thenReturn(pool);
         VideoService service = service(CONFIGURED);
 
-        assertThat(service.searchByCareer("Medicina")).containsExactly(VIDEO);
-        assertThat(service.searchByCareer(" medicina ")).containsExactly(VIDEO);
+        assertThat(service.searchByCareer("Medicina", List.of())).hasSize(VideoService.VIDEOS_PER_CAREER);
+        assertThat(service.searchByCareer(" medicina ", List.of(RiasecCategory.SOCIAL))).hasSize(3);
 
-        verify(client, times(1)).searchVideos(anyString());
+        verify(client, times(1)).searchCandidates(anyString());
+    }
+
+    @Test
+    void shouldRerankTheCachedCandidatesForEachProfileWithoutCallingYouTubeAgain() {
+        registered("Medicina");
+        when(client.searchCandidates(anyString())).thenReturn(List.of(
+                candidate("pesquisa", "Medicina e pesquisa no laboratório", "ciência, estudo e análise"),
+                candidate("pacientes", "Medicina: cuidar de pessoas", "ajudar pacientes no atendimento")));
+        VideoService service = service(CONFIGURED);
+
+        assertThat(service.searchByCareer("Medicina", List.of(RiasecCategory.INVESTIGATIVE)).get(0).videoId())
+                .isEqualTo("pesquisa");
+        assertThat(service.searchByCareer("Medicina", List.of(RiasecCategory.SOCIAL)).get(0).videoId())
+                .isEqualTo("pacientes");
+        verify(client, times(1)).searchCandidates(anyString());
     }
 
     @Test
     void shouldRejectUnregisteredCareerWithoutCallingYouTube() {
-        when(careerRepository.findFirstByNameIgnoreCase("Astronauta")).thenReturn(Optional.empty());
+        when(careerRepository.findFirstByNameIgnoreCaseAndActiveTrue("Astronauta")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service(CONFIGURED).searchByCareer("Astronauta"))
+        assertThatThrownBy(() -> service(CONFIGURED).searchByCareer("Astronauta", List.of()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Carreira não encontrada");
-        verify(client, never()).searchVideos(anyString());
+        verify(client, never()).searchCandidates(anyString());
     }
 
     @Test
     void shouldFailClearlyWhenApiKeyIsMissing() {
         registered("Direito");
-        VideoService service = service(new YouTubeProperties("", "https://www.googleapis.com/youtube/v3", 3, 6));
+        VideoService service = service(new YouTubeProperties("", "https://www.googleapis.com/youtube/v3", 15, 6));
 
-        assertThatThrownBy(() -> service.searchByCareer("Direito"))
+        assertThatThrownBy(() -> service.searchByCareer("Direito", List.of()))
                 .isInstanceOf(ExternalServiceException.class)
                 .hasMessageContaining("YOUTUBE_API_KEY");
-        verify(client, never()).searchVideos(anyString());
+        verify(client, never()).searchCandidates(anyString());
     }
 
     @Test
     void shouldPropagateFailureWhenYouTubeIsDown() {
         registered("Design");
-        when(client.searchVideos(anyString())).thenThrow(new ExternalServiceException("fora do ar"));
+        when(client.searchCandidates(anyString())).thenThrow(new ExternalServiceException("fora do ar"));
 
-        assertThatThrownBy(() -> service(CONFIGURED).searchByCareer("Design"))
+        assertThatThrownBy(() -> service(CONFIGURED).searchByCareer("Design", List.of()))
                 .isInstanceOf(ExternalServiceException.class);
     }
 
     @Test
     void shouldRejectBlankCareer() {
-        assertThatThrownBy(() -> service(CONFIGURED).searchByCareer("  "))
+        assertThatThrownBy(() -> service(CONFIGURED).searchByCareer("  ", List.of()))
                 .isInstanceOf(IllegalArgumentException.class);
-        verify(careerRepository, never()).findFirstByNameIgnoreCase(anyString());
+        verify(careerRepository, never()).findFirstByNameIgnoreCaseAndActiveTrue(anyString());
     }
 }
