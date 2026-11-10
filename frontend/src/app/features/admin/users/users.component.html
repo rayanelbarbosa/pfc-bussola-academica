@@ -147,7 +147,10 @@
         </div>
         <div class="field">
           <label for="a-password" class="field-label">Senha inicial</label>
-          <input id="a-password" type="password" formControlName="password" autocomplete="new-password" class="field-input" [class.is-invalid]="isInvalid('password')" />
+          <div class="relative">
+            <input #pwd id="a-password" type="password" formControlName="password" autocomplete="new-password" class="field-input pr-11" [class.is-invalid]="isInvalid('password')" />
+            <app-password-toggle [target]="pwd" />
+          </div>
           <p class="field-hint">Mínimo de 8 caracteres, com letras e números. Passe a senha à pessoa por um canal seguro.</p>
           @if (isInvalid('password')) { <p class="field-error">A senha precisa ter no mínimo 8 caracteres, com letras e números.</p> }
         </div>
