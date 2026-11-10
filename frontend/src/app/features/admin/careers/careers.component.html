@@ -4,7 +4,8 @@
       <h1>Carreiras</h1>
       <p class="mt-2 max-w-2xl text-muted-foreground">
         Carreiras usadas na recomendação do teste e na busca de vídeos. Cada uma tem uma área e um código RIASEC
-        de 2 letras: a compatibilidade soma 2 vezes o escore do tipo principal com o escore do secundário.
+        de Holland: a compatibilidade soma 2 vezes o escore do tipo principal com o escore do secundário, e o 3º tipo
+        (opcional) desempata. O teste mostra as 3 carreiras mais compatíveis de cada área.
       </p>
     </div>
     <button type="button" class="btn btn-primary" (click)="openCreate()"><app-icon name="plus" class="size-4" /> Nova carreira</button>
@@ -69,9 +70,12 @@
               <td class="font-medium">{{ career.name }}</td>
               <td>{{ career.areaLabel }}</td>
               <td>
-                <span class="flex gap-1" [attr.title]="career.primaryCategoryLabel + ' + ' + career.secondaryCategoryLabel">
-                  <span class="grid size-7 place-items-center rounded-md riasec-tint text-xs font-semibold" [class]="riasecClass(career.primaryCategory)">{{ career.code.charAt(0) }}</span>
-                  <span class="grid size-7 place-items-center rounded-md riasec-tint text-xs font-semibold" [class]="riasecClass(career.secondaryCategory)">{{ career.code.charAt(1) }}</span>
+                <span class="flex gap-1" [attr.title]="career.primaryCategoryLabel + ' + ' + career.secondaryCategoryLabel + (career.tertiaryCategoryLabel ? ' + ' + career.tertiaryCategoryLabel : '')">
+                  <span class="grid size-7 place-items-center rounded-md text-xs font-bold text-white" [style.background]="riasecColor(career.primaryCategory)">{{ career.code.charAt(0) }}</span>
+                  <span class="grid size-7 place-items-center rounded-md text-xs font-bold text-white" [style.background]="riasecColor(career.secondaryCategory)">{{ career.code.charAt(1) }}</span>
+                  @if (career.tertiaryCategory) {
+                    <span class="grid size-7 place-items-center rounded-md border-2 text-xs font-bold" [style.border-color]="riasecColor(career.tertiaryCategory)" [style.color]="riasecColor(career.tertiaryCategory)">{{ career.code.charAt(2) }}</span>
+                  }
                 </span>
               </td>
               <td>
@@ -169,10 +173,21 @@
           @if (isInvalid('secondaryCategory')) { <p class="field-error">Selecione o tipo secundário.</p> }
           @if (sameType) { <p class="field-error">Escolha um tipo diferente do principal.</p> }
         </div>
-        @if (codePreview().length === 2 && !form.hasError('sameType')) {
-          <p class="text-sm text-muted-foreground sm:col-span-2">
-            Código RIASEC: <strong class="text-foreground">{{ codePreview() }}</strong>. Compatibilidade = 2 × escore
-            {{ codePreview().charAt(0) }} + escore {{ codePreview().charAt(1) }} (de 6 a 30 pontos).
+        <div class="field">
+          <label for="tertiaryCategory" class="field-label">3º tipo <span class="font-normal text-muted-foreground">(opcional, desempate)</span></label>
+          <select id="tertiaryCategory" formControlName="tertiaryCategory" class="field-input" [class.is-invalid]="sameTertiary">
+            <option value="">Nenhum</option>
+            @for (category of categories(); track category.value) {
+              <option [value]="category.value">{{ category.label }}</option>
+            }
+          </select>
+          @if (sameTertiary) { <p class="field-error">Escolha um tipo diferente dos dois primeiros.</p> }
+        </div>
+        @if (codePreview().length >= 2 && !form.hasError('sameType') && !sameTertiary) {
+          <p class="self-end text-sm leading-relaxed text-muted-foreground">
+            Código <strong class="text-foreground">{{ codePreview() }}</strong>: compatibilidade = 2 × escore
+            {{ codePreview().charAt(0) }} + escore {{ codePreview().charAt(1) }} (6 a 30).
+            @if (codePreview().length === 3) { Empate: vence quem tem maior escore {{ codePreview().charAt(2) }}. }
           </p>
         }
         <div class="field sm:col-span-2">

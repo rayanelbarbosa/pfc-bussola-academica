@@ -5,16 +5,23 @@ import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, Validat
 import { Option } from '../../../core/models/admission-method.model';
 import { Page } from '../../../core/models/audit.model';
 import { Career } from '../../../core/models/career.model';
-import { riasecClass } from '../../../core/models/riasec-category';
+import { riasecClass, riasecColor } from '../../../core/models/riasec-category';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { CareerService } from '../../../core/services/career.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
-/** O tipo principal e o secundário precisam ser diferentes (mesma regra do back-end). */
+/** Os tipos do código precisam ser diferentes entre si (mesma regra do back-end); o 3º tipo é opcional. */
 export function differentTypes(group: AbstractControl): ValidationErrors | null {
   const primary = group.get('primaryCategory')?.value;
   const secondary = group.get('secondaryCategory')?.value;
-  return primary && secondary && primary === secondary ? { sameType: true } : null;
+  const tertiary = group.get('tertiaryCategory')?.value;
+  if (primary && secondary && primary === secondary) {
+    return { sameType: true };
+  }
+  if (tertiary && (tertiary === primary || tertiary === secondary)) {
+    return { sameTertiary: true };
+  }
+  return null;
 }
 
 /**
@@ -34,6 +41,7 @@ export class CareersComponent implements OnInit {
 
   readonly pageSize = 10;
   readonly riasecClass = riasecClass;
+  readonly riasecColor = riasecColor;
   readonly areas = signal<Option[]>([]);
   readonly categories = signal<Option[]>([]);
   readonly page = signal<Page<Career> | null>(null);
@@ -57,6 +65,7 @@ export class CareersComponent implements OnInit {
       area: ['', Validators.required],
       primaryCategory: ['', Validators.required],
       secondaryCategory: ['', Validators.required],
+      tertiaryCategory: [''],
       description: ['', [Validators.required, Validators.maxLength(300)]],
       active: [true]
     },
@@ -67,7 +76,7 @@ export class CareersComponent implements OnInit {
   /** Prévia do código RIASEC (ex.: "IR") enquanto o administrador escolhe os tipos. */
   readonly codePreview = computed(() => {
     const value = this.formValue();
-    return (value.primaryCategory?.charAt(0) ?? '') + (value.secondaryCategory?.charAt(0) ?? '');
+    return (value.primaryCategory?.charAt(0) ?? '') + (value.secondaryCategory?.charAt(0) ?? '') + (value.tertiaryCategory?.charAt(0) ?? '');
   });
 
   constructor() {
@@ -116,6 +125,7 @@ export class CareersComponent implements OnInit {
       area: career.area,
       primaryCategory: career.primaryCategory,
       secondaryCategory: career.secondaryCategory,
+      tertiaryCategory: career.tertiaryCategory ?? '',
       description: career.description,
       active: career.active
     });
@@ -132,7 +142,8 @@ export class CareersComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    const request = this.form.getRawValue();
+    const value = this.form.getRawValue();
+    const request = { ...value, tertiaryCategory: value.tertiaryCategory || null };
     const id = this.editingId();
     const call = id ? this.service.update(id, request) : this.service.create(request);
     this.saving.set(true);
@@ -171,6 +182,10 @@ export class CareersComponent implements OnInit {
 
   get sameType(): boolean {
     return this.form.hasError('sameType') && this.form.controls.secondaryCategory.touched;
+  }
+
+  get sameTertiary(): boolean {
+    return this.form.hasError('sameTertiary');
   }
 
   length(field: keyof typeof this.form.controls): number {

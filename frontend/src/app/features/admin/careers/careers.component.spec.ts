@@ -9,7 +9,8 @@ import { CareersComponent } from './careers.component';
 
 const MEDICINA: Career = {
   id: 1, name: 'Medicina', area: 'HEALTH', areaLabel: 'Saúde', primaryCategory: 'INVESTIGATIVE',
-  primaryCategoryLabel: 'Investigativo', secondaryCategory: 'SOCIAL', secondaryCategoryLabel: 'Social', code: 'IS',
+  primaryCategoryLabel: 'Investigativo', secondaryCategory: 'SOCIAL', secondaryCategoryLabel: 'Social',
+  tertiaryCategory: 'REALISTIC', tertiaryCategoryLabel: 'Realista', code: 'ISR',
   description: 'Cuida da saúde.', active: true, updatedAt: '2026-11-10T10:00:00'
 };
 
@@ -47,6 +48,20 @@ describe('CareersComponent', () => {
     expect(component.sameType).toBeTrue();
   });
 
+  it('blocks a third type equal to one of the first two and previews the three-letter code', () => {
+    const component = fixture.componentInstance;
+    component.openCreate();
+    component.form.patchValue({ name: 'Nova', area: 'HEALTH', primaryCategory: 'INVESTIGATIVE', secondaryCategory: 'SOCIAL', tertiaryCategory: 'SOCIAL', description: 'D' });
+    component.save();
+    expect(component.sameTertiary).toBeTrue();
+    expect(service.create).not.toHaveBeenCalled();
+
+    component.form.patchValue({ tertiaryCategory: 'REALISTIC' });
+    fixture.detectChanges();
+    expect(component.codePreview()).toBe('ISR');
+    expect(fixture.nativeElement.textContent).toContain('Empate: vence quem tem maior escore R');
+  });
+
   it('creates a career and shows the RIASEC code preview', () => {
     service.create.and.returnValue(of({ ...MEDICINA, id: 50, name: 'Engenharia de Prompt' }));
     const component = fixture.componentInstance;
@@ -56,7 +71,7 @@ describe('CareersComponent', () => {
     expect(component.codePreview()).toBe('IS');
     expect(fixture.nativeElement.textContent).toContain('Código RIASEC');
     component.save();
-    expect(service.create).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Engenharia de Prompt', active: true }));
+    expect(service.create).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Engenharia de Prompt', active: true, tertiaryCategory: null }));
     expect(component.notice()).toContain('Engenharia de Prompt');
     expect(component.editingId()).toBeNull();
   });
@@ -66,6 +81,7 @@ describe('CareersComponent', () => {
     const component = fixture.componentInstance;
     component.openEdit(MEDICINA);
     expect(component.form.controls.name.value).toBe('Medicina');
+    expect(component.form.controls.tertiaryCategory.value).toBe('REALISTIC');
     component.save();
     expect(service.update).toHaveBeenCalledWith(1, jasmine.objectContaining({ primaryCategory: 'INVESTIGATIVE' }));
     expect(component.formError()).toContain('Já existe');
