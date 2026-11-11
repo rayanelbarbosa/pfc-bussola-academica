@@ -6,9 +6,11 @@ import br.com.bussolaacademica.model.RiasecCategory;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Regra de negócio: recomendação de carreiras por área de interesse.
@@ -20,19 +22,19 @@ import java.util.Map;
  *   <li>Desempate: semelhança entre o perfil completo do estudante (6 escores) e o da profissão no O*NET
  *       (6 notas), medida pela correlação de Pearson. Carreira sem perfil O*NET fica atrás e desempata pelo
  *       escore do estudante no 3º tipo do código; persistindo, ordem alfabética.</li>
- *   <li>Para cada área escolhida, recomenda exatamente as {@value #LIMIT} primeiras: poucas opções, bem
- *       ordenadas, ajudam mais quem está em dúvida do que uma lista longa de empatadas.</li>
- *   <li>"Ainda não sei": o ranking considera as carreiras de todas as áreas e mostra {@value #UNDECIDED_LIMIT}.</li>
+ *   <li>As áreas escolhidas (até 3) são um filtro: as carreiras delas entram num ranking único e o estudante vê
+ *       as {@value #LIMIT} melhores, junto com a comparação entre as áreas (qual combina mais com ele). Poucas
+ *       opções, bem ordenadas, ajudam mais quem está em dúvida do que uma lista longa.</li>
+ *   <li>"Ainda não sei": o ranking considera as carreiras de todas as áreas.</li>
  * </ol>
  *
- * <p>Complexidade: O(c log c) por área, por causa da ordenação das c carreiras candidatas (a correlação é O(6) = O(1)
- * por carreira).</p>
+ * <p>Complexidade: O(c log c), por causa da ordenação das c carreiras das áreas consideradas (a correlação é O(6) =
+ * O(1) por carreira; a comparação entre áreas é mais uma passada, O(c)).</p>
  */
 @Component
 public class CareerRecommender {
 
-    static final int LIMIT = 3;
-    static final int UNDECIDED_LIMIT = 5;
+    static final int LIMIT = 5;
 
     /** Valor de semelhança das carreiras sem perfil O*NET: abaixo de qualquer correlação possível (-1 a 1). */
     static final double NO_PROFILE = -2.0;
@@ -90,20 +92,40 @@ public class CareerRecommender {
         return career.getTertiaryCategory() == null ? 0 : scores.get(career.getTertiaryCategory());
     }
 
-    /** Recomendações agrupadas por área, na ordem das áreas escolhidas. */
-    public Map<InterestArea, List<RankedCareer>> recommend(List<InterestArea> areas, List<Career> careers,
-                                                          Map<RiasecCategory, Integer> scores) {
-        Map<InterestArea, List<RankedCareer>> result = new LinkedHashMap<>();
-        for (InterestArea area : areas) {
-            List<Career> candidates = area == InterestArea.UNDECIDED
-                    ? careers
-                    : careers.stream().filter(career -> career.getArea() == area).toList();
-            result.put(area, top(candidates, scores, area == InterestArea.UNDECIDED ? UNDECIDED_LIMIT : LIMIT));
-        }
-        return result;
+    /** Melhor carreira de uma área: mostra ao estudante qual das áreas combina mais com o perfil dele. */
+    public record AreaMatch(InterestArea area, RankedCareer best) {
     }
 
-    List<RankedCareer> top(List<Career> candidates, Map<RiasecCategory, Integer> scores, int limit) {
+    /** Ranking único das áreas consideradas e a comparação entre essas áreas. */
+    public record Recommendation(List<RankedCareer> careers, List<AreaMatch> areaMatches) {
+    }
+
+    /**
+     * As áreas escolhidas funcionam como filtro: as carreiras de todas elas entram num ranking único e o estudante
+     * vê as {@value #LIMIT} melhores, de qualquer uma das áreas. "Ainda não sei" considera todas as áreas.
+     * A comparação entre áreas usa a melhor carreira de cada uma, na mesma ordem do ranking.
+     */
+    public Recommendation recommend(List<InterestArea> areas, List<Career> careers, Map<RiasecCategory, Integer> scores) {
+        // sem área (resultados antigos) ou "Ainda não sei": todas as áreas
+        Set<InterestArea> considered = areas.isEmpty() || areas.contains(InterestArea.UNDECIDED)
+                ? EnumSet.complementOf(EnumSet.of(InterestArea.UNDECIDED))
+                : EnumSet.copyOf(areas);
+        List<RankedCareer> ranked = rank(careers.stream().filter(career -> considered.contains(career.getArea())).toList(),
+                scores);
+
+        // a 1ª vez que cada área aparece no ranking ordenado é a melhor carreira dela: uma passada, O(c)
+        Map<InterestArea, RankedCareer> bestByArea = new LinkedHashMap<>();
+        for (RankedCareer item : ranked) {
+            bestByArea.putIfAbsent(item.career().getArea(), item);
+        }
+        List<AreaMatch> matches = bestByArea.entrySet().stream()
+                .map(entry -> new AreaMatch(entry.getKey(), entry.getValue()))
+                .toList();
+        return new Recommendation(ranked.stream().limit(LIMIT).toList(), matches);
+    }
+
+    /** Ordena: compatibilidade, perfil completo do O*NET, 3º tipo e nome. */
+    List<RankedCareer> rank(List<Career> candidates, Map<RiasecCategory, Integer> scores) {
         return candidates.stream()
                 .map(career -> new RankedCareer(career, compatibility(career, scores), similarity(career, scores),
                         tieBreaker(career, scores)))
@@ -111,7 +133,6 @@ public class CareerRecommender {
                         .thenComparing(Comparator.comparingDouble(RankedCareer::similarity).reversed())
                         .thenComparing(Comparator.comparingInt(RankedCareer::tieBreaker).reversed())
                         .thenComparing(ranked -> ranked.career().getName()))
-                .limit(limit)
                 .toList();
     }
 }

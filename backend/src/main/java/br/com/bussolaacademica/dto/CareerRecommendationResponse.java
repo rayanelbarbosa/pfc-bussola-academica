@@ -5,9 +5,9 @@ import br.com.bussolaacademica.service.CareerRecommender.RankedCareer;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Carreira recomendada: código RIASEC (ex.: "RIC"), tipos do código e pontuação de compatibilidade. */
-public record CareerRecommendationResponse(String name, String code, List<CategoryLabel> categories,
-                                           int compatibility, String description) {
+/** Carreira recomendada: área, código RIASEC (ex.: "RIC"), tipos do código e pontuação de compatibilidade. */
+public record CareerRecommendationResponse(String name, String area, String areaLabel, String code,
+                                           List<CategoryLabel> categories, int compatibility, String description) {
 
     public record CategoryLabel(String category, String label) {
     }
@@ -20,7 +20,8 @@ public record CareerRecommendationResponse(String name, String code, List<Catego
         if (career.getTertiaryCategory() != null) {
             categories.add(new CategoryLabel(career.getTertiaryCategory().name(), career.getTertiaryCategory().getLabel()));
         }
-        return new CareerRecommendationResponse(career.getName(), career.getCode(), List.copyOf(categories),
+        return new CareerRecommendationResponse(career.getName(), career.getArea().name(), career.getArea().getLabel(),
+                career.getCode(), List.copyOf(categories),
                 ranked.compatibility(), career.getDescription());
     }
 }

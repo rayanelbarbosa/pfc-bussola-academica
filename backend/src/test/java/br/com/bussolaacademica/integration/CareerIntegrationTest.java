@@ -157,7 +157,7 @@ class CareerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(answersForEducation()))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.careerRecommendations[0].careers[*].name", hasItem(name)));
+                .andExpect(jsonPath("$.careerRecommendations[*].name", hasItem(name)));
 
         mockMvc.perform(put("/api/admin/careers/" + id)
                         .header("Authorization", bearer(admin))
@@ -177,7 +177,7 @@ class CareerIntegrationTest {
                         .header("Authorization", bearer(student))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(answersForEducation()))
-                .andExpect(jsonPath("$.careerRecommendations[0].careers[*].name", not(hasItem(name))));
+                .andExpect(jsonPath("$.careerRecommendations[*].name", not(hasItem(name))));
 
         // carreira desativada também não aceita busca de vídeos
         mockMvc.perform(get("/api/videos").param("career", name).header("Authorization", bearer(student)))
@@ -194,7 +194,7 @@ class CareerIntegrationTest {
     /**
      * Com os dados reais (V16 a V18): perfil R = 10, I = 8, C = 8 e o resto 2. As 5 engenharias RIC empatam em 28;
      * antes o desempate era pela ordem alfabética e Mecânica, de Computação e Química nunca apareciam.
-     * Com o perfil completo do O*NET, são justamente as 3 mais parecidas com esse aluno.
+     * Com o perfil completo do O*NET, são justamente as 3 primeiras do ranking desse aluno.
      */
     @Test
     void sameCodeCareersAreRankedByTheFullOnetProfile() throws Exception {
@@ -209,8 +209,8 @@ class CareerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.careerRecommendations[0].careers", hasSize(3)))
-                .andExpect(jsonPath("$.careerRecommendations[0].careers[*].name",
+                .andExpect(jsonPath("$.careerRecommendations", hasSize(5)))
+                .andExpect(jsonPath("$.careerRecommendations[0:3].name",
                         org.hamcrest.Matchers.contains("Engenharia Mecânica", "Engenharia de Computação", "Engenharia Química")));
     }
 
