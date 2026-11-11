@@ -15,7 +15,7 @@ type VideoState = { status: 'loading' } | { status: 'ok'; videos: Video[] } | { 
 
 /**
  * Resultado do teste (RF07, RF08, RF09): radar dos escores, explicação do perfil principal,
- * carreiras mais compatíveis por área escolhida e vídeos do YouTube de cada carreira.
+ * as 5 carreiras mais compatíveis entre as áreas escolhidas e vídeos do YouTube de cada carreira.
  */
 @Component({
   selector: 'app-result',
@@ -50,6 +50,16 @@ export class ResultComponent implements OnInit {
     return names.length > 1 ? names.slice(0, -1).join(', ') + ' e ' + names.at(-1) : names[0] ?? '';
   });
 
+  /** Com mais de uma área: a que mais combina e as outras, cada uma com a pontuação da sua melhor carreira. */
+  readonly areaComparison = computed(() => {
+    const matches = this.result()?.areaMatches ?? [];
+    if (matches.length < 2) {
+      return null;
+    }
+    const [best, ...others] = matches;
+    return { best, others };
+  });
+
   /** Os 2 tipos de maior escore do estudante: o back-end usa para ordenar os vídeos (ranking), não para buscar. */
   readonly videoProfile = computed(() =>
     [...(this.result()?.scores ?? [])]
@@ -63,7 +73,7 @@ export class ResultComponent implements OnInit {
       next: (result) => {
         this.result.set(result);
         this.loading.set(false);
-        result.careerRecommendations.forEach((group) => group.careers.forEach((career) => this.loadVideos(career.name)));
+        result.careerRecommendations.forEach((career) => this.loadVideos(career.name));
       },
       error: (err) => {
         this.error.set(getErrorMessage(err, 'Não foi possível carregar o resultado.'));

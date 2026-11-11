@@ -3,7 +3,10 @@ package br.com.bussolaacademica.service;
 import br.com.bussolaacademica.model.Career;
 import br.com.bussolaacademica.model.InterestArea;
 import br.com.bussolaacademica.model.RiasecCategory;
+import br.com.bussolaacademica.service.CareerRecommender.AreaMatch;
 import br.com.bussolaacademica.service.CareerRecommender.RankedCareer;
+import br.com.bussolaacademica.service.CareerRecommender.Recommendation;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumMap;
@@ -18,25 +21,36 @@ import static br.com.bussolaacademica.model.RiasecCategory.REALISTIC;
 import static br.com.bussolaacademica.model.RiasecCategory.SOCIAL;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Regra de recomendação de carreiras: compatibilidade = 2 × tipo dominante + tipo secundário. */
+/**
+ * Regra de recomendação: compatibilidade = 2 × tipo principal + tipo secundário; desempate pelo perfil completo
+ * do O*NET, depois pelo 3º tipo e pelo nome; ranking único das áreas escolhidas, com as 5 melhores.
+ */
 class CareerRecommenderTest {
 
     private final CareerRecommender recommender = new CareerRecommender();
 
     /** R=9, I=4, A=7, S=6, E=3, C=9 (exemplo de perfil com empate entre Realista e Convencional). */
     private static Map<RiasecCategory, Integer> scores() {
+        return scores(9, 4, 7, 6, 3, 9);
+    }
+
+    private static Map<RiasecCategory, Integer> scores(int r, int i, int a, int s, int e, int c) {
         Map<RiasecCategory, Integer> scores = new EnumMap<>(RiasecCategory.class);
-        scores.put(REALISTIC, 9);
-        scores.put(INVESTIGATIVE, 4);
-        scores.put(ARTISTIC, 7);
-        scores.put(SOCIAL, 6);
-        scores.put(ENTERPRISING, 3);
-        scores.put(CONVENTIONAL, 9);
+        scores.put(REALISTIC, r);
+        scores.put(INVESTIGATIVE, i);
+        scores.put(ARTISTIC, a);
+        scores.put(SOCIAL, s);
+        scores.put(ENTERPRISING, e);
+        scores.put(CONVENTIONAL, c);
         return scores;
     }
 
     private static Career career(int id, String name, InterestArea area, RiasecCategory first, RiasecCategory second) {
         return new Career(id, name, area, first, second, "descrição");
+    }
+
+    private static List<String> names(List<RankedCareer> ranked) {
+        return ranked.stream().map(item -> item.career().getName()).toList();
     }
 
     @Test
@@ -47,43 +61,43 @@ class CareerRecommenderTest {
     }
 
     @Test
-    void recommendsTopThreePerChosenAreaIgnoringOtherAreas() {
+    void chosenAreasAreAFilterForASingleRankingOfFive() {
         List<Career> careers = List.of(
-                career(1, "Engenharia Civil", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE),       // 22
+                career(1, "Engenharia Civil", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE),        // 22
                 career(2, "Engenharia de Produção", InterestArea.ENGINEERING, ENTERPRISING, CONVENTIONAL), // 15
-                career(3, "Engenharia Química", InterestArea.ENGINEERING, INVESTIGATIVE, REALISTIC),     // 17
-                career(4, "Engenharia Ambiental", InterestArea.ENGINEERING, INVESTIGATIVE, SOCIAL),      // 14
-                career(5, "Design Gráfico", InterestArea.ARTS_AND_COMMUNICATION, ARTISTIC, REALISTIC));  // 23
+                career(3, "Engenharia Química", InterestArea.ENGINEERING, INVESTIGATIVE, REALISTIC),      // 17
+                career(4, "Contabilidade", InterestArea.BUSINESS, CONVENTIONAL, REALISTIC),               // 27
+                career(5, "Marketing", InterestArea.BUSINESS, ENTERPRISING, ARTISTIC),                    // 13
+                career(6, "Logística", InterestArea.BUSINESS, CONVENTIONAL, ENTERPRISING),                // 21
+                career(7, "Design Gráfico", InterestArea.ARTS_AND_COMMUNICATION, ARTISTIC, REALISTIC));   // 23, área não escolhida
 
-        Map<InterestArea, List<RankedCareer>> result =
-                recommender.recommend(List.of(InterestArea.ENGINEERING), careers, scores());
+        Recommendation result = recommender.recommend(List.of(InterestArea.ENGINEERING, InterestArea.BUSINESS),
+                careers, scores());
 
-        assertThat(result).containsOnlyKeys(InterestArea.ENGINEERING);
-        assertThat(result.get(InterestArea.ENGINEERING))
-                .extracting(ranked -> ranked.career().getName(), RankedCareer::compatibility)
-                .containsExactly(
-                        org.assertj.core.groups.Tuple.tuple("Engenharia Civil", 22),
-                        org.assertj.core.groups.Tuple.tuple("Engenharia Química", 17),
-                        org.assertj.core.groups.Tuple.tuple("Engenharia de Produção", 15));
+        assertThat(names(result.careers()))
+                .containsExactly("Contabilidade", "Engenharia Civil", "Logística", "Engenharia Química", "Engenharia de Produção");
+        assertThat(result.careers()).extracting(RankedCareer::compatibility).containsExactly(27, 22, 21, 17, 15);
+        // a área que mais combina vem primeiro, com a melhor carreira dela
+        assertThat(result.areaMatches()).extracting(AreaMatch::area)
+                .containsExactly(InterestArea.BUSINESS, InterestArea.ENGINEERING);
+        assertThat(result.areaMatches().get(1).best().career().getName()).isEqualTo("Engenharia Civil");
     }
 
     @Test
-    void breaksTiesWithTheThirdTypeAndShowsExactlyThree() {
-        // A, B, C e D empatam em 2 × 9 + 4 = 22 (código RI); o 3º tipo decide: C=9 > A=7 > S=6 > sem 3º tipo
+    void undecidedConsidersEveryArea() {
         List<Career> careers = List.of(
-                new Career(1, "Sem terceiro", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, "d"),
-                new Career(2, "Social", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, SOCIAL, "d"),
-                new Career(3, "Artistico", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, ARTISTIC, "d"),
-                new Career(4, "Convencional", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, CONVENTIONAL, "d"),
-                new Career(5, "Longe", InterestArea.ENGINEERING, ENTERPRISING, INVESTIGATIVE, "d"));
+                career(1, "Engenharia Civil", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE),
+                career(2, "Contabilidade", InterestArea.BUSINESS, CONVENTIONAL, REALISTIC),
+                career(3, "Pedagogia", InterestArea.EDUCATION, SOCIAL, ARTISTIC),
+                career(4, "Marketing", InterestArea.BUSINESS, ENTERPRISING, ARTISTIC));
 
-        List<RankedCareer> top = recommender.recommend(List.of(InterestArea.ENGINEERING), careers, scores())
-                .get(InterestArea.ENGINEERING);
+        Recommendation result = recommender.recommend(List.of(InterestArea.UNDECIDED), careers, scores());
 
-        assertThat(top).extracting(ranked -> ranked.career().getName())
-                .containsExactly("Convencional", "Artistico", "Social");
-        assertThat(top).extracting(RankedCareer::compatibility).containsOnly(22);
-        assertThat(top.get(0).career().getCode()).isEqualTo("RIC");
+        assertThat(names(result.careers())).containsExactly("Contabilidade", "Engenharia Civil", "Pedagogia", "Marketing");
+        assertThat(result.areaMatches()).extracting(AreaMatch::area)
+                .containsExactly(InterestArea.BUSINESS, InterestArea.ENGINEERING, InterestArea.EDUCATION);
+        // resultados antigos sem área também consideram todas
+        assertThat(recommender.recommend(List.of(), careers, scores()).careers()).hasSize(4);
     }
 
     @Test
@@ -96,60 +110,45 @@ class CareerRecommenderTest {
         Career semPerfil = new Career(3, "Aaa sem perfil", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, CONVENTIONAL, "d");
 
         // aluno com Social e Empreendedor baixos: o perfil da Mecânica (S = 1,22) é o mais parecido
-        Map<RiasecCategory, Integer> scores = new EnumMap<>(RiasecCategory.class);
-        scores.put(REALISTIC, 10);
-        scores.put(INVESTIGATIVE, 8);
-        scores.put(ARTISTIC, 2);
-        scores.put(SOCIAL, 2);
-        scores.put(ENTERPRISING, 2);
-        scores.put(CONVENTIONAL, 8);
-
         List<RankedCareer> top = recommender.recommend(List.of(InterestArea.ENGINEERING),
-                List.of(semPerfil, civil, mecanica), scores).get(InterestArea.ENGINEERING);
+                List.of(semPerfil, civil, mecanica), scores(10, 8, 2, 2, 2, 8)).careers();
 
-        assertThat(top).extracting(ranked -> ranked.career().getName())
-                .containsExactly("Mecânica", "Civil", "Aaa sem perfil");
+        assertThat(names(top)).containsExactly("Mecânica", "Civil", "Aaa sem perfil");
         assertThat(top.get(0).similarity()).isGreaterThan(top.get(1).similarity());
         assertThat(top.get(2).similarity()).isEqualTo(CareerRecommender.NO_PROFILE);
     }
 
     @Test
+    void withoutProfileTheThirdTypeBreaksTheTieAndThenTheName() {
+        // todas empatam em 2 × 9 + 4 = 22 (código RI); o 3º tipo decide: C=9 > A=7 > S=6 > sem 3º tipo
+        List<Career> careers = List.of(
+                new Career(1, "Sem terceiro", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, "d"),
+                new Career(2, "Social", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, SOCIAL, "d"),
+                new Career(3, "Artistico", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, ARTISTIC, "d"),
+                new Career(4, "Convencional", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, CONVENTIONAL, "d"),
+                new Career(5, "Biologia", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, CONVENTIONAL, "d"));
+
+        List<RankedCareer> top = recommender.recommend(List.of(InterestArea.ENGINEERING), careers, scores()).careers();
+
+        assertThat(names(top)).containsExactly("Biologia", "Convencional", "Artistico", "Social", "Sem terceiro");
+        assertThat(top.get(0).career().getCode()).isEqualTo("RIC");
+    }
+
+    @Test
+    void showsAtMostFive() {
+        List<Career> careers = java.util.stream.IntStream.rangeClosed(1, 8)
+                .mapToObj(i -> career(i, "Carreira " + i, InterestArea.HEALTH, SOCIAL, INVESTIGATIVE))
+                .toList();
+
+        assertThat(recommender.recommend(List.of(InterestArea.HEALTH), careers, scores()).careers()).hasSize(5);
+    }
+
+    @Test
     void pearsonCorrelationIgnoresScaleAndHandlesFlatProfiles() {
         assertThat(CareerRecommender.pearson(new double[] {2, 4, 6, 8, 10, 10}, new double[] {1, 2, 3, 4, 5, 5}))
-                .isCloseTo(1.0, org.assertj.core.data.Offset.offset(1e-9));
+                .isCloseTo(1.0, Offset.offset(1e-9));
         assertThat(CareerRecommender.pearson(new double[] {2, 4, 6, 8, 10, 10}, new double[] {5, 4, 3, 2, 1, 1}))
-                .isCloseTo(-1.0, org.assertj.core.data.Offset.offset(1e-9));
+                .isCloseTo(-1.0, Offset.offset(1e-9));
         assertThat(CareerRecommender.pearson(new double[] {6, 6, 6, 6, 6, 6}, new double[] {1, 2, 3, 4, 5, 6})).isZero();
-    }
-
-    @Test
-    void sameFullCodeFallsBackToAlphabeticalOrder() {
-        List<Career> careers = List.of(
-                new Career(1, "Zootecnia", InterestArea.HEALTH, SOCIAL, REALISTIC, ARTISTIC, "d"),
-                new Career(2, "Biologia", InterestArea.HEALTH, SOCIAL, REALISTIC, ARTISTIC, "d"));
-
-        assertThat(recommender.recommend(List.of(InterestArea.HEALTH), careers, scores()).get(InterestArea.HEALTH))
-                .extracting(ranked -> ranked.career().getName())
-                .containsExactly("Biologia", "Zootecnia");
-    }
-
-    /** "Ainda não sei" mostra até 5 carreiras de todas as áreas (aqui só existem 4). */
-    @Test
-    void undecidedRanksCareersFromAllAreasAndKeepsChosenOrder() {
-        List<Career> careers = List.of(
-                career(1, "Engenharia Civil", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE),
-                career(2, "Contabilidade", InterestArea.BUSINESS, CONVENTIONAL, REALISTIC),
-                career(3, "Pedagogia", InterestArea.EDUCATION, SOCIAL, ARTISTIC),
-                career(4, "Marketing", InterestArea.BUSINESS, ENTERPRISING, ARTISTIC));
-
-        assertThat(recommender.recommend(List.of(InterestArea.UNDECIDED), careers, scores())
-                .get(InterestArea.UNDECIDED))
-                .extracting(ranked -> ranked.career().getName())
-                .containsExactly("Contabilidade", "Engenharia Civil", "Pedagogia", "Marketing");
-
-        assertThat(recommender.recommend(List.of(InterestArea.EDUCATION, InterestArea.BUSINESS), careers, scores()))
-                .containsOnlyKeys(InterestArea.EDUCATION, InterestArea.BUSINESS)
-                .extractingByKey(InterestArea.BUSINESS)
-                .satisfies(list -> assertThat(list).hasSize(2));
     }
 }

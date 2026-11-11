@@ -83,16 +83,20 @@ class VocationalTestIntegrationTest {
                         .content(answersWithAreas("[\"ENGINEERING\",\"HEALTH\"]")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.interestAreas[0].value").value("ENGINEERING"))
-                .andExpect(jsonPath("$.careerRecommendations", hasSize(2)))
-                .andExpect(jsonPath("$.careerRecommendations[0].label").value("Engenharias"))
+                // ranking único das 2 áreas: as 5 melhores, cada uma com a sua área
+                .andExpect(jsonPath("$.careerRecommendations", hasSize(5)))
                 // R=10, I=10: carreiras RI e IR empatam com 30 pontos
-                .andExpect(jsonPath("$.careerRecommendations[0].careers[0].compatibility").value(30))
-                .andExpect(jsonPath("$.careerRecommendations[1].area").value("HEALTH"))
+                .andExpect(jsonPath("$.careerRecommendations[0].compatibility").value(30))
+                .andExpect(jsonPath("$.careerRecommendations[0].areaLabel").isNotEmpty())
+                // comparação entre as áreas escolhidas
+                .andExpect(jsonPath("$.areaMatches", hasSize(2)))
+                .andExpect(jsonPath("$.areaMatches[*].area", org.hamcrest.Matchers.containsInAnyOrder("ENGINEERING", "HEALTH")))
                 .andReturn().getResponse().getContentAsString();
 
         Integer id = JsonPath.read(body, "$.id");
         mockMvc.perform(get("/api/vocational-test/results/" + id).header("Authorization", bearer(token)))
-                .andExpect(jsonPath("$.careerRecommendations", hasSize(2)));
+                .andExpect(jsonPath("$.careerRecommendations", hasSize(5)))
+                .andExpect(jsonPath("$.areaMatches", hasSize(2)));
         mockMvc.perform(get("/api/users/me/results").header("Authorization", bearer(token)))
                 .andExpect(jsonPath("$[0].interestAreas[0]").value("Engenharias"));
     }
@@ -118,7 +122,8 @@ class VocationalTestIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(answersWithAreas("[\"UNDECIDED\"]")))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.careerRecommendations[0].label").value("Todas as áreas"));
+                .andExpect(jsonPath("$.careerRecommendations", hasSize(5)))
+                .andExpect(jsonPath("$.areaMatches", hasSize(7)));
     }
 
     @Test
