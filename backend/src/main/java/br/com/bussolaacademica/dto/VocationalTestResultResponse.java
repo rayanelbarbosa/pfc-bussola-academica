@@ -39,7 +39,7 @@ public record VocationalTestResultResponse(
                 result.getInterestAreas().stream()
                         .map(area -> new OptionResponse(area.name(), area.getLabel()))
                         .toList(),
-                recommendation.careers().stream().map(CareerRecommendationResponse::from).toList(),
+                recommendation.picks().stream().map(CareerRecommendationResponse::from).toList(),
                 recommendation.areaMatches().stream().map(AreaRecommendationResponse::from).toList()
         );
     }

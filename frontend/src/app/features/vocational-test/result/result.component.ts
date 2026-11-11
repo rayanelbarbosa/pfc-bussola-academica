@@ -15,7 +15,7 @@ type VideoState = { status: 'loading' } | { status: 'ok'; videos: Video[] } | { 
 
 /**
  * Resultado do teste (RF07, RF08, RF09): radar dos escores, explicação do perfil principal,
- * as 5 carreiras mais compatíveis entre as áreas escolhidas e vídeos do YouTube de cada carreira.
+ * as 4 carreiras mais compatíveis entre as áreas escolhidas e vídeos do YouTube de cada carreira.
  */
 @Component({
   selector: 'app-result',
@@ -50,14 +50,10 @@ export class ResultComponent implements OnInit {
     return names.length > 1 ? names.slice(0, -1).join(', ') + ' e ' + names.at(-1) : names[0] ?? '';
   });
 
-  /** Com mais de uma área: a que mais combina e as outras, cada uma com a pontuação da sua melhor carreira. */
+  /** Com mais de uma área: comparação entre elas pela melhor carreira de cada uma (a 1ª é a que mais combina). */
   readonly areaComparison = computed(() => {
     const matches = this.result()?.areaMatches ?? [];
-    if (matches.length < 2) {
-      return null;
-    }
-    const [best, ...others] = matches;
-    return { best, others };
+    return matches.length < 2 ? null : matches;
   });
 
   /** Os 2 tipos de maior escore do estudante: o back-end usa para ordenar os vídeos (ranking), não para buscar. */
@@ -80,6 +76,11 @@ export class ResultComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  /** Escore do estudante (2 a 10) num tipo RIASEC: usado para mostrar a conta da compatibilidade. */
+  scoreOf(category: string): number {
+    return this.result()?.scores.find((score) => score.category === category)?.score ?? 0;
   }
 
   letter(category: string): string {

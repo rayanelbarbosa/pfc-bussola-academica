@@ -70,7 +70,9 @@ jobs:
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             docker pull "$IMAGEM"
             docker rm -f bussola-backend 2>/dev/null || true
+            # limite de memória: sem ele a JVM enxerga 1 GB e cresce até travar a EC2 (nginx e SSH juntos)
             docker run -d --name bussola-backend --restart unless-stopped \
+              --memory=640m --memory-swap=900m \
               --env-file /opt/bussola/.env -p 127.0.0.1:8080:8080 "$IMAGEM"
             docker image prune -af --filter "until=72h"
             for i in $(seq 1 30); do

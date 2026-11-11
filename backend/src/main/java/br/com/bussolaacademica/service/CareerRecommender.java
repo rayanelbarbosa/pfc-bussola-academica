@@ -5,6 +5,7 @@ import br.com.bussolaacademica.model.InterestArea;
 import br.com.bussolaacademica.model.RiasecCategory;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -34,7 +35,7 @@ import java.util.Set;
 @Component
 public class CareerRecommender {
 
-    static final int LIMIT = 5;
+    static final int LIMIT = 4;
 
     /** Valor de semelhança das carreiras sem perfil O*NET: abaixo de qualquer correlação possível (-1 a 1). */
     static final double NO_PROFILE = -2.0;
@@ -96,8 +97,23 @@ public class CareerRecommender {
     public record AreaMatch(InterestArea area, RankedCareer best) {
     }
 
+    /** Critério que separou duas carreiras empatadas na compatibilidade. */
+    public enum TieReason { PROFILE, THIRD_TYPE, NAME }
+
+    /**
+     * Carreira do ranking com a explicação da posição: quando empata na compatibilidade com a seguinte (mesmo a
+     * que ficou fora das {@value #LIMIT}), diz qual foi e o critério que deixou esta na frente. Sem empate, os
+     * dois campos ficam nulos.
+     */
+    public record Pick(RankedCareer ranked, RankedCareer aheadOf, TieReason reason) {
+    }
+
     /** Ranking único das áreas consideradas e a comparação entre essas áreas. */
-    public record Recommendation(List<RankedCareer> careers, List<AreaMatch> areaMatches) {
+    public record Recommendation(List<Pick> picks, List<AreaMatch> areaMatches) {
+
+        public List<RankedCareer> careers() {
+            return picks.stream().map(Pick::ranked).toList();
+        }
     }
 
     /**
@@ -121,7 +137,23 @@ public class CareerRecommender {
         List<AreaMatch> matches = bestByArea.entrySet().stream()
                 .map(entry -> new AreaMatch(entry.getKey(), entry.getValue()))
                 .toList();
-        return new Recommendation(ranked.stream().limit(LIMIT).toList(), matches);
+        List<Pick> picks = new ArrayList<>();
+        for (int i = 0; i < Math.min(LIMIT, ranked.size()); i++) {
+            RankedCareer current = ranked.get(i);
+            RankedCareer next = i + 1 < ranked.size() ? ranked.get(i + 1) : null;
+            picks.add(next != null && next.compatibility() == current.compatibility()
+                    ? new Pick(current, next, tieReason(current, next))
+                    : new Pick(current, null, null));
+        }
+        return new Recommendation(List.copyOf(picks), matches);
+    }
+
+    /** Mesmo critério da ordenação: o primeiro que diferencia as duas carreiras empatadas. */
+    static TieReason tieReason(RankedCareer ahead, RankedCareer behind) {
+        if (Double.compare(ahead.similarity(), behind.similarity()) != 0) {
+            return TieReason.PROFILE;
+        }
+        return ahead.tieBreaker() != behind.tieBreaker() ? TieReason.THIRD_TYPE : TieReason.NAME;
     }
 
     /** Ordena: compatibilidade, perfil completo do O*NET, 3º tipo e nome. */

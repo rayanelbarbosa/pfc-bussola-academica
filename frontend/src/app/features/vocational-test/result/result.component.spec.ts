@@ -25,12 +25,14 @@ const RESULT: VocationalTestResult = {
   interestAreas: [{ value: 'ENGINEERING', label: 'Engenharias' }],
   careerRecommendations: [{
     name: 'Engenharia Civil', area: 'ENGINEERING', areaLabel: 'Engenharias', code: 'RI', compatibility: 22,
-    description: 'Projeta obras.',
+    description: 'Projeta obras.', tiedWith: 'Engenharia Mecânica', tieReason: 'PROFILE',
     categories: [{ category: 'REALISTIC', label: 'Realista' }, { category: 'INVESTIGATIVE', label: 'Investigativo' }]
   }],
   areaMatches: [
-    { area: 'ENGINEERING', label: 'Engenharias', bestCareer: 'Engenharia Civil', bestCompatibility: 22 },
-    { area: 'HEALTH', label: 'Saúde', bestCareer: 'Enfermagem', bestCompatibility: 18 }
+    { area: 'ENGINEERING', label: 'Engenharias', bestCareer: 'Engenharia Civil', bestCompatibility: 22,
+      bestCategories: [{ category: 'REALISTIC', label: 'Realista' }, { category: 'INVESTIGATIVE', label: 'Investigativo' }] },
+    { area: 'HEALTH', label: 'Saúde', bestCareer: 'Enfermagem', bestCompatibility: 18,
+      bestCategories: [{ category: 'SOCIAL', label: 'Social' }, { category: 'INVESTIGATIVE', label: 'Investigativo' }] }
   ]
 };
 
@@ -65,7 +67,8 @@ describe('ResultComponent', () => {
     expect(el.textContent).toContain('22 de 30 pontos');
     expect(el.textContent).toContain('1º · Engenharias');
     expect(el.textContent).toContain('Seu perfil combina mais com Engenharias');
-    expect(el.textContent).toContain('Saúde (melhor: 18 de 30)');
+    expect(el.textContent).toContain('Enfermagem pede Social');
+    expect(el.textContent).toContain('Empatou com Engenharia Mecânica');
     expect(el.textContent).toContain('Seu perfil é Realista e Convencional');
   });
 
