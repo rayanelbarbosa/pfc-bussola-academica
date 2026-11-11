@@ -30,6 +30,8 @@ export interface CareerRecommendation {
   categories: { category: string; label: string }[];
   compatibility: number;
   description: string;
+  /** Até 3 tarefas do dia a dia (O*NET); vazio quando a carreira não tem. */
+  dailyTasks: string[];
   /** Carreira seguinte do ranking que empatou com esta; nulo sem empate. */
   tiedWith: string | null;
   /** Critério que deixou esta na frente: perfil completo do O*NET, 3º tipo ou nome. */

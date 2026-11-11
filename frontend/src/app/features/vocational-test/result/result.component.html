@@ -14,49 +14,45 @@
     </div>
   }
   @if (result(); as r) {
-    <div class="hero-violet mb-6 overflow-hidden rounded-2xl px-5 py-4 shadow-lg shadow-primary/20 sm:px-6 sm:py-5">
+    <div class="hero-violet mb-8 overflow-hidden rounded-2xl px-5 py-5 shadow-lg shadow-primary/20 sm:px-7 sm:py-6">
       <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-wider text-violet-200">Seu resultado · {{ r.createdAt | date: "dd/MM/yyyy 'às' HH:mm" }}</p>
-          <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <h1 class="text-[22px] font-bold leading-tight text-white sm:text-[26px]">
-            Seu perfil é {{ profileName() }}
-          </h1>
-          <div class="flex flex-wrap items-center gap-2">
+          <p class="text-xs font-semibold uppercase tracking-wider text-violet-200">Seu resultado · {{ r.createdAt | date: "dd/MM/yyyy" }}</p>
+          <h1 class="mt-1 text-[24px] font-bold leading-tight text-white sm:text-[28px]">Seu perfil é {{ profileName() }}</h1>
+          <div class="mt-3 space-y-2">
             @for (top of r.topCategories; track top.category) {
-              <span class="inline-flex items-center gap-2 rounded-full bg-white/15 py-1 pl-1 pr-3 text-sm font-semibold text-white">
-                <span class="grid size-7 place-items-center rounded-full text-sm font-bold text-white" [style.background]="riasecColor(top.category)">{{ letter(top.category) }}</span>
-                {{ top.label }} · {{ top.score }}/10
-              </span>
+              @if (categoryInfo(top.category); as info) {
+                <p class="flex items-start gap-3 text-sm leading-relaxed text-violet-100">
+                  <span class="grid size-7 shrink-0 place-items-center rounded-full text-sm font-bold text-white" [style.background]="riasecColor(top.category)">{{ info.letter }}</span>
+                  <span><strong class="text-white">{{ info.name }}:</strong> {{ info.meaning }} {{ info.traits }}</span>
+                </p>
+              }
             }
           </div>
-          </div>
         </div>
-        <div class="flex flex-wrap gap-2">
-          <a routerLink="/teste-vocacional" class="btn btn-light"><app-icon name="rotate-ccw" class="size-4" /> Refazer o teste</a>
-          <a routerLink="/meus-resultados" class="btn btn-outline-light"><app-icon name="history" class="size-4" /> Ver histórico</a>
+        <div class="flex shrink-0 flex-wrap gap-2">
+          <a routerLink="/teste-vocacional" class="btn btn-light"><app-icon name="rotate-ccw" class="size-4" /> Refazer</a>
+          <a routerLink="/meus-resultados" class="btn btn-outline-light"><app-icon name="history" class="size-4" /> Histórico</a>
         </div>
       </div>
     </div>
 
-    <section class="card mb-8">
-      <h2 class="text-xl">Seus escores RIASEC</h2>
-      <p class="mt-1 text-sm text-muted-foreground">Cada escore é a soma de duas respostas, de 2 a 10 pontos. O gráfico segue a ordem do hexágono de Holland.</p>
+    <section class="card mb-10">
+      <h2 class="text-xl">Seus pontos em cada tipo</h2>
       <div class="mt-4 grid items-center gap-6 md:grid-cols-2">
         <div class="flex justify-center"><app-radar-chart [points]="radarPoints()" /></div>
         <ul class="space-y-3">
           @for (score of r.scores; track score.category) {
-            <li class="border-b border-border pb-3 last:border-b-0">
-              <div class="flex items-center justify-between gap-4">
-                <span class="flex items-center gap-3">
-                  <span class="grid size-8 place-items-center rounded-lg text-sm font-bold text-white" [style.background]="riasecColor(score.category)">{{ letter(score.category) }}</span>
-                  <span class="font-medium">{{ score.label }}</span>
+            <li>
+              <div class="flex items-center justify-between gap-4 text-sm">
+                <span class="flex items-center gap-2">
+                  <span class="grid size-6 place-items-center rounded-md text-xs font-bold text-white" [style.background]="riasecColor(score.category)">{{ letter(score.category) }}</span>
+                  {{ score.label }}
                 </span>
-                <strong class="font-semibold">{{ score.score }}/10</strong>
+                <strong>{{ score.score }}/10</strong>
               </div>
-              <div class="mt-2 h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-                <div class="h-full rounded-full transition-[width] duration-500" [style.width.%]="score.score * 10"
-                  [style.background]="riasecColor(score.category)"></div>
+              <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                <div class="h-full rounded-full" [style.width.%]="score.score * 10" [style.background]="riasecColor(score.category)"></div>
               </div>
             </li>
           }
@@ -64,96 +60,44 @@
       </div>
     </section>
 
-    <section class="mb-8">
-      <h2 class="text-xl">O que o seu perfil significa</h2>
-      @if (hasTie()) {
-        <p class="mt-2 text-sm text-muted-foreground">
-          {{ r.topCategories.length }} tipos tiveram o mesmo maior escore. Todos fazem parte do seu perfil principal.
-        </p>
-      }
-      <div class="mt-4 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
-        @for (top of r.topCategories; track top.category) {
-          @if (categoryInfo(top.category); as info) {
-            <div class="card p-5 sm:p-6" [style.border-top]="'4px solid ' + riasecColor(top.category)">
-              <h3 class="flex items-center gap-3 text-lg">
-                <span class="grid size-9 place-items-center rounded-lg text-base font-bold text-white" [style.background]="riasecColor(top.category)">{{ info.letter }}</span>
-                <span [class]="riasecClass(top.category)">{{ info.name }}</span>
-                <span class="text-sm font-normal text-muted-foreground">({{ top.score }}/10)</span>
-              </h3>
-              <p class="mt-3 text-sm leading-relaxed text-muted-foreground">{{ info.meaning }}</p>
-              <h4 class="mt-4 text-sm font-semibold">Características comuns</h4>
-              <p class="mt-1 text-sm leading-relaxed text-muted-foreground">{{ info.traits }}</p>
-              <h4 class="mt-4 text-sm font-semibold">Ambientes de trabalho</h4>
-              <p class="mt-1 text-sm leading-relaxed text-muted-foreground">{{ info.environments }}</p>
-            </div>
-          }
-        }
-      </div>
-    </section>
-
-    <section class="mb-8">
-      <h2 class="text-xl">Carreiras mais compatíveis</h2>
-      <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-        As 4 carreiras mais compatíveis entre as áreas que você escolheu, em ordem de pontuação: 2 vezes o seu escore no
-        tipo principal da carreira mais o seu escore no tipo secundário (de 6 a 30). Quando duas empatam, o card diz o
-        que decidiu a ordem.
-      </p>
+    <section class="mb-10">
+      <h2 class="text-xl">Carreiras que combinam com você</h2>
       @if (areaComparison(); as matches) {
-        <div class="mt-4 rounded-xl border border-border bg-accent/60 p-4 text-sm leading-relaxed">
-          <p>
-            Seu perfil combina mais com <strong>{{ matches[0].label }}</strong>. Comparamos as áreas pela melhor carreira
-            de cada uma: quanto mais ela usa os seus tipos mais fortes, mais a área combina com você.
-          </p>
-          <ul class="mt-3 space-y-1.5">
-            @for (match of matches; track match.area; let first = $first) {
-              <li class="flex flex-wrap items-baseline gap-x-2">
-                <strong [class.text-primary]="first">{{ match.label }}:</strong>
-                <span>
-                  {{ match.bestCareer }} pede {{ match.bestCategories[0].label }} (seu escore {{ scoreOf(match.bestCategories[0].category) }})
-                  e {{ match.bestCategories[1].label }} ({{ scoreOf(match.bestCategories[1].category) }})
-                  = <strong>{{ match.bestCompatibility }} de 30</strong>
-                </span>
-              </li>
-            }
-          </ul>
-        </div>
+        <p class="mt-1 text-muted-foreground">Das áreas que você escolheu, <strong class="text-foreground">{{ matches[0].label }}</strong> é a que mais combina com você.</p>
       }
-      <div class="mt-4 grid items-stretch gap-4 md:grid-cols-2">
+      <div class="mt-4 grid items-start gap-4 md:grid-cols-2">
         @for (career of r.careerRecommendations; track career.name; let i = $index) {
-          <div class="card card-hover flex flex-col overflow-hidden p-0 sm:p-0">
-            <div class="h-1.5" [style.background]="'linear-gradient(90deg,' + riasecColor(career.categories[0].category) + ',' + riasecColor(career.categories[1].category) + ')'"></div>
-            <div class="flex flex-1 flex-col p-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{{ i + 1 }}º · {{ career.areaLabel }}</p>
-            <h4 class="mt-1 text-lg font-semibold">{{ career.name }}</h4>
-            <div class="mt-3 flex items-center justify-between gap-2">
-              <span class="flex gap-1">
-                @for (type of career.categories; track $index) {
-                  <span class="grid size-7 place-items-center rounded-md text-xs font-bold text-white" [style.background]="riasecColor(type.category)"
-                    [attr.title]="type.label">{{ letter(type.category) }}</span>
-                }
-              </span>
-              <span class="rounded-full bg-accent px-2.5 py-1 text-sm font-semibold text-accent-foreground">{{ career.compatibility }} de 30 pontos</span>
+          <div class="card flex flex-col p-5">
+            <div class="flex items-center justify-between gap-3">
+              <span class="grid size-9 place-items-center rounded-full bg-primary text-base font-bold text-white">{{ i + 1 }}</span>
+              <span class="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">{{ career.areaLabel }}</span>
             </div>
-            <p class="mt-3 text-sm leading-relaxed text-muted-foreground">{{ career.description }}</p>
-            @if (career.tieReason || (i > 0 && r.careerRecommendations[i - 1].tiedWith === career.name)) {
-            <div class="mt-3 space-y-1 rounded-lg bg-muted px-3 py-2 text-xs leading-relaxed">
-              @if (i > 0 && r.careerRecommendations[i - 1].tiedWith === career.name) {
-                <p>Empatou com {{ r.careerRecommendations[i - 1].name }}, que ficou na frente (o motivo está no card dela).</p>
-              }
-              @switch (career.tieReason) {
-                @case ('PROFILE') {
-                  <p>Empatou com {{ career.tiedWith }} e ficou na frente porque o perfil completo dela (os 6 tipos) é mais parecido com o seu.</p>
-                }
-                @case ('THIRD_TYPE') {
-                  <p>Empatou com {{ career.tiedWith }} e ficou na frente pelo 3º tipo, {{ career.categories[2].label }} (seu escore {{ scoreOf(career.categories[2].category) }}).</p>
-                }
-                @case ('NAME') {
-                  <p>Empatou com {{ career.tiedWith }} em todos os critérios, então a ordem entre as duas é alfabética.</p>
-                }
-              }
+            <h3 class="mt-3 text-lg font-semibold">{{ career.name }}</h3>
+            <div class="mt-2 flex items-center gap-3">
+              <div class="h-2 flex-1 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                <div class="h-full rounded-full bg-primary" [style.width.%]="career.compatibility / 30 * 100"></div>
+              </div>
+              <span class="text-sm font-semibold text-primary">{{ career.compatibility }}/30</span>
             </div>
-            }
-            <div class="mt-auto pt-4">
+            <p class="mt-3 text-sm text-muted-foreground">{{ career.description }}</p>
+            <div class="pt-4">
+              <button type="button" class="btn btn-secondary btn-sm mb-4" (click)="toggleDetails(career.name)" [attr.aria-expanded]="openDetails().has(career.name)">
+                <app-icon name="graduation-cap" class="size-4" /> {{ openDetails().has(career.name) ? 'Menos sobre a carreira' : 'Mais sobre a carreira' }}
+              </button>
+              @if (openDetails().has(career.name)) {
+                <div class="mb-4 space-y-3 rounded-lg bg-muted px-4 py-3 text-sm">
+                  <p><strong>Combina com você porque</strong> usa os seus tipos {{ career.categories[0].label }} ({{ scoreOf(career.categories[0].category) }}/10) e {{ career.categories[1].label }} ({{ scoreOf(career.categories[1].category) }}/10).</p>
+                  @if (career.dailyTasks.length) {
+                    <div>
+                      <p class="font-semibold">No dia a dia</p>
+                      <ul class="mt-1 list-disc space-y-0.5 pl-5">
+                        @for (task of career.dailyTasks; track task) { <li>{{ task }}</li> }
+                      </ul>
+                    </div>
+                  }
+                  <a routerLink="/formas-de-ingresso" class="inline-flex items-center gap-1 font-medium text-primary hover:underline">Como entrar na faculdade <app-icon name="arrow-right" class="size-4" /></a>
+                </div>
+              }
               @switch (videos()[career.name]?.status) {
                 @case ('ok') {
                   <p class="mb-2 text-xs font-medium">Vídeos sobre a carreira</p>
@@ -183,15 +127,18 @@
                   <div class="skeleton h-16" aria-label="Carregando vídeos"></div>
                 }
               }
-            </div>
+
             </div>
           </div>
         }
       </div>
+      <details class="mt-4 text-sm text-muted-foreground">
+        <summary class="cursor-pointer font-medium text-foreground">Como escolhemos essas carreiras?</summary>
+        <p class="mt-2">Cada carreira combina com 2 tipos do teste. Somamos os seus pontos nesses tipos (o principal vale o dobro), até 30. Se duas empatam, fica na frente a mais parecida com o seu perfil completo.</p>
+      </details>
     </section>
 
-    <p class="alert alert-info text-sm leading-relaxed">
-      O teste é uma orientação inicial. Vale conversar com professores, profissionais da área e visitar faculdades antes de decidir.
-    </p>
+
+    <p class="text-center text-sm text-muted-foreground">O teste é um ponto de partida. Converse com professores e profissionais antes de decidir.</p>
   }
 </div>
