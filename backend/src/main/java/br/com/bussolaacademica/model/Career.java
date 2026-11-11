@@ -13,6 +13,10 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * Carreira (curso de graduação) de uma área de interesse, com o código RIASEC de 2 letras
@@ -79,11 +83,17 @@ public class Career {
     @Column(nullable = false, length = 300)
     private String description;
 
+    /** Até 3 tarefas do dia a dia (O*NET), separadas por {@value #TASK_SEPARATOR}; opcional. */
+    @Column(name = "daily_tasks", length = 600)
+    private String dailyTasks;
+
     @Column(nullable = false)
     private boolean active = true;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public static final String TASK_SEPARATOR = "|";
 
     protected Career() {
         // exigido pelo JPA
@@ -167,6 +177,21 @@ public class Career {
         this.onetConventional = profile[5];
     }
     public String getDescription() { return description; }
+
+    public List<String> getDailyTasks() {
+        if (dailyTasks == null || dailyTasks.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(dailyTasks.split(Pattern.quote(TASK_SEPARATOR))).map(String::trim)
+                .filter(task -> !task.isEmpty()).toList();
+    }
+
+    /** Guarda as tarefas sem as vazias; nenhuma tarefa deixa a coluna nula. */
+    public void setDailyTasks(List<String> tasks) {
+        List<String> clean = tasks == null ? List.of()
+                : tasks.stream().filter(Objects::nonNull).map(String::trim).filter(task -> !task.isEmpty()).toList();
+        this.dailyTasks = clean.isEmpty() ? null : String.join(TASK_SEPARATOR, clean);
+    }
     public boolean isActive() { return active; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

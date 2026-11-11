@@ -15,6 +15,8 @@ export interface Career {
   /** Ocupação do O*NET usada como referência do código e do perfil (ex.: "29-1216.00"); null se cadastrada sem. */
   onetCode: string | null;
   description: string;
+  /** Até 3 tarefas do dia a dia (O*NET), mostradas no "Mais sobre a carreira". */
+  dailyTasks: string[];
   active: boolean;
   updatedAt: string;
 }
@@ -26,5 +28,7 @@ export interface CareerRequest {
   secondaryCategory: string;
   tertiaryCategory: string | null;
   description: string;
+  /** Opcional: até 3 tarefas do dia a dia. */
+  dailyTasks?: string[];
   active: boolean;
 }

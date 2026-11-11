@@ -28,6 +28,17 @@ export function differentTypes(group: AbstractControl): ValidationErrors | null 
  * Gestão das carreiras pelo administrador: consulta com filtros, inclusão, alteração e ativação/desativação.
  * A carreira nova entra na recomendação do teste e na busca de vídeos sem precisar de deploy.
  */
+/** Linhas preenchidas do campo "Dia a dia" (uma tarefa por linha). */
+function taskLines(text: string): string[] {
+  return text.split('\n').map((line) => line.trim()).filter((line) => line.length > 0);
+}
+
+/** Até 3 tarefas, cada uma com até 150 caracteres e sem "|" (separador usado no banco). */
+function maxTasks(control: AbstractControl): ValidationErrors | null {
+  const lines = taskLines(String(control.value ?? ''));
+  return lines.length > 3 || lines.some((line) => line.length > 150 || line.includes('|')) ? { tasks: true } : null;
+}
+
 @Component({
   selector: 'app-careers',
   standalone: true,
@@ -67,6 +78,8 @@ export class CareersComponent implements OnInit {
       secondaryCategory: ['', Validators.required],
       tertiaryCategory: [''],
       description: ['', [Validators.required, Validators.maxLength(300)]],
+      // uma tarefa por linha (até 3); vira lista no envio
+      dailyTasks: ['', [maxTasks]],
       active: [true]
     },
     { validators: differentTypes }
@@ -127,6 +140,7 @@ export class CareersComponent implements OnInit {
       secondaryCategory: career.secondaryCategory,
       tertiaryCategory: career.tertiaryCategory ?? '',
       description: career.description,
+      dailyTasks: (career.dailyTasks ?? []).join('\n'),
       active: career.active
     });
     this.formError.set(null);
@@ -143,7 +157,7 @@ export class CareersComponent implements OnInit {
       return;
     }
     const value = this.form.getRawValue();
-    const request = { ...value, tertiaryCategory: value.tertiaryCategory || null };
+    const request = { ...value, tertiaryCategory: value.tertiaryCategory || null, dailyTasks: taskLines(value.dailyTasks) };
     const id = this.editingId();
     const call = id ? this.service.update(id, request) : this.service.create(request);
     this.saving.set(true);

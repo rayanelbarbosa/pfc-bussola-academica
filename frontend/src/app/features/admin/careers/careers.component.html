@@ -202,6 +202,13 @@
           <p class="field-hint">{{ length('description') }}/300. Aparece no cartão da carreira no resultado do teste.</p>
           @if (isInvalid('description')) { <p class="field-error">Informe a descrição (até 300 caracteres).</p> }
         </div>
+        <div class="field sm:col-span-2">
+          <label for="dailyTasks" class="field-label">Dia a dia (opcional)</label>
+          <textarea id="dailyTasks" formControlName="dailyTasks" rows="3" class="field-input" [class.is-invalid]="isInvalid('dailyTasks')"
+            placeholder="Uma tarefa por linha, até 3"></textarea>
+          <p class="field-hint">Aparece em "Mais sobre a carreira". Sugestão: as principais tarefas da ocupação no O*NET.</p>
+          @if (isInvalid('dailyTasks')) { <p class="field-error">Use no máximo 3 linhas, com até 150 caracteres cada, sem o caractere |.</p> }
+        </div>
         <label class="flex cursor-pointer items-center gap-3 text-sm sm:col-span-2">
           <input type="checkbox" formControlName="active" class="size-5 accent-[var(--primary)]" /> Ativa (entra na recomendação do teste)
         </label>

@@ -11,7 +11,7 @@ const MEDICINA: Career = {
   id: 1, name: 'Medicina', area: 'HEALTH', areaLabel: 'Saúde', primaryCategory: 'INVESTIGATIVE',
   primaryCategoryLabel: 'Investigativo', secondaryCategory: 'SOCIAL', secondaryCategoryLabel: 'Social',
   tertiaryCategory: 'REALISTIC', tertiaryCategoryLabel: 'Realista', code: 'ISR', onetCode: '29-1216.00',
-  description: 'Cuida da saúde.', active: true, updatedAt: '2026-11-10T10:00:00'
+  description: 'Cuida da saúde.', dailyTasks: ['Atende pacientes', 'Pede exames'], active: true, updatedAt: '2026-11-10T10:00:00'
 };
 
 describe('CareersComponent', () => {
@@ -67,12 +67,14 @@ describe('CareersComponent', () => {
     service.create.and.returnValue(of({ ...MEDICINA, id: 50, name: 'Engenharia de Prompt' }));
     const component = fixture.componentInstance;
     component.openCreate();
-    component.form.patchValue({ name: 'Engenharia de Prompt', area: 'HEALTH', primaryCategory: 'INVESTIGATIVE', secondaryCategory: 'SOCIAL', description: 'D' });
+    component.form.patchValue({ name: 'Engenharia de Prompt', area: 'HEALTH', primaryCategory: 'INVESTIGATIVE', secondaryCategory: 'SOCIAL', description: 'D',
+      dailyTasks: ' Escreve prompts \n\nTesta modelos' });
     fixture.detectChanges();
     expect(component.codePreview()).toBe('IS');
     expect(fixture.nativeElement.textContent).toContain('Código RIASEC');
     component.save();
-    expect(service.create).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Engenharia de Prompt', active: true, tertiaryCategory: null }));
+    expect(service.create).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Engenharia de Prompt', active: true, tertiaryCategory: null,
+      dailyTasks: ['Escreve prompts', 'Testa modelos'] }));
     expect(component.notice()).toContain('Engenharia de Prompt');
     expect(component.editingId()).toBeNull();
   });
@@ -83,9 +85,20 @@ describe('CareersComponent', () => {
     component.openEdit(MEDICINA);
     expect(component.form.controls.name.value).toBe('Medicina');
     expect(component.form.controls.tertiaryCategory.value).toBe('REALISTIC');
+    expect(component.form.controls.dailyTasks.value).toBe('Atende pacientes\nPede exames');
     component.save();
     expect(service.update).toHaveBeenCalledWith(1, jasmine.objectContaining({ primaryCategory: 'INVESTIGATIVE' }));
     expect(component.formError()).toContain('Já existe');
+  });
+
+  it('rejects more than 3 daily tasks or the | separator', () => {
+    const control = fixture.componentInstance.form.controls.dailyTasks;
+    control.setValue('a\nb\nc\nd');
+    expect(control.hasError('tasks')).toBeTrue();
+    control.setValue('a|b');
+    expect(control.hasError('tasks')).toBeTrue();
+    control.setValue('a\nb\nc');
+    expect(control.valid).toBeTrue();
   });
 
   it('deactivates after confirmation', () => {

@@ -14,7 +14,7 @@ import { RadarChartComponent } from '../../../shared/components/radar-chart/rada
 type VideoState = { status: 'loading' } | { status: 'ok'; videos: Video[] } | { status: 'error' };
 
 /**
- * Resultado do teste (RF07, RF08, RF09): radar dos escores, explicação do perfil principal,
+ * Resultado do teste (RF07, RF08, RF09): explicação do perfil principal, radar dos escores,
  * as 4 carreiras mais compatíveis entre as áreas escolhidas e vídeos do YouTube de cada carreira.
  */
 @Component({
@@ -35,6 +35,8 @@ export class ResultComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly videos = signal<Partial<Record<string, VideoState>>>({});
+  /** Carreiras com o "Mais sobre a carreira" aberto. */
+  readonly openDetails = signal<ReadonlySet<string>>(new Set());
 
   readonly categoryInfo = getCategoryInfo;
   readonly riasecClass = riasecClass;
@@ -43,7 +45,6 @@ export class ResultComponent implements OnInit {
   readonly radarPoints = computed(() =>
     (this.result()?.scores ?? []).map((score) => ({ label: score.label, value: score.score, color: riasecColor(score.category) }))
   );
-  readonly hasTie = computed(() => (this.result()?.topCategories.length ?? 0) > 1);
   /** "Investigativo" ou, com empate, "Investigativo e Social". */
   readonly profileName = computed(() => {
     const names = (this.result()?.topCategories ?? []).map((top) => top.label);
@@ -85,6 +86,16 @@ export class ResultComponent implements OnInit {
 
   letter(category: string): string {
     return getCategoryInfo(category)?.letter ?? '?';
+  }
+
+  toggleDetails(career: string): void {
+    this.openDetails.update((open) => {
+      const next = new Set(open);
+      if (!next.delete(career)) {
+        next.add(career);
+      }
+      return next;
+    });
   }
 
   /**
