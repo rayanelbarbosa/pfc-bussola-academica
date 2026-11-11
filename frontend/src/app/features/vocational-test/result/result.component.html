@@ -94,66 +94,71 @@
     <section class="mb-8">
       <h2 class="text-xl">Carreiras mais compatíveis</h2>
       <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-        Mostramos as 3 carreiras mais compatíveis de cada área. A compatibilidade soma 2 vezes o seu escore no 1º tipo
-        da carreira com o escore no 2º tipo; se duas carreiras empatarem, vence a que tem o perfil completo (os 6 tipos)
-        mais parecido com o seu.
+        Mostramos as 5 carreiras mais compatíveis entre as áreas que você escolheu. A compatibilidade soma 2 vezes o seu
+        escore no 1º tipo da carreira com o escore no 2º tipo; se duas carreiras empatarem, vence a que tem o perfil
+        completo (os 6 tipos) mais parecido com o seu.
       </p>
-      @for (group of r.careerRecommendations; track group.area) {
-        <div class="mt-6">
-          <h3 class="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-base text-accent-foreground">{{ group.label }}</h3>
-          <div class="mt-3 grid items-stretch gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))]">
-            @for (career of group.careers; track career.name) {
-              <div class="card card-hover flex flex-col overflow-hidden p-0 sm:p-0">
-                <div class="h-1.5" [style.background]="'linear-gradient(90deg,' + riasecColor(career.categories[0].category) + ',' + riasecColor(career.categories[1].category) + ')'"></div>
-                <div class="flex flex-1 flex-col p-5">
-                <h4 class="text-lg font-semibold">{{ career.name }}</h4>
-                <div class="mt-3 flex items-center justify-between gap-2">
-                  <span class="flex gap-1">
-                    @for (type of career.categories; track $index) {
-                      <span class="grid size-7 place-items-center rounded-md text-xs font-bold text-white" [style.background]="riasecColor(type.category)"
-                        [attr.title]="type.label">{{ letter(type.category) }}</span>
-                    }
-                  </span>
-                  <span class="rounded-full bg-accent px-2.5 py-1 text-sm font-semibold text-accent-foreground">{{ career.compatibility }} de 30 pontos</span>
-                </div>
-                <p class="mt-3 text-sm leading-relaxed text-muted-foreground">{{ career.description }}</p>
-                <div class="mt-auto pt-4">
-                  @switch (videos()[career.name]?.status) {
-                    @case ('ok') {
-                      <p class="mb-2 text-xs font-medium">Vídeos sobre a carreira</p>
-                      <ul class="space-y-2">
-                        @for (video of $any(videos()[career.name]).videos; track video.videoId) {
-                          <li>
-                            <a [href]="video.url" target="_blank" rel="noopener noreferrer" class="flex gap-3 rounded-md p-1 hover:bg-muted">
-                              @if (video.thumbnailUrl) {
-                                <img [src]="video.thumbnailUrl" alt="" class="h-12 w-20 shrink-0 rounded object-cover" loading="lazy" />
-                              }
-                              <span class="min-w-0">
-                                <span class="line-clamp-2 text-xs font-medium">{{ video.title }}</span>
-                                <span class="block truncate text-xs text-muted-foreground">{{ video.channelTitle }}</span>
-                              </span>
-                            </a>
-                          </li>
-                        } @empty {
-                          <li class="text-xs text-muted-foreground">Nenhum vídeo encontrado.</li>
-                        }
-                      </ul>
-                    }
-                    @case ('error') {
-                      <p class="text-xs text-muted-foreground">Vídeos indisponíveis no momento.</p>
-                      <button type="button" class="btn btn-ghost btn-sm mt-1 h-8 px-2" (click)="loadVideos(career.name)">Tentar de novo</button>
-                    }
-                    @default {
-                      <div class="skeleton h-16" aria-label="Carregando vídeos"></div>
-                    }
-                  }
-                </div>
-                </div>
-              </div>
-            }
-          </div>
+      @if (areaComparison(); as cmp) {
+        <div class="mt-4 rounded-xl border border-border bg-accent/60 px-4 py-3 text-sm leading-relaxed">
+          Seu perfil combina mais com <strong>{{ cmp.best.label }}</strong>
+          (melhor carreira: {{ cmp.best.bestCareer }}, {{ cmp.best.bestCompatibility }} de 30) do que com
+          @for (other of cmp.others; track other.area; let last = $last) {
+            <strong>{{ other.label }}</strong> (melhor: {{ other.bestCompatibility }} de 30){{ last ? '.' : ', ' }}
+          }
         </div>
       }
+      <div class="mt-4 grid items-stretch gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))]">
+        @for (career of r.careerRecommendations; track career.name; let i = $index) {
+          <div class="card card-hover flex flex-col overflow-hidden p-0 sm:p-0">
+            <div class="h-1.5" [style.background]="'linear-gradient(90deg,' + riasecColor(career.categories[0].category) + ',' + riasecColor(career.categories[1].category) + ')'"></div>
+            <div class="flex flex-1 flex-col p-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{{ i + 1 }}º · {{ career.areaLabel }}</p>
+            <h4 class="mt-1 text-lg font-semibold">{{ career.name }}</h4>
+            <div class="mt-3 flex items-center justify-between gap-2">
+              <span class="flex gap-1">
+                @for (type of career.categories; track $index) {
+                  <span class="grid size-7 place-items-center rounded-md text-xs font-bold text-white" [style.background]="riasecColor(type.category)"
+                    [attr.title]="type.label">{{ letter(type.category) }}</span>
+                }
+              </span>
+              <span class="rounded-full bg-accent px-2.5 py-1 text-sm font-semibold text-accent-foreground">{{ career.compatibility }} de 30 pontos</span>
+            </div>
+            <p class="mt-3 text-sm leading-relaxed text-muted-foreground">{{ career.description }}</p>
+            <div class="mt-auto pt-4">
+              @switch (videos()[career.name]?.status) {
+                @case ('ok') {
+                  <p class="mb-2 text-xs font-medium">Vídeos sobre a carreira</p>
+                  <ul class="space-y-2">
+                    @for (video of $any(videos()[career.name]).videos; track video.videoId) {
+                      <li>
+                        <a [href]="video.url" target="_blank" rel="noopener noreferrer" class="flex gap-3 rounded-md p-1 hover:bg-muted">
+                          @if (video.thumbnailUrl) {
+                            <img [src]="video.thumbnailUrl" alt="" class="h-12 w-20 shrink-0 rounded object-cover" loading="lazy" />
+                          }
+                          <span class="min-w-0">
+                            <span class="line-clamp-2 text-xs font-medium">{{ video.title }}</span>
+                            <span class="block truncate text-xs text-muted-foreground">{{ video.channelTitle }}</span>
+                          </span>
+                        </a>
+                      </li>
+                    } @empty {
+                      <li class="text-xs text-muted-foreground">Nenhum vídeo encontrado.</li>
+                    }
+                  </ul>
+                }
+                @case ('error') {
+                  <p class="text-xs text-muted-foreground">Vídeos indisponíveis no momento.</p>
+                  <button type="button" class="btn btn-ghost btn-sm mt-1 h-8 px-2" (click)="loadVideos(career.name)">Tentar de novo</button>
+                }
+                @default {
+                  <div class="skeleton h-16" aria-label="Carregando vídeos"></div>
+                }
+              }
+            </div>
+            </div>
+          </div>
+        }
+      </div>
     </section>
 
     <p class="alert alert-info text-sm leading-relaxed">

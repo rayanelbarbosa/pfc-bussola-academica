@@ -24,12 +24,14 @@ const RESULT: VocationalTestResult = {
   ],
   interestAreas: [{ value: 'ENGINEERING', label: 'Engenharias' }],
   careerRecommendations: [{
-    area: 'ENGINEERING', label: 'Engenharias',
-    careers: [{
-      name: 'Engenharia Civil', code: 'RI', compatibility: 22, description: 'Projeta obras.',
-      categories: [{ category: 'REALISTIC', label: 'Realista' }, { category: 'INVESTIGATIVE', label: 'Investigativo' }]
-    }]
-  }]
+    name: 'Engenharia Civil', area: 'ENGINEERING', areaLabel: 'Engenharias', code: 'RI', compatibility: 22,
+    description: 'Projeta obras.',
+    categories: [{ category: 'REALISTIC', label: 'Realista' }, { category: 'INVESTIGATIVE', label: 'Investigativo' }]
+  }],
+  areaMatches: [
+    { area: 'ENGINEERING', label: 'Engenharias', bestCareer: 'Engenharia Civil', bestCompatibility: 22 },
+    { area: 'HEALTH', label: 'Saúde', bestCareer: 'Enfermagem', bestCompatibility: 18 }
+  ]
 };
 
 describe('ResultComponent', () => {
@@ -54,13 +56,16 @@ describe('ResultComponent', () => {
     fixture.detectChanges();
   });
 
-  it('shows the radar chart, the tied main profile with explanations and the careers by area', () => {
+  it('shows the radar chart, the tied main profile with explanations and the single career ranking', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('app-radar-chart svg polygon')).toBeTruthy();
     expect(el.textContent).toContain('2 tipos tiveram o mesmo maior escore');
     expect(el.textContent).toContain('Características comuns');
     expect(el.textContent).toContain('Engenharia Civil');
     expect(el.textContent).toContain('22 de 30 pontos');
+    expect(el.textContent).toContain('1º · Engenharias');
+    expect(el.textContent).toContain('Seu perfil combina mais com Engenharias');
+    expect(el.textContent).toContain('Saúde (melhor: 18 de 30)');
     expect(el.textContent).toContain('Seu perfil é Realista e Convencional');
   });
 

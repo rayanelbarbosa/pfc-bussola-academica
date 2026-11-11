@@ -24,16 +24,20 @@ export interface CategoryScore {
 
 export interface CareerRecommendation {
   name: string;
+  area: string;
+  areaLabel: string;
   code: string;
   categories: { category: string; label: string }[];
   compatibility: number;
   description: string;
 }
 
-export interface AreaRecommendation {
+/** Melhor carreira de cada área escolhida: mostra com qual área o perfil combina mais. */
+export interface AreaMatch {
   area: string;
   label: string;
-  careers: CareerRecommendation[];
+  bestCareer: string;
+  bestCompatibility: number;
 }
 
 export interface VocationalTestResult {
@@ -42,7 +46,10 @@ export interface VocationalTestResult {
   scores: CategoryScore[];
   topCategories: CategoryScore[];
   interestAreas: { value: string; label: string }[];
-  careerRecommendations: AreaRecommendation[];
+  /** Ranking único: as 5 carreiras mais compatíveis entre as áreas escolhidas. */
+  careerRecommendations: CareerRecommendation[];
+  /** Áreas na ordem de compatibilidade (a primeira é a que mais combina). */
+  areaMatches: AreaMatch[];
 }
 
 /** Escala Likert usada em todas as perguntas. */
