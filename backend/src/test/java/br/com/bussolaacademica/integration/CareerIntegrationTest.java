@@ -211,7 +211,47 @@ class CareerIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.careerRecommendations", hasSize(4)))
                 .andExpect(jsonPath("$.careerRecommendations[0:3].name",
-                        org.hamcrest.Matchers.contains("Engenharia Mecânica", "Engenharia de Computação", "Engenharia Química")));
+                        org.hamcrest.Matchers.contains("Engenharia Mecânica", "Engenharia de Computação", "Engenharia Química")))
+                // dia a dia vindo do O*NET (V19)
+                .andExpect(jsonPath("$.careerRecommendations[0].dailyTasks", hasSize(3)))
+                .andExpect(jsonPath("$.careerRecommendations[0].dailyTasks[0]").value("Lê e interpreta desenhos técnicos e projetos"));
+    }
+
+    @Test
+    void adminManagesDailyTasks() throws Exception {
+        String admin = login(mockMvc, ADMIN_EMAIL, ADMIN_PASSWORD);
+        String name = "Dia a dia " + UUID.randomUUID().toString().substring(0, 6);
+        String base = "{\"name\":\"" + name + "\",\"area\":\"HEALTH\",\"primaryCategory\":\"SOCIAL\","
+                + "\"secondaryCategory\":\"INVESTIGATIVE\",\"description\":\"d\",\"dailyTasks\":";
+        String body = mockMvc.perform(post("/api/admin/careers")
+                        .header("Authorization", bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(base + "[\" Atende pacientes \",\"\",\"Faz relatórios\"]}"))
+                .andExpect(status().isCreated())
+                // tarefas vazias são descartadas e os espaços, removidos
+                .andExpect(jsonPath("$.dailyTasks", org.hamcrest.Matchers.contains("Atende pacientes", "Faz relatórios")))
+                .andReturn().getResponse().getContentAsString();
+        String id = String.valueOf((Integer) JsonPath.read(body, "$.id"));
+
+        // mais de 3 tarefas ou o separador "|" são recusados
+        mockMvc.perform(put("/api/admin/careers/" + id)
+                        .header("Authorization", bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(base + "[\"a\",\"b\",\"c\",\"d\"]}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/api/admin/careers/" + id)
+                        .header("Authorization", bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(base + "[\"a|b\"]}"))
+                .andExpect(status().isBadRequest());
+
+        // lista vazia limpa as tarefas
+        mockMvc.perform(put("/api/admin/careers/" + id)
+                        .header("Authorization", bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(base + "[]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.dailyTasks", hasSize(0)));
     }
 
     @Test

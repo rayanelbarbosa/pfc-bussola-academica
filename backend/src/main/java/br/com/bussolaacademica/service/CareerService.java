@@ -95,7 +95,9 @@ public class CareerService {
         if (repository.existsByNameIgnoreCaseAndArea(content.name(), content.area())) {
             throw new DuplicateResourceException(DUPLICATE);
         }
-        Career saved = repository.save(new Career(content, request.activeOrDefault(), LocalDateTime.now(clock)));
+        Career career = new Career(content, request.activeOrDefault(), LocalDateTime.now(clock));
+        career.setDailyTasks(request.dailyTasksOrEmpty());
+        Career saved = repository.save(career);
         auditService.recordForCurrentUser(AuditAction.CAREER_CREATED,
                 "Incluiu a carreira \"" + saved.getName() + "\" (" + saved.getCode() + ")", true);
         return CareerResponse.from(saved);
@@ -109,6 +111,7 @@ public class CareerService {
             throw new DuplicateResourceException(DUPLICATE);
         }
         career.update(content, request.activeOrDefault(), LocalDateTime.now(clock));
+        career.setDailyTasks(request.dailyTasksOrEmpty());
         auditService.recordForCurrentUser(AuditAction.CAREER_UPDATED,
                 "Alterou a carreira \"" + career.getName() + "\" (" + career.getCode() + ")", true);
         return CareerResponse.from(career);
