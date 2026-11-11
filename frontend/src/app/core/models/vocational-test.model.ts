@@ -30,6 +30,10 @@ export interface CareerRecommendation {
   categories: { category: string; label: string }[];
   compatibility: number;
   description: string;
+  /** Carreira seguinte do ranking que empatou com esta; nulo sem empate. */
+  tiedWith: string | null;
+  /** Critério que deixou esta na frente: perfil completo do O*NET, 3º tipo ou nome. */
+  tieReason: 'PROFILE' | 'THIRD_TYPE' | 'NAME' | null;
 }
 
 /** Melhor carreira de cada área escolhida: mostra com qual área o perfil combina mais. */
@@ -38,6 +42,8 @@ export interface AreaMatch {
   label: string;
   bestCareer: string;
   bestCompatibility: number;
+  /** Os 2 tipos da melhor carreira: explicam por que a área combina (ou não) com o perfil. */
+  bestCategories: { category: string; label: string }[];
 }
 
 export interface VocationalTestResult {
@@ -46,7 +52,7 @@ export interface VocationalTestResult {
   scores: CategoryScore[];
   topCategories: CategoryScore[];
   interestAreas: { value: string; label: string }[];
-  /** Ranking único: as 5 carreiras mais compatíveis entre as áreas escolhidas. */
+  /** Ranking único: as 4 carreiras mais compatíveis entre as áreas escolhidas. */
   careerRecommendations: CareerRecommendation[];
   /** Áreas na ordem de compatibilidade (a primeira é a que mais combina). */
   areaMatches: AreaMatch[];
