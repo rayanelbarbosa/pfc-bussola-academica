@@ -14,4 +14,6 @@ COPY --from=build /app/target/backend-*.jar app.jar
 USER bussola
 ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE 8080
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]
+# A EC2 é uma t3.micro (1 GB de RAM, dividida com o nginx). O container roda com limite de memória (--memory no
+# deploy) e a JVM usa no máximo 60% dele de heap; o GC serial gasta menos memória que o padrão nesse tamanho.
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=60", "-XX:+UseSerialGC", "-XX:MaxMetaspaceSize=160m", "-jar", "app.jar"]
