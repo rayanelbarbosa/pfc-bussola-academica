@@ -85,6 +85,40 @@ class CareerRecommenderTest {
         assertThat(result.areaMatches()).extracting(AreaMatch::area)
                 .containsExactly(InterestArea.BUSINESS, InterestArea.ENGINEERING);
         assertThat(result.areaMatches().get(1).best().career().getName()).isEqualTo("Engenharia Civil");
+        // Design Gráfico (23) não supera Contabilidade (27): sem aviso
+        assertThat(result.suggestions()).isEmpty();
+    }
+
+    @Test
+    void suggestsTheCareersThatFitBestWhenTheChosenAreasFitPoorly() {
+        // perfil Artístico (A=10) que escolheu só Engenharias
+        Map<RiasecCategory, Integer> artistic = scores(4, 4, 10, 6, 5, 4);
+        List<Career> careers = List.of(
+                career(1, "Engenharia Civil", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE),        // 12
+                career(2, "Engenharia Mecânica", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE),     // 12
+                career(3, "Artes Cênicas", InterestArea.ARTS_AND_COMMUNICATION, ARTISTIC, SOCIAL),        // 26
+                career(4, "Design Gráfico", InterestArea.ARTS_AND_COMMUNICATION, ARTISTIC, CONVENTIONAL), // 24
+                career(5, "Pedagogia", InterestArea.EDUCATION, SOCIAL, ARTISTIC));                       // 22
+
+        Recommendation result = recommender.recommend(List.of(InterestArea.ENGINEERING), careers, artistic);
+
+        // a escolha do estudante é respeitada: o ranking principal continua sendo das Engenharias
+        assertThat(names(result.careers())).containsExactly("Engenharia Civil", "Engenharia Mecânica");
+        // e ele recebe também as que mais combinam com ele, de todas as áreas
+        assertThat(result.suggestions()).extracting(pick -> pick.ranked().career().getName())
+                .containsExactly("Artes Cênicas", "Design Gráfico", "Pedagogia", "Engenharia Civil");
+        assertThat(result.suggestions().get(0).ranked().compatibility()).isEqualTo(26);
+    }
+
+    @Test
+    void noSuggestionWhenTheDifferenceIsSmallOrTheStudentIsUndecided() {
+        Map<RiasecCategory, Integer> balanced = scores(8, 7, 9, 5, 5, 5);
+        List<Career> careers = List.of(
+                career(1, "Engenharia Civil", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE),   // 23
+                career(2, "Design de Moda", InterestArea.ARTS_AND_COMMUNICATION, ARTISTIC, REALISTIC)); // 26: só 3 a mais
+
+        assertThat(recommender.recommend(List.of(InterestArea.ENGINEERING), careers, balanced).suggestions()).isEmpty();
+        assertThat(recommender.recommend(List.of(InterestArea.UNDECIDED), careers, balanced).suggestions()).isEmpty();
     }
 
     @Test

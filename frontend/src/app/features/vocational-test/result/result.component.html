@@ -61,12 +61,28 @@
     </section>
 
     <section class="mb-10">
-      <h2 class="text-xl">Carreiras que combinam com você</h2>
-      @if (areaComparison(); as matches) {
+      <h2 class="text-xl">{{ showSuggested() ? 'Carreiras que mais combinam com você' : 'Carreiras que combinam com você' }}</h2>
+      @if (hasSuggestion()) {
+        <div class="alert alert-warning mt-3" role="status">
+          <app-icon name="alert-circle" class="mt-0.5 size-5" />
+          <div>
+            <p>
+              As áreas que você escolheu combinam pouco com o seu perfil. Fora delas, <strong>{{ r.suggestedCareers[0].name }}</strong>
+              ({{ r.suggestedCareers[0].areaLabel }}) chega a <strong>{{ r.suggestedCareers[0].compatibility }}/30</strong>,
+              enquanto a melhor das suas áreas fica em {{ r.careerRecommendations[0]?.compatibility ?? 0 }}/30.
+            </p>
+            <div class="mt-3 flex flex-wrap gap-2" role="group" aria-label="Quais carreiras ver">
+              <button type="button" class="btn btn-sm" [class.btn-primary]="!showSuggested()" [class.btn-secondary]="showSuggested()" [attr.aria-pressed]="!showSuggested()" (click)="setShowSuggested(false)">Das áreas que escolhi</button>
+              <button type="button" class="btn btn-sm" [class.btn-primary]="showSuggested()" [class.btn-secondary]="!showSuggested()" [attr.aria-pressed]="showSuggested()" (click)="setShowSuggested(true)">As que mais combinam comigo</button>
+            </div>
+          </div>
+        </div>
+      }
+      @if (!showSuggested() && areaComparison(); as matches) {
         <p class="mt-1 text-muted-foreground">Das áreas que você escolheu, <strong class="text-foreground">{{ matches[0].label }}</strong> é a que mais combina com você.</p>
       }
       <div class="mt-4 grid items-start gap-4 md:grid-cols-2">
-        @for (career of r.careerRecommendations; track career.name; let i = $index) {
+        @for (career of shownCareers(); track career.name; let i = $index) {
           <div class="card flex flex-col p-5">
             <div class="flex items-center justify-between gap-3">
               <span class="grid size-9 place-items-center rounded-full bg-primary text-base font-bold text-white">{{ i + 1 }}</span>
