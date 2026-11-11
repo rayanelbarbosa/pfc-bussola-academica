@@ -27,6 +27,10 @@ import java.util.Set;
  *       as {@value #LIMIT} melhores, junto com a comparação entre as áreas (qual combina mais com ele). Poucas
  *       opções, bem ordenadas, ajudam mais quem está em dúvida do que uma lista longa.</li>
  *   <li>"Ainda não sei": o ranking considera as carreiras de todas as áreas.</li>
+ *   <li>Aviso de área que combina pouco: quando a melhor carreira de fora das áreas escolhidas tem pelo menos
+ *       {@value #SUGGESTION_GAP} pontos a mais que a melhor das áreas escolhidas, o estudante recebe também as
+ *       {@value #LIMIT} carreiras que mais combinam com ele em todas as áreas. A escolha dele é respeitada (ele
+ *       continua vendo as áreas que escolheu) e decide qual lista quer ver.</li>
  * </ol>
  *
  * <p>Complexidade: O(c log c), por causa da ordenação das c carreiras das áreas consideradas (a correlação é O(6) =
@@ -36,6 +40,13 @@ import java.util.Set;
 public class CareerRecommender {
 
     static final int LIMIT = 4;
+
+    /**
+     * Diferença mínima de compatibilidade para sugerir outras áreas: 4 pontos equivalem a 2 pontos a mais no tipo
+     * principal (que pesa o dobro), ou seja, uma resposta inteira de diferença em cada uma das 2 perguntas dele.
+     * Diferenças menores são pequenas demais para justificar o aviso.
+     */
+    static final int SUGGESTION_GAP = 4;
 
     /** Valor de semelhança das carreiras sem perfil O*NET: abaixo de qualquer correlação possível (-1 a 1). */
     static final double NO_PROFILE = -2.0;
@@ -108,8 +119,11 @@ public class CareerRecommender {
     public record Pick(RankedCareer ranked, RankedCareer aheadOf, TieReason reason) {
     }
 
-    /** Ranking único das áreas consideradas e a comparação entre essas áreas. */
-    public record Recommendation(List<Pick> picks, List<AreaMatch> areaMatches) {
+    /**
+     * Ranking único das áreas consideradas, a comparação entre essas áreas e, quando as áreas escolhidas combinam
+     * pouco com o perfil, as carreiras que mais combinam com ele em todas as áreas (lista vazia quando não há aviso).
+     */
+    public record Recommendation(List<Pick> picks, List<AreaMatch> areaMatches, List<Pick> suggestions) {
 
         public List<RankedCareer> careers() {
             return picks.stream().map(Pick::ranked).toList();
@@ -123,7 +137,8 @@ public class CareerRecommender {
      */
     public Recommendation recommend(List<InterestArea> areas, List<Career> careers, Map<RiasecCategory, Integer> scores) {
         // sem área (resultados antigos) ou "Ainda não sei": todas as áreas
-        Set<InterestArea> considered = areas.isEmpty() || areas.contains(InterestArea.UNDECIDED)
+        boolean allAreas = areas.isEmpty() || areas.contains(InterestArea.UNDECIDED);
+        Set<InterestArea> considered = allAreas
                 ? EnumSet.complementOf(EnumSet.of(InterestArea.UNDECIDED))
                 : EnumSet.copyOf(areas);
         List<RankedCareer> ranked = rank(careers.stream().filter(career -> considered.contains(career.getArea())).toList(),
@@ -137,6 +152,26 @@ public class CareerRecommender {
         List<AreaMatch> matches = bestByArea.entrySet().stream()
                 .map(entry -> new AreaMatch(entry.getKey(), entry.getValue()))
                 .toList();
+        List<Pick> suggestions = allAreas ? List.of() : suggestions(ranked, careers, scores);
+        return new Recommendation(top(ranked), matches, suggestions);
+    }
+
+    /**
+     * Carreiras de todas as áreas, quando a melhor delas supera a melhor das áreas escolhidas em pelo menos
+     * {@value #SUGGESTION_GAP} pontos; senão, lista vazia. Mais um ranking: O(c log c).
+     */
+    List<Pick> suggestions(List<RankedCareer> chosen, List<Career> careers, Map<RiasecCategory, Integer> scores) {
+        List<RankedCareer> everyArea = rank(careers.stream()
+                .filter(career -> career.getArea() != InterestArea.UNDECIDED).toList(), scores);
+        if (everyArea.isEmpty()) {
+            return List.of();
+        }
+        int bestChosen = chosen.isEmpty() ? 0 : chosen.get(0).compatibility();
+        return everyArea.get(0).compatibility() - bestChosen >= SUGGESTION_GAP ? top(everyArea) : List.of();
+    }
+
+    /** As {@value #LIMIT} primeiras do ranking, cada uma com o critério que a separou da seguinte, se empataram. */
+    private static List<Pick> top(List<RankedCareer> ranked) {
         List<Pick> picks = new ArrayList<>();
         for (int i = 0; i < Math.min(LIMIT, ranked.size()); i++) {
             RankedCareer current = ranked.get(i);
@@ -145,7 +180,7 @@ public class CareerRecommender {
                     ? new Pick(current, next, tieReason(current, next))
                     : new Pick(current, null, null));
         }
-        return new Recommendation(List.copyOf(picks), matches);
+        return List.copyOf(picks);
     }
 
     /** Mesmo critério da ordenação: o primeiro que diferencia as duas carreiras empatadas. */
