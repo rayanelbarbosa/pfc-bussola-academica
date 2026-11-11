@@ -83,8 +83,8 @@ class VocationalTestIntegrationTest {
                         .content(answersWithAreas("[\"ENGINEERING\",\"HEALTH\"]")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.interestAreas[0].value").value("ENGINEERING"))
-                // ranking único das 2 áreas: as 5 melhores, cada uma com a sua área
-                .andExpect(jsonPath("$.careerRecommendations", hasSize(5)))
+                // ranking único das 2 áreas: as 4 melhores, cada uma com a sua área
+                .andExpect(jsonPath("$.careerRecommendations", hasSize(4)))
                 // R=10, I=10: carreiras RI e IR empatam com 30 pontos
                 .andExpect(jsonPath("$.careerRecommendations[0].compatibility").value(30))
                 .andExpect(jsonPath("$.careerRecommendations[0].areaLabel").isNotEmpty())
@@ -95,7 +95,7 @@ class VocationalTestIntegrationTest {
 
         Integer id = JsonPath.read(body, "$.id");
         mockMvc.perform(get("/api/vocational-test/results/" + id).header("Authorization", bearer(token)))
-                .andExpect(jsonPath("$.careerRecommendations", hasSize(5)))
+                .andExpect(jsonPath("$.careerRecommendations", hasSize(4)))
                 .andExpect(jsonPath("$.areaMatches", hasSize(2)));
         mockMvc.perform(get("/api/users/me/results").header("Authorization", bearer(token)))
                 .andExpect(jsonPath("$[0].interestAreas[0]").value("Engenharias"));
@@ -122,7 +122,7 @@ class VocationalTestIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(answersWithAreas("[\"UNDECIDED\"]")))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.careerRecommendations", hasSize(5)))
+                .andExpect(jsonPath("$.careerRecommendations", hasSize(4)))
                 .andExpect(jsonPath("$.areaMatches", hasSize(7)));
     }
 

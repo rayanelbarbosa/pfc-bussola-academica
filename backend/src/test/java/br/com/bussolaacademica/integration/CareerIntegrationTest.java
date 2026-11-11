@@ -209,7 +209,7 @@ class CareerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.careerRecommendations", hasSize(5)))
+                .andExpect(jsonPath("$.careerRecommendations", hasSize(4)))
                 .andExpect(jsonPath("$.careerRecommendations[0:3].name",
                         org.hamcrest.Matchers.contains("Engenharia Mecânica", "Engenharia de Computação", "Engenharia Química")));
     }

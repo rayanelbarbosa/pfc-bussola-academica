@@ -4,8 +4,10 @@ import br.com.bussolaacademica.model.Career;
 import br.com.bussolaacademica.model.InterestArea;
 import br.com.bussolaacademica.model.RiasecCategory;
 import br.com.bussolaacademica.service.CareerRecommender.AreaMatch;
+import br.com.bussolaacademica.service.CareerRecommender.Pick;
 import br.com.bussolaacademica.service.CareerRecommender.RankedCareer;
 import br.com.bussolaacademica.service.CareerRecommender.Recommendation;
+import br.com.bussolaacademica.service.CareerRecommender.TieReason;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Regra de recomendação: compatibilidade = 2 × tipo principal + tipo secundário; desempate pelo perfil completo
- * do O*NET, depois pelo 3º tipo e pelo nome; ranking único das áreas escolhidas, com as 5 melhores.
+ * do O*NET, depois pelo 3º tipo e pelo nome; ranking único das áreas escolhidas, com as 4 melhores.
  */
 class CareerRecommenderTest {
 
@@ -61,7 +63,7 @@ class CareerRecommenderTest {
     }
 
     @Test
-    void chosenAreasAreAFilterForASingleRankingOfFive() {
+    void chosenAreasAreAFilterForASingleRankingOfFour() {
         List<Career> careers = List.of(
                 career(1, "Engenharia Civil", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE),        // 22
                 career(2, "Engenharia de Produção", InterestArea.ENGINEERING, ENTERPRISING, CONVENTIONAL), // 15
@@ -75,8 +77,10 @@ class CareerRecommenderTest {
                 careers, scores());
 
         assertThat(names(result.careers()))
-                .containsExactly("Contabilidade", "Engenharia Civil", "Logística", "Engenharia Química", "Engenharia de Produção");
-        assertThat(result.careers()).extracting(RankedCareer::compatibility).containsExactly(27, 22, 21, 17, 15);
+                .containsExactly("Contabilidade", "Engenharia Civil", "Logística", "Engenharia Química");
+        assertThat(result.careers()).extracting(RankedCareer::compatibility).containsExactly(27, 22, 21, 17);
+        // sem empate, nenhuma explicação de desempate
+        assertThat(result.picks()).allSatisfy(pick -> assertThat(pick.reason()).isNull());
         // a área que mais combina vem primeiro, com a melhor carreira dela
         assertThat(result.areaMatches()).extracting(AreaMatch::area)
                 .containsExactly(InterestArea.BUSINESS, InterestArea.ENGINEERING);
@@ -116,6 +120,14 @@ class CareerRecommenderTest {
         assertThat(names(top)).containsExactly("Mecânica", "Civil", "Aaa sem perfil");
         assertThat(top.get(0).similarity()).isGreaterThan(top.get(1).similarity());
         assertThat(top.get(2).similarity()).isEqualTo(CareerRecommender.NO_PROFILE);
+
+        // cada carreira explica por que ficou na frente da seguinte, que empatou com ela
+        List<Pick> picks = recommender.recommend(List.of(InterestArea.ENGINEERING),
+                List.of(semPerfil, civil, mecanica), scores(10, 8, 2, 2, 2, 8)).picks();
+        assertThat(picks.get(0).aheadOf().career().getName()).isEqualTo("Civil");
+        assertThat(picks.get(0).reason()).isEqualTo(TieReason.PROFILE);
+        assertThat(picks.get(1).reason()).isEqualTo(TieReason.PROFILE);
+        assertThat(picks.get(2).aheadOf()).isNull();
     }
 
     @Test
@@ -128,19 +140,25 @@ class CareerRecommenderTest {
                 new Career(4, "Convencional", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, CONVENTIONAL, "d"),
                 new Career(5, "Biologia", InterestArea.ENGINEERING, REALISTIC, INVESTIGATIVE, CONVENTIONAL, "d"));
 
-        List<RankedCareer> top = recommender.recommend(List.of(InterestArea.ENGINEERING), careers, scores()).careers();
+        List<Pick> picks = recommender.recommend(List.of(InterestArea.ENGINEERING), careers, scores()).picks();
 
-        assertThat(names(top)).containsExactly("Biologia", "Convencional", "Artistico", "Social", "Sem terceiro");
-        assertThat(top.get(0).career().getCode()).isEqualTo("RIC");
+        assertThat(picks).extracting(pick -> pick.ranked().career().getName())
+                .containsExactly("Biologia", "Convencional", "Artistico", "Social");
+        assertThat(picks.get(0).ranked().career().getCode()).isEqualTo("RIC");
+        // mesmo código completo: só o nome separa; depois, o 3º tipo
+        assertThat(picks).extracting(Pick::reason)
+                .containsExactly(TieReason.NAME, TieReason.THIRD_TYPE, TieReason.THIRD_TYPE, TieReason.THIRD_TYPE);
+        // a 4ª explica por que ficou na frente da que ficou de fora
+        assertThat(picks.get(3).aheadOf().career().getName()).isEqualTo("Sem terceiro");
     }
 
     @Test
-    void showsAtMostFive() {
+    void showsAtMostFour() {
         List<Career> careers = java.util.stream.IntStream.rangeClosed(1, 8)
                 .mapToObj(i -> career(i, "Carreira " + i, InterestArea.HEALTH, SOCIAL, INVESTIGATIVE))
                 .toList();
 
-        assertThat(recommender.recommend(List.of(InterestArea.HEALTH), careers, scores()).careers()).hasSize(5);
+        assertThat(recommender.recommend(List.of(InterestArea.HEALTH), careers, scores()).careers()).hasSize(4);
     }
 
     @Test
