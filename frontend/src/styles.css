@@ -159,8 +159,14 @@
 @keyframes compass-swing { 0%, 100% { transform: rotate(-12deg); } 50% { transform: rotate(18deg); } }
 @keyframes fade-in { from { opacity: 0; transform: translateX(6px); } to { opacity: 1; transform: none; } }
 
+/* Quem pede menos movimento no sistema: animações rodam uma vez só e param (sem o "1" a animação infinita da bússola
+   repetiria a cada 0,01 ms e ficaria tremendo). */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Documentos legais (Termo de Uso e Política de Privacidade): leitura confortável. */
