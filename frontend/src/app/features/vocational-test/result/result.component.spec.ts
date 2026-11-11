@@ -25,7 +25,7 @@ const RESULT: VocationalTestResult = {
   interestAreas: [{ value: 'ENGINEERING', label: 'Engenharias' }],
   careerRecommendations: [{
     name: 'Engenharia Civil', area: 'ENGINEERING', areaLabel: 'Engenharias', code: 'RI', compatibility: 22,
-    description: 'Projeta obras.', tiedWith: 'Engenharia Mecânica', tieReason: 'PROFILE',
+    description: 'Projeta obras.', dailyTasks: ['Gerencia obras', 'Inspeciona projetos'], tiedWith: 'Engenharia Mecânica', tieReason: 'PROFILE',
     categories: [{ category: 'REALISTIC', label: 'Realista' }, { category: 'INVESTIGATIVE', label: 'Investigativo' }]
   }],
   areaMatches: [
@@ -58,18 +58,33 @@ describe('ResultComponent', () => {
     fixture.detectChanges();
   });
 
-  it('shows the radar chart, the tied main profile with explanations and the single career ranking', () => {
+  it('explains the tied main profile at the top, then shows the scores and the career ranking', () => {
     const el: HTMLElement = fixture.nativeElement;
+    const text = el.textContent ?? '';
+    expect(text).toContain('Seu perfil é Realista e Convencional');
+    // explicação de cada tipo empatado logo no topo
+    expect(text).toContain('Realista:');
+    expect(text).toContain('Convencional:');
     expect(el.querySelector('app-radar-chart svg polygon')).toBeTruthy();
-    expect(el.textContent).toContain('2 tipos tiveram o mesmo maior escore');
-    expect(el.textContent).toContain('Características comuns');
-    expect(el.textContent).toContain('Engenharia Civil');
-    expect(el.textContent).toContain('22 de 30 pontos');
-    expect(el.textContent).toContain('1º · Engenharias');
-    expect(el.textContent).toContain('Seu perfil combina mais com Engenharias');
-    expect(el.textContent).toContain('Enfermagem pede Social');
-    expect(el.textContent).toContain('Empatou com Engenharia Mecânica');
-    expect(el.textContent).toContain('Seu perfil é Realista e Convencional');
+    expect(text.indexOf('Seus pontos em cada tipo')).toBeLessThan(text.indexOf('Carreiras que combinam com você'));
+    expect(text).toContain('Engenharia Civil');
+    expect(text).toContain('22/30');
+    expect(text).toContain('Das áreas que você escolheu, Engenharias é a que mais combina com você');
+    expect(text).not.toContain('No dia a dia');
+  });
+
+  it('opens and closes "Mais sobre a carreira" with the daily tasks', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    const button = Array.from(el.querySelectorAll('button')).find((b) => b.textContent?.includes('Mais sobre a carreira'))!;
+    button.click();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('No dia a dia');
+    expect(el.textContent).toContain('Gerencia obras');
+    expect(el.textContent).toContain('usa os seus tipos Realista (9/10) e Investigativo (4/10)');
+    expect(el.querySelector('a[href="/formas-de-ingresso"]')).toBeTruthy();
+    fixture.componentInstance.toggleDetails('Engenharia Civil');
+    fixture.detectChanges();
+    expect(el.textContent).not.toContain('No dia a dia');
   });
 
   it('loads the videos of each career and keeps the page working when the API is down', () => {
