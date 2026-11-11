@@ -35,6 +35,8 @@ export class ResultComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly videos = signal<Partial<Record<string, VideoState>>>({});
+  /** Aviso de área que combina pouco: true = o estudante escolheu ver as carreiras que mais combinam com ele. */
+  readonly showSuggested = signal(false);
   /** Carreiras com o "Mais sobre a carreira" aberto. */
   readonly openDetails = signal<ReadonlySet<string>>(new Set());
 
@@ -55,6 +57,18 @@ export class ResultComponent implements OnInit {
   readonly areaComparison = computed(() => {
     const matches = this.result()?.areaMatches ?? [];
     return matches.length < 2 ? null : matches;
+  });
+
+  /** Há carreiras de outras áreas que combinam bem mais com o perfil do que as das áreas escolhidas. */
+  readonly hasSuggestion = computed(() => (this.result()?.suggestedCareers ?? []).length > 0);
+
+  /** Lista exibida: as áreas escolhidas (padrão, respeita a escolha) ou as que mais combinam, se ele preferir. */
+  readonly shownCareers = computed(() => {
+    const r = this.result();
+    if (!r) {
+      return [];
+    }
+    return this.showSuggested() && this.hasSuggestion() ? r.suggestedCareers : r.careerRecommendations;
   });
 
   /** Os 2 tipos de maior escore do estudante: o back-end usa para ordenar os vídeos (ranking), não para buscar. */
@@ -86,6 +100,12 @@ export class ResultComponent implements OnInit {
 
   letter(category: string): string {
     return getCategoryInfo(category)?.letter ?? '?';
+  }
+
+  /** Troca entre as carreiras das áreas escolhidas e as que mais combinam; busca os vídeos das que aparecerem. */
+  setShowSuggested(show: boolean): void {
+    this.showSuggested.set(show);
+    this.shownCareers().forEach((career) => this.loadVideos(career.name));
   }
 
   toggleDetails(career: string): void {

@@ -58,6 +58,11 @@ export interface VocationalTestResult {
   careerRecommendations: CareerRecommendation[];
   /** Áreas na ordem de compatibilidade (a primeira é a que mais combina). */
   areaMatches: AreaMatch[];
+  /**
+   * Aviso de área que combina pouco: as 4 carreiras que mais combinam com o perfil, de todas as áreas, quando a
+   * melhor delas tem pelo menos 4 pontos a mais que a melhor das áreas escolhidas. Vazia quando não há aviso.
+   */
+  suggestedCareers: CareerRecommendation[];
 }
 
 /** Escala Likert usada em todas as perguntas. */
