@@ -26,6 +26,9 @@ jobs:
           java-version: "21"
           cache: maven
 
+      - name: Linter (Checkstyle)
+        run: mvn -B checkstyle:check
+
       - name: Build e testes (com cobertura JaCoCo)
         run: mvn -B verify
 

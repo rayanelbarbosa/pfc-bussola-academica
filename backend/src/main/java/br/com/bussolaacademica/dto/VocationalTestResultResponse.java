@@ -1,6 +1,5 @@
 package br.com.bussolaacademica.dto;
 
-import br.com.bussolaacademica.model.InterestArea;
 import br.com.bussolaacademica.model.RiasecCategory;
 import br.com.bussolaacademica.model.VocationalTestResult;
 import br.com.bussolaacademica.service.CareerRecommender.Recommendation;
