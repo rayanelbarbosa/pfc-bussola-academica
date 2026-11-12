@@ -28,6 +28,7 @@ public enum AuditAction {
     CAREER_STATUS_CHANGED("Carreira ativada/desativada"),
     ADMIN_CREATED("Administrador cadastrado"),
     USER_ROLE_CHANGED("Perfil de usuário alterado"),
+    USER_DATA_VIEWED("Dados de usuário consultados pelo administrador"),
     AUDIT_LOGS_PURGED("Expurgo de registros antigos"),
     /** antigo: consulta do histórico de resultados */
     PERSONAL_DATA_VIEWED("Consulta aos próprios dados"),

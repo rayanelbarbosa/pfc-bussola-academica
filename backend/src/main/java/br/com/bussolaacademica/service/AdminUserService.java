@@ -1,8 +1,10 @@
 package br.com.bussolaacademica.service;
 
+import br.com.bussolaacademica.dto.AdminUserDetailResponse;
 import br.com.bussolaacademica.dto.AdminUserResponse;
 import br.com.bussolaacademica.dto.CreateAdminRequest;
 import br.com.bussolaacademica.dto.PageResponse;
+import br.com.bussolaacademica.dto.ResultSummaryResponse;
 import br.com.bussolaacademica.exception.BusinessRuleException;
 import br.com.bussolaacademica.exception.EmailAlreadyUsedException;
 import br.com.bussolaacademica.exception.ResourceNotFoundException;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -31,6 +34,8 @@ import java.util.Locale;
  *   <li>Ninguém altera o próprio perfil: assim a plataforma nunca fica sem administrador.</li>
  *   <li>O administrador pode excluir a conta de outra pessoa (cadastro e resultados); a própria conta
  *       só é excluída pelo titular, em "Meus dados".</li>
+ *   <li>O administrador consulta o cadastro e o histórico de testes de um usuário (suporte ao estudante);
+ *       cada consulta fica registrada na auditoria, porque é acesso a dado pessoal de outra pessoa.</li>
  *   <li>Toda criação e mudança de perfil é registrada na auditoria.</li>
  * </ul>
  */
@@ -74,6 +79,19 @@ public class AdminUserService {
         PageRequest pageRequest = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), MAX_PAGE_SIZE),
                 Sort.by(Sort.Direction.DESC, "createdAt", "id"));
         return PageResponse.from(userRepository.findAll(filter, pageRequest).map(AdminUserResponse::from));
+    }
+
+    /** Cadastro e histórico de testes de um usuário, do mais recente para o mais antigo. A consulta é auditada. */
+    @Transactional(readOnly = true)
+    public AdminUserDetailResponse details(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+        List<ResultSummaryResponse> results = resultRepository.findByUser_IdOrderByCreatedAtDesc(user.getId()).stream()
+                .map(ResultSummaryResponse::from)
+                .toList();
+        auditService.recordForCurrentUser(AuditAction.USER_DATA_VIEWED,
+                "Consultou o cadastro e os " + results.size() + " resultado(s) de " + user.getEmail(), true);
+        return AdminUserDetailResponse.from(user, results);
     }
 
     @Transactional

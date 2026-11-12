@@ -41,6 +41,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   CAREER_STATUS_CHANGED: 'Carreira ativada/desativada',
   ADMIN_CREATED: 'Administrador cadastrado',
   USER_ROLE_CHANGED: 'Perfil de usuário alterado',
+  USER_DATA_VIEWED: 'Dados de usuário consultados pelo administrador',
   AUDIT_LOGS_PURGED: 'Expurgo de registros antigos',
   PERSONAL_DATA_VIEWED: 'Consulta aos próprios dados (antigo)',
   RESULT_VIEWED: 'Resultado consultado (antigo)',
