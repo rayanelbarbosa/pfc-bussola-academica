@@ -66,7 +66,7 @@ export interface VocationalTestResult {
 }
 
 /** Escala Likert usada em todas as perguntas. */
-export const LIKERT_OPTIONS: ReadonlyArray<{ score: number; label: string }> = [
+export const LIKERT_OPTIONS: readonly { score: number; label: string }[] = [
   { score: 1, label: 'Discordo totalmente' },
   { score: 2, label: 'Discordo' },
   { score: 3, label: 'Neutro' },

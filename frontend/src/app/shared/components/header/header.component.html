@@ -61,7 +61,7 @@
   </div>
 
   @if (mobileOpen()) {
-    <nav aria-label="Menu móvel" class="border-t border-border lg:hidden" (click)="mobileOpen.set(false)">
+    <nav aria-label="Menu móvel" class="border-t border-border lg:hidden" tabindex="-1" (click)="mobileOpen.set(false)" (keydown.escape)="mobileOpen.set(false)">
       <div class="container-page flex flex-col gap-1 py-4">
         <a routerLink="/formas-de-ingresso" routerLinkActive="nav-link-active" class="nav-link">Formas de ingresso</a>
         @if (!isLoggedIn()) {
