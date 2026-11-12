@@ -4,7 +4,8 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn -B -q dependency:go-offline
 COPY src ./src
-RUN mvn -B -q package -DskipTests
+# Testes e linter (Checkstyle) já rodaram no CI antes do merge; aqui só empacota o .jar
+RUN mvn -B -q package -DskipTests -Dcheckstyle.skip
 
 # ---------- Etapa 2: imagem final, so com o Java necessario pra rodar ----------
 FROM eclipse-temurin:21-jre-alpine
