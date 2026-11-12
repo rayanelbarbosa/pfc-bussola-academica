@@ -133,9 +133,46 @@ class AdminUserIntegrationTest {
     }
 
     @Test
+    void adminSeesUserDetailsWithTestHistoryAndTheAccessIsAudited() throws Exception {
+        String admin = login(mockMvc, ADMIN_EMAIL, ADMIN_PASSWORD);
+        String email = uniqueEmail();
+        String studentToken = registerStudent(mockMvc, email);
+        String answers = java.util.stream.IntStream.rangeClosed(1, 12)
+                .mapToObj(id -> "{\"questionId\":" + id + ",\"score\":" + (id == 3 || id == 4 ? 5 : 3) + "}")
+                .collect(java.util.stream.Collectors.joining(",", "{\"answers\":[", "]}"));
+        String result = mockMvc.perform(post("/api/vocational-test/results").header("Authorization", bearer(studentToken))
+                        .contentType(MediaType.APPLICATION_JSON).content(answers))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        Integer resultId = JsonPath.read(result, "$.id");
+        String page = mockMvc.perform(get("/api/admin/users").param("search", email).header("Authorization", bearer(admin)))
+                .andReturn().getResponse().getContentAsString();
+        Integer id = JsonPath.read(page, "$.content[0].id");
+
+        mockMvc.perform(get("/api/admin/users/" + id).header("Authorization", bearer(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(email))
+                .andExpect(jsonPath("$.termsVersion").isNotEmpty())
+                .andExpect(jsonPath("$.passwordHash").doesNotExist())
+                .andExpect(jsonPath("$.results.length()").value(1))
+                .andExpect(jsonPath("$.results[0].id").value(resultId))
+                .andExpect(jsonPath("$.results[0].topCategories[0]").value("Investigativo"));
+
+        // acesso a dado pessoal de outra pessoa: fica registrado na auditoria
+        mockMvc.perform(get("/api/admin/audit-logs").param("action", "USER_DATA_VIEWED").param("email", ADMIN_EMAIL)
+                        .header("Authorization", bearer(admin)))
+                .andExpect(jsonPath("$.content[0].details").value(org.hamcrest.Matchers.containsString(email)));
+
+        mockMvc.perform(get("/api/admin/users/999999").header("Authorization", bearer(admin)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void studentCannotManageUsers() throws Exception {
         String student = registerStudent(mockMvc, uniqueEmail());
         mockMvc.perform(get("/api/admin/users").header("Authorization", bearer(student)))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/admin/users/1").header("Authorization", bearer(student)))
                 .andExpect(status().isForbidden());
     }
 }

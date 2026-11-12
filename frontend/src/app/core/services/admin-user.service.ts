@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { Page } from '../models/audit.model';
-import { Role } from '../models/auth.model';
+import { ResultSummary, Role } from '../models/auth.model';
 
 export interface AdminUser {
   id: number;
@@ -12,6 +12,13 @@ export interface AdminUser {
   email: string;
   role: Role;
   createdAt: string;
+}
+
+/** Cadastro e histórico de testes de um usuário, visto pelo administrador (consulta auditada). */
+export interface AdminUserDetail extends AdminUser {
+  termsVersion: string;
+  termsAcceptedAt: string;
+  results: ResultSummary[];
 }
 
 export interface UserFilter {
@@ -32,6 +39,10 @@ export class AdminUserService {
     if (filter.search?.trim()) params = params.set('search', filter.search.trim());
     if (filter.role) params = params.set('role', filter.role);
     return this.http.get<Page<AdminUser>>(this.baseUrl, { params });
+  }
+
+  details(id: number): Observable<AdminUserDetail> {
+    return this.http.get<AdminUserDetail>(`${this.baseUrl}/${id}`);
   }
 
   createAdmin(request: { name: string; email: string; password: string }): Observable<AdminUser> {

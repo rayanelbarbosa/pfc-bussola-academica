@@ -1,5 +1,6 @@
 package br.com.bussolaacademica.controller;
 
+import br.com.bussolaacademica.dto.AdminUserDetailResponse;
 import br.com.bussolaacademica.dto.AdminUserResponse;
 import br.com.bussolaacademica.dto.CreateAdminRequest;
 import br.com.bussolaacademica.dto.PageResponse;
@@ -36,6 +37,12 @@ public class AdminUserController {
                                                   @RequestParam(defaultValue = "0") int page,
                                                   @RequestParam(defaultValue = "20") int size) {
         return service.search(search, role, page, size);
+    }
+
+    /** Cadastro e histórico de testes de um usuário (consulta auditada). */
+    @GetMapping("/{id}")
+    public AdminUserDetailResponse details(@PathVariable Long id) {
+        return service.details(id);
     }
 
     @PostMapping

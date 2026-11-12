@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 
-import { AdminUser, AdminUserService } from '../../../core/services/admin-user.service';
+import { AdminUser, AdminUserDetail, AdminUserService } from '../../../core/services/admin-user.service';
 import { authResponse } from '../../../core/testing/auth-fixtures';
 import { UsersComponent } from './users.component';
 
@@ -19,7 +19,7 @@ describe('UsersComponent', () => {
     const admin = authResponse('ADMIN');
     localStorage.setItem('bussola.token', admin.token);
     localStorage.setItem('bussola.user', JSON.stringify(admin.user));
-    service = jasmine.createSpyObj('AdminUserService', ['search', 'createAdmin', 'changeRole', 'deleteUser']);
+    service = jasmine.createSpyObj('AdminUserService', ['search', 'createAdmin', 'changeRole', 'deleteUser', 'details']);
     service.search.and.returnValue(of({ content: [ME, STUDENT], page: 0, size: 20, totalElements: 2, totalPages: 1 }));
     await TestBed.configureTestingModule({
       imports: [UsersComponent],
@@ -30,6 +30,37 @@ describe('UsersComponent', () => {
   });
 
   afterEach(() => localStorage.clear());
+
+  it('shows the profile and test history of a user, with a link to each result', () => {
+    const detail: AdminUserDetail = {
+      ...STUDENT, termsVersion: '1.2', termsAcceptedAt: '2026-11-01T10:00:00',
+      results: [{ id: 42, createdAt: '2026-11-05T14:30:00', topCategories: ['Artístico', 'Social'], interestAreas: ['Educação'] }]
+    };
+    service.details.and.returnValue(of(detail));
+    const el: HTMLElement = fixture.nativeElement;
+    const button = Array.from(el.querySelectorAll('tbody tr')[1].querySelectorAll('button')).find((b) => b.textContent?.includes('Ver dados'))!;
+    button.click();
+    fixture.detectChanges();
+
+    expect(service.details).toHaveBeenCalledWith(2);
+    const dialog = el.querySelector('[role="dialog"]')!;
+    expect(dialog.textContent).toContain('joao@teste.com');
+    expect(dialog.textContent).toContain('versão 1.2');
+    expect(dialog.textContent).toContain('Testes realizados (1)');
+    expect(dialog.textContent).toContain('Perfil Artístico, Social · Educação');
+    expect(dialog.querySelector('a[href="/teste-vocacional/resultado/42"]')).toBeTruthy();
+
+    fixture.componentInstance.closeDetails();
+    fixture.detectChanges();
+    expect(el.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('shows an error when the details cannot be loaded', () => {
+    service.details.and.returnValue(throwError(() => new HttpErrorResponse({ status: 404, error: { message: 'Usuário não encontrado' } })));
+    fixture.componentInstance.openDetails(STUDENT);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="dialog"] [role="alert"]')).toBeTruthy();
+  });
 
   it('blocks changing your own role and offers it for the others', () => {
     const rows = fixture.nativeElement.querySelectorAll('tbody tr');
