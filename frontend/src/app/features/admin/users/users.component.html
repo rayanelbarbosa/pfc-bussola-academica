@@ -64,6 +64,9 @@
                   </span>
                 } @else {
                   <div class="flex items-center justify-end gap-1">
+                  <button type="button" class="btn btn-ghost btn-sm" (click)="openDetails(user)">
+                    <app-icon name="history" class="size-4" /> Ver dados
+                  </button>
                   <button type="button" class="btn btn-ghost btn-sm" (click)="confirming.set(user)">
                     {{ user.role === 'ADMIN' ? 'Remover administrador' : 'Tornar administrador' }}
                   </button>
@@ -159,6 +162,47 @@
           <button type="submit" class="btn btn-primary" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Cadastrar' }}</button>
         </div>
       </form>
+    </div>
+  </div>
+}
+
+@if (viewing(); as user) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" tabindex="-1" (click)="closeDetails()" (keydown.escape)="closeDetails()">
+    <div role="dialog" aria-modal="true" aria-labelledby="detail-title"
+      class="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()" (keydown.escape)="closeDetails(); $event.stopPropagation()">
+      <div class="mb-4 flex items-start justify-between gap-4">
+        <h2 id="detail-title" class="text-xl">{{ user.name }}</h2>
+        <button type="button" class="btn btn-ghost btn-sm" aria-label="Fechar" (click)="closeDetails()"><app-icon name="x" class="size-4" /></button>
+      </div>
+      @if (detailError(); as message) {
+        <div class="alert alert-error" role="alert"><app-icon name="alert-circle" class="mt-0.5 size-5" /><p>{{ message }}</p></div>
+      } @else {
+        @if (detail(); as d) {
+        <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+          <dt class="text-muted-foreground">E-mail</dt><dd>{{ d.email }}</dd>
+          <dt class="text-muted-foreground">Perfil</dt><dd>{{ roleLabels[d.role] }}</dd>
+          <dt class="text-muted-foreground">Cadastro</dt><dd>{{ d.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          <dt class="text-muted-foreground">Termos aceitos</dt><dd>versão {{ d.termsVersion }} em {{ d.termsAcceptedAt | date: 'dd/MM/yyyy' }}</dd>
+        </dl>
+        <h3 class="mt-6 text-base font-semibold">Testes realizados ({{ d.results.length }})</h3>
+        <ul class="mt-2 space-y-2">
+          @for (result of d.results; track result.id) {
+            <li class="flex items-center justify-between gap-3 rounded-md border border-border p-3 text-sm">
+              <span>
+                <span class="font-medium">{{ result.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                <span class="block text-muted-foreground">Perfil {{ result.topCategories.join(', ') }} · {{ result.interestAreas.join(', ') }}</span>
+              </span>
+              <a [routerLink]="['/teste-vocacional/resultado', result.id]" class="btn btn-secondary btn-sm shrink-0">Abrir</a>
+            </li>
+          } @empty {
+            <li class="text-sm text-muted-foreground">Nenhum teste realizado.</li>
+          }
+        </ul>
+        <p class="mt-4 text-xs text-muted-foreground">Esta consulta fica registrada na auditoria. As respostas individuais do teste não são armazenadas.</p>
+        } @else {
+          <div class="skeleton h-40" aria-busy="true"></div>
+        }
+      }
     </div>
   </div>
 }

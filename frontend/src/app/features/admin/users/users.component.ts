@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import { Page } from '../../../core/models/audit.model';
 import { Role } from '../../../core/models/auth.model';
-import { AdminUser, AdminUserService } from '../../../core/services/admin-user.service';
+import { AdminUser, AdminUserDetail, AdminUserService } from '../../../core/services/admin-user.service';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { AuthService } from '../../../core/services/auth.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -18,7 +19,7 @@ import { PasswordToggleComponent } from '../../../shared/components/password-tog
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [DatePipe, FormsModule, ReactiveFormsModule, IconComponent, PasswordToggleComponent],
+  imports: [DatePipe, FormsModule, ReactiveFormsModule, RouterLink, IconComponent, PasswordToggleComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './users.component.html'
 })
@@ -39,6 +40,10 @@ export class UsersComponent implements OnInit {
   readonly notice = signal<string | null>(null);
   readonly confirming = signal<AdminUser | null>(null);
   readonly deleting = signal<AdminUser | null>(null);
+  /** Painel "Ver dados": cadastro e histórico de testes do usuário escolhido. */
+  readonly viewing = signal<AdminUser | null>(null);
+  readonly detail = signal<AdminUserDetail | null>(null);
+  readonly detailError = signal<string | null>(null);
 
   readonly creating = signal(false);
   readonly saving = signal(false);
@@ -89,6 +94,22 @@ export class UsersComponent implements OnInit {
       },
       error: (err) => this.error.set(getErrorMessage(err, 'Não foi possível alterar o perfil.'))
     });
+  }
+
+  /** Abre o painel e busca o cadastro e o histórico (a consulta fica registrada na auditoria). */
+  openDetails(user: AdminUser): void {
+    this.viewing.set(user);
+    this.detail.set(null);
+    this.detailError.set(null);
+    this.service.details(user.id).subscribe({
+      next: (detail) => this.detail.set(detail),
+      error: (err) => this.detailError.set(getErrorMessage(err, 'Não foi possível carregar os dados do usuário.'))
+    });
+  }
+
+  closeDetails(): void {
+    this.viewing.set(null);
+    this.detail.set(null);
   }
 
   confirmDelete(): void {
