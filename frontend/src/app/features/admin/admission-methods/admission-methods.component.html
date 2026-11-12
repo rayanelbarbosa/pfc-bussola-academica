@@ -94,8 +94,8 @@
 </div>
 
 @if (confirming(); as method) {
-  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" (click)="confirming.set(null)">
-    <div role="dialog" aria-modal="true" aria-labelledby="confirm-title" class="w-full max-w-md rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()">
+  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" tabindex="-1" (click)="confirming.set(null)" (keydown.escape)="confirming.set(null)">
+    <div role="dialog" aria-modal="true" aria-labelledby="confirm-title" class="w-full max-w-md rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()" (keydown.escape)="confirming.set(null); $event.stopPropagation()">
       <h2 id="confirm-title" class="text-xl">{{ method.active ? 'Desativar' : 'Reativar' }} "{{ method.name }}"?</h2>
       <p class="mt-3 text-sm text-muted-foreground">
         {{ method.active ? 'Ela deixa de aparecer na página inicial, mas continua guardada e pode ser reativada.' : 'Ela volta a aparecer na página inicial.' }}
@@ -111,9 +111,9 @@
 }
 
 @if (editingId() !== null) {
-  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" (click)="closeForm()">
+  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" tabindex="-1" (click)="closeForm()" (keydown.escape)="closeForm()">
     <div role="dialog" aria-modal="true" aria-labelledby="form-title"
-      class="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()">
+      class="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()" (keydown.escape)="closeForm(); $event.stopPropagation()">
       <div class="mb-4 flex items-start justify-between gap-4">
         <h2 id="form-title" class="text-2xl">{{ editingId() ? 'Editar forma de ingresso' : 'Nova forma de ingresso' }}</h2>
         <button type="button" aria-label="Fechar" class="rounded-md p-1 text-muted-foreground hover:bg-accent" (click)="closeForm()"><app-icon name="x" class="size-5" /></button>

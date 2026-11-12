@@ -29,6 +29,9 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Linter (ESLint + angular-eslint)
+        run: npx ng lint
+
       - name: Build de producao
         run: npx ng build
 
