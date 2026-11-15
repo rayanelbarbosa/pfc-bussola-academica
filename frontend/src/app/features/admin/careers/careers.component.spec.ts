@@ -60,7 +60,7 @@ describe('CareersComponent', () => {
     component.form.patchValue({ tertiaryCategory: 'REALISTIC' });
     fixture.detectChanges();
     expect(component.codePreview()).toBe('ISR');
-    expect(fixture.nativeElement.textContent).toContain('sem perfil O*NET, o maior escore R');
+    expect(fixture.nativeElement.textContent).toContain('depois em S, depois em R');
   });
 
   it('creates a career and shows the RIASEC code preview', () => {
