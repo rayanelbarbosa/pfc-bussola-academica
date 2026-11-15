@@ -24,6 +24,7 @@ backend/    API REST (detalhes em backend/README.md)
 frontend/   aplicação Angular (detalhes em frontend/README.md)
 infra/      configuração do nginx do servidor
 docs/       documentação técnica da integração com o YouTube
+.github/    CI (build e testes), PRs automáticos e deploy na AWS
 ```
 
 ## Funcionalidades entregues
@@ -31,23 +32,39 @@ docs/       documentação técnica da integração com o YouTube
 - **Página inicial pública** com as formas de ingresso no ensino superior (Enem, Sisu, Prouni, Fies,
   vestibulares próprios, faculdades particulares, Quero Bolsa e Educa Mais Brasil), filtro por tipo e
   link para o site oficial. O administrador inclui, altera e desativa as formas de ingresso.
-- **Teste vocacional RIASEC (Holland)**: o estudante escolhe de 1 a 3 áreas de interesse (ou "Ainda não
-  sei") e responde 12 afirmações (2 por categoria, escala de 1 a 5). O escore de cada categoria é a soma
-  das suas 2 respostas (2 a 10) e a(s) categoria(s) de maior escore formam o perfil principal (empates são
-  mantidos). Em cada área escolhida, o sistema recomenda as 3 carreiras mais compatíveis
-  (compatibilidade = 2 × escore da 1ª letra do código RIASEC da carreira + escore da 2ª).
-- **Resultado e histórico**: gráfico de radar com os 6 escores, explicação do perfil e carreiras por área.
-- **Vídeos do YouTube** (YouTube Data API v3) sobre cada carreira recomendada, com cache de 24 h.
-  Detalhes em [docs/integracao-youtube.md](docs/integracao-youtube.md).
+- **Teste vocacional RIASEC (Holland)** com o questionário **O\*NET Mini Interest Profiler** (30 atividades,
+  5 por categoria, versão validada por Rounds et al., 2016). O estudante escolhe de 1 a 3 áreas de interesse
+  (ou "Ainda não sei") e responde cada atividade de 0 (detesto) a 4 (adoro). O escore de cada categoria é a
+  soma das suas 5 respostas (0 a 20); a(s) categoria(s) de maior escore formam o perfil principal (empates
+  são mantidos). Se os 6 escores forem iguais, o resultado avisa que as respostas não diferenciam os interesses.
+- **Recomendação de carreiras** (70 carreiras, cada uma com o código de Holland de 3 letras da base O\*NET 31.0):
+  as carreiras são ordenadas pelos pontos do estudante no 1º tipo do código da carreira, depois no 2º, no 3º
+  e, por último, pelo nome. O resultado mostra as 4 primeiras das áreas escolhidas, o **ranking completo** de
+  todas as carreiras e, quando nenhuma carreira das áreas escolhidas tem como 1º tipo um tipo do perfil, um
+  **aviso de área** com as 4 que mais combinam em todas as áreas.
+- **Resultado e histórico**: gráfico de radar com os 6 escores, explicação do perfil, carreiras recomendadas e
+  "Meus resultados" com os testes anteriores.
+- **Vídeos do YouTube** (YouTube Data API v3) sobre cada carreira, carregados sob demanda e reordenados para o
+  perfil do estudante, com cache de 24 h. Detalhes em [docs/integracao-youtube.md](docs/integracao-youtube.md).
 - **Cadastro, login e recuperação de senha**: JWT (HS256), senhas com BCrypt, logout com revogação do
   token, bloqueio após 5 tentativas sem sucesso em 15 minutos e redefinição de senha por e-mail (Resend)
-  com link de uso único válido por 30 minutos.
+  com link de uso único válido por 30 minutos. Ações críticas (excluir a própria conta ou a de outro
+  usuário) pedem a senha de novo.
 - **Perfis de acesso**: estudante e administrador, com página de acesso negado no front-end.
-- **Administração**: gestão de usuários e administradores, versões do Termo de Uso e da Política de
-  Privacidade editáveis pelo painel, auditoria com filtros e dashboard de métricas de uso.
+- **Administração**: formas de ingresso, carreiras (inclusão, alteração, consulta e desativação, com o código
+  RIASEC), usuários e administradores, versões do Termo de Uso e da Política de Privacidade, dashboard de
+  métricas de uso e auditoria com filtros. Os registros de auditoria são encadeados por hash, e o botão
+  "Verificar integridade" aponta qualquer registro alterado ou removido.
 - **LGPD**: aceite obrigatório dos termos (com novo aceite a cada versão), declaração de idade mínima de
-  16 anos, página "Meus dados" para consultar, exportar (JSON) e excluir a conta, e expurgo diário dos
-  registros de auditoria com mais de 6 meses.
+  16 anos, página "Meus dados" para consultar, exportar (JSON) e excluir a conta (os resultados do teste são
+  anonimizados, sem vínculo com a pessoa), e expurgo diário dos registros de auditoria com mais de 6 meses.
+
+### Créditos do questionário
+
+Atividades do O\*NET® Mini Interest Profiler (O\*NET Career Exploration Tools, USDOL/ETA), traduzidas por
+Rayane da Luz Barbosa. USDOL/ETA has not approved, endorsed, or tested these modifications.
+[Licença](https://www.onetcenter.org/license_tools.html). Os códigos de Holland das carreiras vêm da base
+O\*NET 31.0 (Career Interest Types).
 
 ## Rodando localmente
 
