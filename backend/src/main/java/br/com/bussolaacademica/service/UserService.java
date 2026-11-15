@@ -28,14 +28,17 @@ public class UserService {
     private final CurrentUser currentUser;
     private final AuditService auditService;
     private final Clock clock;
+    private final PasswordConfirmationService passwordConfirmation;
 
     public UserService(UserRepository userRepository, VocationalTestResultRepository resultRepository,
-                       CurrentUser currentUser, AuditService auditService, Clock clock) {
+                       CurrentUser currentUser, AuditService auditService, Clock clock,
+                       PasswordConfirmationService passwordConfirmation) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.currentUser = currentUser;
         this.auditService = auditService;
         this.clock = clock;
+        this.passwordConfirmation = passwordConfirmation;
     }
 
     @Transactional(readOnly = true)
@@ -65,10 +68,11 @@ public class UserService {
                         .toList());
     }
 
-    /** Exclui a conta e anonimiza os resultados do teste do usuário (eles deixam de ser dele). */
+    /** Confere a senha, exclui a conta e anonimiza os resultados do teste do usuário (eles deixam de ser dele). */
     @Transactional
-    public void deleteMyAccount() {
+    public void deleteMyAccount(String password) {
         User user = loadCurrent();
+        passwordConfirmation.confirm(user, password);
         resultRepository.anonymizeByUser(user.getId());
         userRepository.delete(user);
         auditService.record(AuditAction.ACCOUNT_DELETED, user.getId(), user.getEmail(),

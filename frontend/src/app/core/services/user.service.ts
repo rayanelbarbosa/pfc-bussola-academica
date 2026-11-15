@@ -24,7 +24,8 @@ export class UserService {
     return this.http.get(`${this.baseUrl}/export`, { responseType: 'blob' });
   }
 
-  deleteMyAccount(): Observable<void> {
-    return this.http.delete<void>(this.baseUrl);
+  /** Exclui a conta; a senha é pedida de novo porque a ação não pode ser desfeita. */
+  deleteMyAccount(password: string): Observable<void> {
+    return this.http.delete<void>(this.baseUrl, { body: { password } });
   }
 }

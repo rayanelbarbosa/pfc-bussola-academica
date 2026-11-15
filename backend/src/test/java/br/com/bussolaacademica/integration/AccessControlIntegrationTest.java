@@ -21,6 +21,7 @@ import static br.com.bussolaacademica.support.AuthTestHelper.answers;
 import static br.com.bussolaacademica.support.AuthTestHelper.bearer;
 import static br.com.bussolaacademica.support.AuthTestHelper.login;
 import static br.com.bussolaacademica.support.AuthTestHelper.loginJson;
+import static br.com.bussolaacademica.support.AuthTestHelper.passwordJson;
 import static br.com.bussolaacademica.support.AuthTestHelper.registerStudent;
 import static br.com.bussolaacademica.support.AuthTestHelper.uniqueEmail;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -94,7 +95,17 @@ class AccessControlIntegrationTest {
         String token = registerStudent(mockMvc, email);
         Integer resultId = submitTest(token);
 
+        // sem a senha certa a conta não é excluída
+        mockMvc.perform(delete("/api/users/me").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content(passwordJson("SenhaErrada1")))
+                .andExpect(status().isUnprocessableEntity());
         mockMvc.perform(delete("/api/users/me").header("Authorization", bearer(token)))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/users/me").header("Authorization", bearer(token)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(delete("/api/users/me").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content(passwordJson(DEFAULT_PASSWORD)))
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(post("/api/auth/login")

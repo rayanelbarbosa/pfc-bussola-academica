@@ -67,10 +67,10 @@
                   <button type="button" class="btn btn-ghost btn-sm" (click)="openDetails(user)">
                     <app-icon name="history" class="size-4" /> Ver dados
                   </button>
-                  <button type="button" class="btn btn-ghost btn-sm" (click)="confirming.set(user)">
+                  <button type="button" class="btn btn-ghost btn-sm" (click)="askRoleChange(user)">
                     {{ user.role === 'ADMIN' ? 'Remover administrador' : 'Tornar administrador' }}
                   </button>
-                  <button type="button" class="btn btn-ghost btn-sm text-destructive hover:bg-destructive-soft" (click)="deleting.set(user)">
+                  <button type="button" class="btn btn-ghost btn-sm text-destructive hover:bg-destructive-soft" (click)="askDelete(user)">
                     <app-icon name="trash" class="size-4" /> Excluir
                   </button>
                   </div>
@@ -96,8 +96,8 @@
 </div>
 
 @if (confirming(); as user) {
-  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" tabindex="-1" (click)="confirming.set(null)" (keydown.escape)="confirming.set(null)">
-    <div role="dialog" aria-modal="true" aria-labelledby="role-title" class="w-full max-w-md rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()" (keydown.escape)="confirming.set(null); $event.stopPropagation()">
+  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" tabindex="-1" (click)="closeAction()" (keydown.escape)="closeAction()">
+    <div role="dialog" aria-modal="true" aria-labelledby="role-title" class="w-full max-w-md rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()" (keydown.escape)="closeAction(); $event.stopPropagation()">
       <h2 id="role-title" class="text-xl">{{ user.role === 'ADMIN' ? 'Remover administrador?' : 'Tornar administrador?' }}</h2>
       <p class="mt-3 text-sm text-muted-foreground">
         @if (user.role === 'ADMIN') {
@@ -106,26 +106,44 @@
           {{ user.name }} ganha acesso ao dashboard, à gestão de formas de ingresso, de usuários e à auditoria.
         }
       </p>
-      <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <button type="button" class="btn btn-ghost" (click)="confirming.set(null)">Cancelar</button>
-        <button type="button" class="btn" [class.btn-danger]="user.role === 'ADMIN'" [class.btn-primary]="user.role !== 'ADMIN'" (click)="confirmRoleChange()">Confirmar</button>
-      </div>
+      <form class="mt-4" (submit)="confirmRoleChange(); $event.preventDefault()">
+        <label for="role-password" class="field-label">Sua senha, para confirmar</label>
+        <input id="role-password" type="password" class="field-input" autocomplete="current-password" required
+          [value]="actionPassword()" (input)="actionPassword.set($any($event.target).value)"
+          [attr.aria-invalid]="actionError() ? true : null" [attr.aria-describedby]="actionError() ? 'role-password-error' : null" />
+        @if (actionError()) {
+          <p id="role-password-error" class="mt-1 text-sm text-destructive" role="alert">{{ actionError() }}</p>
+        }
+        <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" class="btn btn-ghost" (click)="closeAction()">Cancelar</button>
+          <button type="submit" class="btn" [class.btn-danger]="user.role === 'ADMIN'" [class.btn-primary]="user.role !== 'ADMIN'" [disabled]="actionBusy() || !actionPassword()">Confirmar</button>
+        </div>
+      </form>
     </div>
   </div>
 }
 
 @if (deleting(); as user) {
-  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" tabindex="-1" (click)="deleting.set(null)" (keydown.escape)="deleting.set(null)">
-    <div role="dialog" aria-modal="true" aria-labelledby="delete-title" class="w-full max-w-md rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()" (keydown.escape)="deleting.set(null); $event.stopPropagation()">
+  <div class="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 sm:items-center sm:p-4" tabindex="-1" (click)="closeAction()" (keydown.escape)="closeAction()">
+    <div role="dialog" aria-modal="true" aria-labelledby="delete-title" class="w-full max-w-md rounded-t-xl bg-card p-6 sm:rounded-xl" (click)="$event.stopPropagation()" (keydown.escape)="closeAction(); $event.stopPropagation()">
       <h2 id="delete-title" class="text-xl">Excluir a conta de {{ user.name }}?</h2>
       <p class="mt-3 text-sm text-muted-foreground">
         O cadastro de {{ user.email }} é apagado definitivamente e os resultados de teste viram dados anônimos (sem dono e só
         com a data), usados apenas nas estatísticas. Essa ação não pode ser desfeita e fica registrada na auditoria.
       </p>
-      <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <button type="button" class="btn btn-ghost" (click)="deleting.set(null)">Cancelar</button>
-        <button type="button" class="btn btn-danger" (click)="confirmDelete()">Excluir conta</button>
-      </div>
+      <form class="mt-4" (submit)="confirmDelete(); $event.preventDefault()">
+        <label for="delete-password" class="field-label">Sua senha, para confirmar</label>
+        <input id="delete-password" type="password" class="field-input" autocomplete="current-password" required
+          [value]="actionPassword()" (input)="actionPassword.set($any($event.target).value)"
+          [attr.aria-invalid]="actionError() ? true : null" [attr.aria-describedby]="actionError() ? 'delete-password-error' : null" />
+        @if (actionError()) {
+          <p id="delete-password-error" class="mt-1 text-sm text-destructive" role="alert">{{ actionError() }}</p>
+        }
+        <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" class="btn btn-ghost" (click)="closeAction()">Cancelar</button>
+          <button type="submit" class="btn btn-danger" [disabled]="actionBusy() || !actionPassword()">Excluir conta</button>
+        </div>
+      </form>
     </div>
   </div>
 }
