@@ -19,5 +19,5 @@ A URL da API fica em `src/environments/` (`environment.development.ts` no `npm s
 npm install
 npm start      # http://localhost:4200 (precisa do back-end em localhost:8080)
 npm test       # Jasmine/Karma
-npm run build  # gera dist/frontend/browser (publicado no S3)
+npm run build  # gera dist/frontend/browser (publicado na EC2 e servido pelo nginx)
 ```
