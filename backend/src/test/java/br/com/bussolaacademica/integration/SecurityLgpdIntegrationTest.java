@@ -23,6 +23,7 @@ import java.time.Period;
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_EMAIL;
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_PASSWORD;
 import static br.com.bussolaacademica.support.AuthTestHelper.DEFAULT_PASSWORD;
+import static br.com.bussolaacademica.support.AuthTestHelper.answers;
 import static br.com.bussolaacademica.support.AuthTestHelper.bearer;
 import static br.com.bussolaacademica.support.AuthTestHelper.login;
 import static br.com.bussolaacademica.support.AuthTestHelper.loginJson;
@@ -282,8 +283,6 @@ class SecurityLgpdIntegrationTest {
     }
 
     private static String fullAnswersJson() {
-        return java.util.stream.IntStream.rangeClosed(1, 12)
-                .mapToObj(id -> "{\"questionId\":" + id + ",\"score\":3}")
-                .collect(java.util.stream.Collectors.joining(",", "{\"answers\":[", "]}"));
+        return "{\"answers\":[" + answers(2, 2, 2, 2, 2, 2) + "]}";
     }
 }

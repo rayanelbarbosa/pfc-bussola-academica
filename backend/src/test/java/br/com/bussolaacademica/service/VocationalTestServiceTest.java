@@ -52,9 +52,9 @@ import static org.mockito.ArgumentMatchers.eq;
 @ExtendWith(MockitoExtension.class)
 class VocationalTestServiceTest {
 
-    /** Mesmo questionário do banco: perguntas 1-2 Realista, 3-4 Investigativo ... 11-12 Convencional. */
-    private static final List<Question> QUESTIONS = IntStream.rangeClosed(1, 12)
-            .mapToObj(id -> new Question(id, "Pergunta " + id, RiasecCategory.values()[(id - 1) / 2], id))
+    /** Mesmo questionário do banco (Mini-IP): 30 atividades em blocos de 6 (R, I, A, S, E, C). */
+    private static final List<Question> QUESTIONS = IntStream.rangeClosed(1, 30)
+            .mapToObj(id -> new Question(id, "Atividade " + id, RiasecCategory.values()[(id - 1) % 6], id))
             .toList();
 
     @Mock
@@ -103,18 +103,25 @@ class VocationalTestServiceTest {
         when(questionRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(QUESTIONS);
         when(resultRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        // Realista 3+3=6, Investigativo 5+4=9, Artístico 4+3=7, Social 4+4=8, Empreendedor 2+3=5, Convencional 2+2=4
-        VocationalTestResultResponse result = service.submit(request(3, 3, 5, 4, 4, 3, 4, 4, 2, 3, 2, 2));
+        // Exemplo da Ana: cada tipo é a soma das 5 respostas dele (0 a 4 cada)
+        VocationalTestResultResponse result = service.submit(byType(
+                new int[] {1, 0, 1, 0, 2},   // Realista 4
+                new int[] {2, 2, 3, 1, 2},   // Investigativo 10
+                new int[] {3, 3, 2, 3, 3},   // Artístico 14
+                new int[] {4, 3, 4, 3, 3},   // Social 17
+                new int[] {2, 1, 2, 1, 2},   // Empreendedor 8
+                new int[] {1, 1, 1, 1, 1})); // Convencional 5
 
         assertThat(result.scores()).extracting(CategoryScoreResponse::label, CategoryScoreResponse::score)
                 .containsExactly(
-                        tuple("Realista", 6),
-                        tuple("Investigativo", 9),
-                        tuple("Artístico", 7),
-                        tuple("Social", 8),
-                        tuple("Empreendedor", 5),
-                        tuple("Convencional", 4));
-        assertThat(result.topCategories()).extracting(CategoryScoreResponse::category).containsExactly("INVESTIGATIVE");
+                        tuple("Realista", 4),
+                        tuple("Investigativo", 10),
+                        tuple("Artístico", 14),
+                        tuple("Social", 17),
+                        tuple("Empreendedor", 8),
+                        tuple("Convencional", 5));
+        assertThat(result.maxScore()).isEqualTo(20);
+        assertThat(result.topCategories()).extracting(CategoryScoreResponse::category).containsExactly("SOCIAL");
         assertThat(result.createdAt()).isEqualTo("2026-09-28T09:00:00");
         verify(resultRepository).save(any(VocationalTestResult.class));
     }
@@ -125,8 +132,8 @@ class VocationalTestServiceTest {
         when(questionRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(QUESTIONS);
         when(resultRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        // Social 5+5=10 e Empreendedor 5+5=10 empatados no topo
-        VocationalTestResultResponse result = service.submit(request(1, 1, 2, 2, 3, 3, 5, 5, 5, 5, 1, 1));
+        // Social 20 e Empreendedor 20 empatados no topo
+        VocationalTestResultResponse result = service.submit(sameAnswerPerType(0, 1, 2, 4, 4, 0));
 
         assertThat(result.topCategories()).extracting(CategoryScoreResponse::label)
                 .containsExactly("Social", "Empreendedor");
@@ -135,19 +142,19 @@ class VocationalTestServiceTest {
     @Test
     void shouldRejectIncompleteQuestionnaire() {
         when(questionRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(QUESTIONS);
-        SubmitTestRequest incomplete = new SubmitTestRequest(List.of(new AnswerRequest(1, 5)));
+        SubmitTestRequest incomplete = new SubmitTestRequest(List.of(new AnswerRequest(1, 4)));
 
         assertThatThrownBy(() -> service.submit(incomplete))
                 .isInstanceOf(InvalidAnswersException.class)
-                .hasMessageContaining("Faltando: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]");
+                .hasMessageContaining("Faltando: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13");
         verify(resultRepository, never()).save(any());
     }
 
     @Test
     void shouldRejectQuestionAnsweredTwice() {
         when(questionRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(QUESTIONS);
-        List<AnswerRequest> answers = new ArrayList<>(request(3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3).answers());
-        answers.set(11, new AnswerRequest(1, 5));
+        List<AnswerRequest> answers = new ArrayList<>(sameAnswerPerType(3, 3, 3, 3, 3, 3).answers());
+        answers.set(29, new AnswerRequest(1, 4));
 
         assertThatThrownBy(() -> service.submit(new SubmitTestRequest(answers)))
                 .isInstanceOf(InvalidAnswersException.class)
@@ -168,7 +175,7 @@ class VocationalTestServiceTest {
     void shouldListQuestionsInOrder() {
         when(questionRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(QUESTIONS);
 
-        assertThat(service.listQuestions()).hasSize(12)
+        assertThat(service.listQuestions()).hasSize(30)
                 .first().satisfies(q -> {
                     assertThat(q.id()).isEqualTo(1);
                     assertThat(q.category()).isEqualTo("REALISTIC");
@@ -219,8 +226,8 @@ class VocationalTestServiceTest {
         when(questionRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(QUESTIONS);
         when(resultRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        // Act: Convencional 5+5=10 é o maior escore
-        VocationalTestResultResponse result = service.submit(request(2, 2, 3, 3, 1, 1, 3, 3, 2, 2, 5, 5));
+        // Act: Convencional 5 × 4 = 20 é o maior escore
+        VocationalTestResultResponse result = service.submit(sameAnswerPerType(2, 3, 1, 3, 2, 4));
 
         // Assert
         ArgumentCaptor<VocationalTestResult> salvo = ArgumentCaptor.forClass(VocationalTestResult.class);
@@ -241,22 +248,20 @@ class VocationalTestServiceTest {
         InvalidAnswersException ex = assertThrows(InvalidAnswersException.class, () -> service.submit(vazio));
 
         // Assert
-        assertEquals("Responda todas as perguntas. Faltando: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]", ex.getMessage());
+        assertThat(ex.getMessage()).startsWith("Responda todas as perguntas. Faltando: [1, 2, 3,").endsWith("29, 30]");
         verify(resultRepository, never()).save(any());
         verify(auditService, never()).record(any(), any(), any(), any(), eq(true));
     }
 
     @ParameterizedTest
-    @CsvSource({"1,2", "3,6", "5,10"})
+    @CsvSource({"0,0", "2,10", "4,20"})
     void deveCalcularEscoreNosLimitesDaEscalaEEmpatarTodasAsCategorias(int nota, int escoreEsperado) {
         // Arrange
         loggedAs(1L);
         when(questionRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(QUESTIONS);
         when(resultRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        int[] notas = IntStream.range(0, 12).map(i -> nota).toArray();
-
         // Act
-        VocationalTestResultResponse result = service.submit(request(notas));
+        VocationalTestResultResponse result = service.submit(sameAnswerPerType(nota, nota, nota, nota, nota, nota));
 
         // Assert
         assertThat(result.scores()).extracting(CategoryScoreResponse::score).containsOnly(escoreEsperado);
@@ -270,13 +275,27 @@ class VocationalTestServiceTest {
         }
         return new VocationalTestResult(owner, LocalDateTime.of(2026, 9, 28, 9, 0), scores,
                 List.of(RiasecCategory.INVESTIGATIVE),
-                List.of(br.com.bussolaacademica.model.InterestArea.UNDECIDED));
+                List.of(br.com.bussolaacademica.model.InterestArea.UNDECIDED), 20);
     }
 
-    private static SubmitTestRequest request(int... scores) {
-        List<AnswerRequest> answers = IntStream.range(0, scores.length)
-                .mapToObj(i -> new AnswerRequest(i + 1, scores[i]))
+    /**
+     * Respostas por tipo, na ordem R, I, A, S, E, C: answers[tipo][rodada]. A atividade da rodada r do tipo t é a
+     * de id r × 6 + t + 1 (ordem oficial do Mini-IP, em blocos de 6).
+     */
+    private static SubmitTestRequest byType(int[]... answersByType) {
+        List<AnswerRequest> answers = IntStream.range(0, 30)
+                .mapToObj(i -> new AnswerRequest(i + 1, answersByType[i % 6][i / 6]))
                 .toList();
         return new SubmitTestRequest(answers);
+    }
+
+    /** A mesma resposta nas 5 atividades de cada tipo (escore do tipo = 5 × resposta). */
+    private static SubmitTestRequest sameAnswerPerType(int r, int i, int a, int s, int e, int c) {
+        int[][] answers = {new int[5], new int[5], new int[5], new int[5], new int[5], new int[5]};
+        int[] values = {r, i, a, s, e, c};
+        for (int type = 0; type < 6; type++) {
+            java.util.Arrays.fill(answers[type], values[type]);
+        }
+        return byType(answers);
     }
 }

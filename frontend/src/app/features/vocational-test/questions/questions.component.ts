@@ -1,18 +1,15 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { LIKERT_OPTIONS, Question } from '../../../core/models/vocational-test.model';
+import { LIKERT_OPTIONS, QUESTIONS_PER_PAGE, Question } from '../../../core/models/vocational-test.model';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { QuizDraftService } from '../../../core/services/quiz-draft.service';
 import { VocationalTestService } from '../../../core/services/vocational-test.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
-/** Tempo até avançar sozinho para a próxima afirmação depois de responder. */
-export const AUTO_ADVANCE_MS = 300;
-
 /**
- * Etapa 2 do teste (RF06): uma afirmação por vez, com avanço automático ao responder,
- * atalhos de teclado (1 a 5) e progresso salvo no navegador.
+ * Etapa 2 do teste (RF06): as 30 atividades do O*NET Mini Interest Profiler em 5 telas de 6 (uma de cada tipo
+ * RIASEC), respostas de 0 (detesto) a 4 (adoro) com emojis, barra de progresso e rascunho salvo no navegador.
  */
 @Component({
   selector: 'app-questions',
@@ -21,11 +18,10 @@ export const AUTO_ADVANCE_MS = 300;
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './questions.component.html'
 })
-export class QuestionsComponent implements OnInit, OnDestroy {
+export class QuestionsComponent implements OnInit {
   private readonly testService = inject(VocationalTestService);
   private readonly draft = inject(QuizDraftService);
   private readonly router = inject(Router);
-  private timer: ReturnType<typeof setTimeout> | null = null;
 
   readonly options = LIKERT_OPTIONS;
   readonly questions = signal<Question[]>([]);
@@ -33,12 +29,18 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   readonly error = signal<string | null>(null);
   readonly submitting = signal(false);
 
-  readonly index = computed(() => Math.min(this.draft.draft().current, Math.max(this.questions().length - 1, 0)));
-  readonly question = computed(() => this.questions()[this.index()]);
   readonly answers = computed(() => this.draft.draft().answers);
-  readonly isLast = computed(() => this.index() === this.questions().length - 1);
+  readonly pageCount = computed(() => Math.max(1, Math.ceil(this.questions().length / QUESTIONS_PER_PAGE)));
+  /** Tela atual (0 a 4), guardada no rascunho para a pessoa voltar de onde parou. */
+  readonly page = computed(() => Math.min(this.draft.draft().current, this.pageCount() - 1));
+  readonly pageQuestions = computed(() =>
+    this.questions().slice(this.page() * QUESTIONS_PER_PAGE, (this.page() + 1) * QUESTIONS_PER_PAGE)
+  );
+  readonly answeredCount = computed(() => this.questions().filter((q) => this.answers()[q.id] !== undefined).length);
+  readonly pageComplete = computed(() => this.pageQuestions().every((q) => this.answers()[q.id] !== undefined));
+  readonly isLast = computed(() => this.page() === this.pageCount() - 1);
   readonly allAnswered = computed(
-    () => this.questions().length > 0 && this.questions().every((q) => this.answers()[q.id] !== undefined)
+    () => this.questions().length > 0 && this.answeredCount() === this.questions().length
   );
 
   ngOnInit(): void {
@@ -58,44 +60,27 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    this.cancelAdvance();
+  /** Guarda a nota (0 a 4) da atividade no rascunho. */
+  respond(questionId: number, score: number): void {
+    if (!this.submitting()) {
+      this.draft.answer(questionId, score);
+    }
   }
 
-  respond(score: number): void {
-    const question = this.question();
-    if (!question || this.timer !== null || this.submitting()) {
-      return;
+  /** Próxima tela: só depois de responder as 6 atividades da tela atual. */
+  next(): void {
+    if (this.pageComplete() && !this.isLast()) {
+      this.draft.goTo(this.page() + 1);
+      this.scrollToTop();
     }
-    this.draft.answer(question.id, score);
-    if (this.isLast()) {
-      return;
-    }
-    this.timer = setTimeout(() => {
-      this.timer = null;
-      this.draft.goTo(this.index() + 1);
-    }, AUTO_ADVANCE_MS);
   }
 
   back(): void {
-    this.cancelAdvance();
-    if (this.index() === 0) {
+    if (this.page() === 0) {
       this.router.navigate(['/teste-vocacional']);
     } else {
-      this.draft.goTo(this.index() - 1);
-    }
-  }
-
-  @HostListener('window:keydown', ['$event'])
-  onKey(event: KeyboardEvent): void {
-    const target = event.target as HTMLElement | null;
-    if (event.repeat || event.altKey || event.ctrlKey || event.metaKey ||
-      (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) {
-      return;
-    }
-    if (/^[1-5]$/.test(event.key)) {
-      event.preventDefault();
-      this.respond(Number(event.key));
+      this.draft.goTo(this.page() - 1);
+      this.scrollToTop();
     }
   }
 
@@ -118,10 +103,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  private cancelAdvance(): void {
-    if (this.timer !== null) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
+  private scrollToTop(): void {
+    window.scrollTo({ top: 0 });
   }
 }

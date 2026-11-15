@@ -12,9 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
+import static br.com.bussolaacademica.support.AuthTestHelper.answers;
 import static br.com.bussolaacademica.support.AuthTestHelper.bearer;
 import static br.com.bussolaacademica.support.AuthTestHelper.registerStudent;
 import static br.com.bussolaacademica.support.AuthTestHelper.uniqueEmail;
@@ -69,11 +68,9 @@ class UserAccountIntegrationTest {
 
     @Test
     void deveEnviarTesteEExibirNoHistoricoComOResultadoGravadoNoBanco() throws Exception {
-        // Arrange: nota 5 nas perguntas de Investigativo (3 e 4) e 3 nas demais
+        // Arrange: nota 4 nas atividades de Investigativo e 2 nas demais
         String token = registerStudent(mockMvc, uniqueEmail());
-        String answers = IntStream.rangeClosed(1, 12)
-                .mapToObj(id -> "{\"questionId\":" + id + ",\"score\":" + (id == 3 || id == 4 ? 5 : 3) + "}")
-                .collect(Collectors.joining(",", "{\"answers\":[", "]}"));
+        String answers = "{\"answers\":[" + answers(2, 4, 2, 2, 2, 2) + "]}";
 
         // Act: API -> service -> banco
         mockMvc.perform(post("/api/vocational-test/results")
