@@ -49,6 +49,8 @@ export interface VocationalTestResult {
    * combinam com ele em todas as áreas. Vazia quando não há aviso.
    */
   suggestedCareers: CareerRecommendation[];
+  /** Ranking completo de todas as carreiras, de todas as áreas, na mesma ordem (o botão "Ver ranking completo"). */
+  allCareers: CareerRecommendation[];
 }
 
 /** Escala do O*NET Interest Profiler, de 0 (detesto) a 4 (adoro), com emojis. */

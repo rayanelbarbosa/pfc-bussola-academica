@@ -13,7 +13,8 @@ import java.util.Map;
  * de cada uma ({@code maxScore}: 20 no questionário atual, 10 nos resultados antigos),
  * a(s) categoria(s) de maior escore, as áreas de interesse escolhidas, as 4 carreiras recomendadas dessas áreas e,
  * quando nenhuma carreira delas tem o perfil do estudante como tipo principal (aviso de área), as 4 que mais combinam
- * com ele em todas as áreas ({@code suggestedCareers}, vazia quando não há aviso).
+ * com ele em todas as áreas ({@code suggestedCareers}, vazia quando não há aviso) e o ranking completo de todas as
+ * carreiras ({@code allCareers}), para nenhuma ficar escondida pelos empates.
  */
 public record VocationalTestResultResponse(
         Long id,
@@ -23,7 +24,8 @@ public record VocationalTestResultResponse(
         List<CategoryScoreResponse> topCategories,
         List<OptionResponse> interestAreas,
         List<CareerRecommendationResponse> careerRecommendations,
-        List<CareerRecommendationResponse> suggestedCareers
+        List<CareerRecommendationResponse> suggestedCareers,
+        List<CareerRecommendationResponse> allCareers
 ) {
 
     public static VocationalTestResultResponse from(VocationalTestResult result,
@@ -43,7 +45,8 @@ public record VocationalTestResultResponse(
                         .map(area -> new OptionResponse(area.name(), area.getLabel()))
                         .toList(),
                 recommendation.careers().stream().map(CareerRecommendationResponse::from).toList(),
-                recommendation.suggestions().stream().map(CareerRecommendationResponse::from).toList()
+                recommendation.suggestions().stream().map(CareerRecommendationResponse::from).toList(),
+                recommendation.ranking().stream().map(CareerRecommendationResponse::from).toList()
         );
     }
 }

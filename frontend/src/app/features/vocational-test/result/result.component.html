@@ -114,43 +114,42 @@
                   <a routerLink="/formas-de-ingresso" class="inline-flex items-center gap-1 font-medium text-primary hover:underline">Como entrar na faculdade <app-icon name="arrow-right" class="size-4" /></a>
                 </div>
               }
-              @switch (videos()[career.name]?.status) {
-                @case ('ok') {
-                  <p class="mb-2 text-xs font-medium">Vídeos sobre a carreira</p>
-                  <ul class="space-y-2">
-                    @for (video of $any(videos()[career.name]).videos; track video.videoId) {
-                      <li>
-                        <a [href]="video.url" target="_blank" rel="noopener noreferrer" class="flex gap-3 rounded-md p-1 hover:bg-muted">
-                          @if (video.thumbnailUrl) {
-                            <img [src]="video.thumbnailUrl" alt="" class="h-12 w-20 shrink-0 rounded object-cover" loading="lazy" />
-                          }
-                          <span class="min-w-0">
-                            <span class="line-clamp-2 text-xs font-medium">{{ video.title }}</span>
-                            <span class="block truncate text-xs text-muted-foreground">{{ video.channelTitle }}</span>
-                          </span>
-                        </a>
-                      </li>
-                    } @empty {
-                      <li class="text-xs text-muted-foreground">Nenhum vídeo encontrado.</li>
-                    }
-                  </ul>
-                }
-                @case ('error') {
-                  <p class="text-xs text-muted-foreground">Vídeos indisponíveis no momento.</p>
-                  <button type="button" class="btn btn-ghost btn-sm mt-1 h-8 px-2" (click)="loadVideos(career.name)">Tentar de novo</button>
-                }
-                @default {
-                  <div class="skeleton h-16" aria-label="Carregando vídeos"></div>
-                }
-              }
+              <ng-container *ngTemplateOutlet="videoList; context: { $implicit: career.name }" />
 
             </div>
           </div>
         }
       </div>
+      <div class="mt-6">
+        <button type="button" class="btn btn-secondary btn-sm" (click)="toggleShowAll()" [attr.aria-expanded]="showAll()" aria-controls="ranking-completo">
+          <app-icon name="list-checks" class="size-4" /> {{ showAll() ? 'Esconder o ranking completo' : 'Ver o ranking completo (' + r.allCareers.length + ' carreiras)' }}
+        </button>
+        @if (showAll()) {
+          <ol id="ranking-completo" class="card mt-3 divide-y divide-border p-0">
+            @for (career of r.allCareers; track career.name; let i = $index) {
+              <li class="px-4 py-2.5 text-sm">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span class="w-7 shrink-0 font-semibold text-muted-foreground">{{ i + 1 }}º</span>
+                  <span class="min-w-0 flex-1 font-medium">{{ career.name }}</span>
+                  <span class="text-xs text-muted-foreground">{{ career.areaLabel }}</span>
+                  <span class="text-xs"><span class="font-mono font-semibold">{{ career.code }}</span> · você: {{ scoreOf(career.categories[0].category) }}/{{ r.maxScore }} em {{ career.categories[0].label }}</span>
+                  @if (!videos()[career.name]) {
+                    <button type="button" class="btn btn-ghost btn-sm h-8 px-2" (click)="loadVideos(career.name)">Ver vídeos</button>
+                  }
+                </div>
+                @if (videos()[career.name]) {
+                  <div class="mt-2 pl-10">
+                    <ng-container *ngTemplateOutlet="videoList; context: { $implicit: career.name }" />
+                  </div>
+                }
+              </li>
+            }
+          </ol>
+        }
+      </div>
       <details class="mt-4 text-sm text-muted-foreground">
         <summary class="cursor-pointer font-medium text-foreground">Como escolhemos essas carreiras?</summary>
-        <p class="mt-2">Cada carreira tem um tipo principal e um secundário, segundo o O*NET®. Fica na frente a carreira em que você fez mais pontos no tipo principal dela. Se duas empatam, decidem os seus pontos no tipo secundário e, por último, a ordem alfabética.</p>
+        <p class="mt-2">Cada carreira tem um código de 3 tipos, segundo o O*NET®. Fica na frente a carreira em que você fez mais pontos no 1º tipo dela. Se duas empatam, decidem os seus pontos no 2º tipo, depois no 3º e, por último, a ordem alfabética. O ranking completo mostra todas as carreiras nessa mesma ordem.</p>
       </details>
     </section>
 
@@ -158,3 +157,36 @@
     <p class="text-center text-sm text-muted-foreground">O teste é um ponto de partida. Converse com professores e profissionais antes de decidir.</p>
   }
 </div>
+
+<!-- Vídeos de uma carreira: usados nos cards das 4 principais e no ranking completo (sob demanda). -->
+<ng-template #videoList let-name>
+  @switch (videos()[name]?.status) {
+    @case ('ok') {
+      <p class="mb-2 text-xs font-medium">Vídeos sobre a carreira</p>
+      <ul class="space-y-2">
+        @for (video of $any(videos()[name]).videos; track video.videoId) {
+          <li>
+            <a [href]="video.url" target="_blank" rel="noopener noreferrer" class="flex gap-3 rounded-md p-1 hover:bg-muted">
+              @if (video.thumbnailUrl) {
+                <img [src]="video.thumbnailUrl" alt="" class="h-12 w-20 shrink-0 rounded object-cover" loading="lazy" />
+              }
+              <span class="min-w-0">
+                <span class="line-clamp-2 text-xs font-medium">{{ video.title }}</span>
+                <span class="block truncate text-xs text-muted-foreground">{{ video.channelTitle }}</span>
+              </span>
+            </a>
+          </li>
+        } @empty {
+          <li class="text-xs text-muted-foreground">Nenhum vídeo encontrado.</li>
+        }
+      </ul>
+    }
+    @case ('error') {
+      <p class="text-xs text-muted-foreground">Vídeos indisponíveis no momento.</p>
+      <button type="button" class="btn btn-ghost btn-sm mt-1 h-8 px-2" (click)="loadVideos(name)">Tentar de novo</button>
+    }
+    @default {
+      <div class="skeleton h-16" aria-label="Carregando vídeos"></div>
+    }
+  }
+</ng-template>

@@ -29,7 +29,17 @@ const RESULT: VocationalTestResult = {
     description: 'Projeta obras.', dailyTasks: ['Gerencia obras', 'Inspeciona projetos'],
     categories: [{ category: 'REALISTIC', label: 'Realista' }, { category: 'INVESTIGATIVE', label: 'Investigativo' }]
   }],
-  suggestedCareers: []
+  suggestedCareers: [],
+  allCareers: [
+    {
+      name: 'Engenharia Civil', area: 'ENGINEERING', areaLabel: 'Engenharias', code: 'RIC', description: 'Projeta obras.',
+      dailyTasks: [], categories: [{ category: 'REALISTIC', label: 'Realista' }, { category: 'INVESTIGATIVE', label: 'Investigativo' }]
+    },
+    {
+      name: 'Engenharia de Computação', area: 'ENGINEERING', areaLabel: 'Engenharias', code: 'RIC', description: 'Projeta hardware.',
+      dailyTasks: [], categories: [{ category: 'REALISTIC', label: 'Realista' }, { category: 'INVESTIGATIVE', label: 'Investigativo' }]
+    }
+  ]
 };
 
 /** Perfil Artístico que escolheu só Engenharias: nenhuma engenharia tem Artístico como tipo principal. */
@@ -122,6 +132,35 @@ describe('ResultComponent', () => {
     fixture.componentInstance.toggleDetails('Engenharia Civil');
     fixture.detectChanges();
     expect(el.textContent).not.toContain('No dia a dia');
+  });
+
+  it('opens the full ranking with every career, in the same order, without loading their videos', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('#ranking-completo')).toBeNull();
+    const button = Array.from(el.querySelectorAll('button')).find((b) => b.textContent?.includes('Ver o ranking completo'))!;
+    expect(button.textContent).toContain('(2 carreiras)');
+
+    button.click();
+    fixture.detectChanges();
+
+    const items = el.querySelectorAll('#ranking-completo li');
+    expect(items.length).toBe(2);
+    expect(items[1].textContent).toContain('2º');
+    expect(items[1].textContent).toContain('Engenharia de Computação');
+    expect(items[1].textContent).toContain('você: 18/20 em Realista');
+    expect(videoService.searchByCareer).not.toHaveBeenCalledWith('Engenharia de Computação', jasmine.any(Array));
+
+    // vídeos só sob demanda, para não gastar a cota do YouTube com todas as carreiras
+    const verVideos = Array.from(items[1].querySelectorAll('button')).find((b) => b.textContent?.includes('Ver vídeos'))!;
+    verVideos.click();
+    fixture.detectChanges();
+    expect(videoService.searchByCareer).toHaveBeenCalledWith('Engenharia de Computação', jasmine.any(Array));
+    expect(items[1].textContent).toContain('Vídeos indisponíveis no momento');
+    expect(items[1].textContent).not.toContain('Ver vídeos');
+
+    fixture.componentInstance.toggleShowAll();
+    fixture.detectChanges();
+    expect(el.querySelector('#ranking-completo')).toBeNull();
   });
 
   it('loads the videos of each career and keeps the page working when the API is down', () => {

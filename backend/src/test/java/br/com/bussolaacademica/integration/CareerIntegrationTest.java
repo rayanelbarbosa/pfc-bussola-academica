@@ -207,6 +207,9 @@ class CareerIntegrationTest {
                 .andExpect(jsonPath("$.careerRecommendations[0].categories[0].category").value("REALISTIC"))
                 // perfil Realista e as engenharias pedem Realista: sem aviso de área
                 .andExpect(jsonPath("$.suggestedCareers", hasSize(0)))
+                // as engenharias RIC que ficam fora das 4 primeiras continuam no ranking completo
+                .andExpect(jsonPath("$.allCareers[*].name", hasItem("Engenharia de Computação")))
+                .andExpect(jsonPath("$.allCareers[*].name", hasItem("Engenharia Química")))
                 // dia a dia vindo do O*NET (V19)
                 .andExpect(jsonPath("$.careerRecommendations[0].dailyTasks", hasSize(3)))
                 .andExpect(jsonPath("$.careerRecommendations[0].dailyTasks[0]").value("Gerencia obras e a manutenção de construções"));

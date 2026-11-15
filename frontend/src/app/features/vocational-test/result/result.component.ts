@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 import { Video } from '../../../core/models/video.model';
@@ -20,7 +20,7 @@ type VideoState = { status: 'loading' } | { status: 'ok'; videos: Video[] } | { 
 @Component({
   selector: 'app-result',
   standalone: true,
-  imports: [DatePipe, RouterLink, IconComponent, RadarChartComponent],
+  imports: [DatePipe, NgTemplateOutlet, RouterLink, IconComponent, RadarChartComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './result.component.html'
 })
@@ -37,6 +37,8 @@ export class ResultComponent implements OnInit {
   readonly videos = signal<Partial<Record<string, VideoState>>>({});
   /** Aviso de área que combina pouco: true = o estudante escolheu ver as carreiras que mais combinam com ele. */
   readonly showSuggested = signal(false);
+  /** Ranking completo aberto: todas as carreiras, de todas as áreas. */
+  readonly showAll = signal(false);
   /** Carreiras com o "Mais sobre a carreira" aberto. */
   readonly openDetails = signal<ReadonlySet<string>>(new Set());
 
@@ -106,6 +108,10 @@ export class ResultComponent implements OnInit {
   setShowSuggested(show: boolean): void {
     this.showSuggested.set(show);
     this.shownCareers().forEach((career) => this.loadVideos(career.name));
+  }
+
+  toggleShowAll(): void {
+    this.showAll.update((open) => !open);
   }
 
   toggleDetails(career: string): void {
