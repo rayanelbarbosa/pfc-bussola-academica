@@ -5,7 +5,7 @@ API REST em Spring Boot 3.3 (Java 21), organizada em camadas:
 ```
 br.com.bussolaacademica
 ├── controller   endpoints REST (recebem e devolvem DTOs)
-├── service      regras de negócio (ex.: pontuação RIASEC)
+├── service      regras de negócio (pontuação RIASEC, recomendação de carreiras, ranking de vídeos)
 ├── repository   acesso ao banco (Spring Data JPA)
 ├── model        entidades JPA e enums de domínio
 ├── dto          objetos de entrada/saída da API
@@ -61,21 +61,28 @@ Relatório de cobertura: `target/site/jacoco/index.html`.
 | GET | `/api/users/me` | autenticado | dados do próprio usuário |
 | GET | `/api/users/me/results` | autenticado | histórico de resultados |
 | GET | `/api/users/me/export` | autenticado | exporta os dados pessoais em JSON |
-| DELETE | `/api/users/me` | autenticado | exclui a conta e os resultados |
-| GET | `/api/vocational-test/questions` | autenticado | as 12 afirmações do questionário |
+| DELETE | `/api/users/me` | autenticado | exclui a conta (pede a senha) e anonimiza os resultados |
+| GET | `/api/vocational-test/questions` | autenticado | as 30 atividades do questionário (Mini-IP) |
 | GET | `/api/vocational-test/interest-areas` | autenticado | áreas de interesse disponíveis |
-| POST | `/api/vocational-test/results` | autenticado | calcula e salva o resultado (201) |
+| POST | `/api/vocational-test/results` | autenticado | calcula e salva o resultado (201): escores, perfil, carreiras recomendadas, aviso de área e ranking completo |
 | GET | `/api/vocational-test/results/{id}` | dono ou admin | consulta um resultado |
-| GET | `/api/videos?career=` | autenticado | vídeos do YouTube de uma carreira cadastrada |
+| GET | `/api/videos?career=&profile=` | autenticado | vídeos do YouTube de uma carreira cadastrada, ordenados para o perfil (`profile` opcional) |
 | GET/POST | `/api/admin/admission-methods` | admin | consulta paginada e inclusão de formas de ingresso |
 | GET/PUT | `/api/admin/admission-methods/{id}` | admin | consulta e alteração |
 | PATCH | `/api/admin/admission-methods/{id}/status` | admin | ativa ou desativa |
+| GET/POST | `/api/admin/careers` | admin | consulta paginada (filtros `name`, `area`, `active`) e inclusão de carreiras |
+| GET/PUT | `/api/admin/careers/{id}` | admin | consulta e alteração (nome, área, código RIASEC, descrição) |
+| PATCH | `/api/admin/careers/{id}/status` | admin | ativa ou desativa |
+| GET | `/api/admin/careers/areas` | admin | áreas de interesse |
+| GET | `/api/admin/careers/categories` | admin | tipos RIASEC |
 | GET/POST | `/api/admin/users` | admin | lista usuários (busca e perfil) e cadastra administrador |
+| GET | `/api/admin/users/{id}` | admin | dados de um usuário |
 | PATCH | `/api/admin/users/{id}/role` | admin | promove ou rebaixa (exceto a si mesmo) |
-| DELETE | `/api/admin/users/{id}` | admin | exclui a conta de outro usuário |
+| DELETE | `/api/admin/users/{id}` | admin | exclui a conta de outro usuário (pede a senha do admin) |
 | GET/POST | `/api/admin/terms` | admin | lista e publica versões dos termos |
 | GET | `/api/admin/audit-logs` | admin | auditoria (filtros `action`, `email`, `page`, `size`) |
 | GET | `/api/admin/audit-logs/actions` | admin | ações disponíveis no filtro |
+| GET | `/api/admin/audit-logs/integrity` | admin | confere o encadeamento por hash e aponta registros alterados ou removidos |
 | GET | `/api/admin/dashboard?days=` | admin | métricas de uso (7, 30 ou 90 dias) |
 | GET | `/actuator/health` | público | health check |
 
