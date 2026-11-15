@@ -8,12 +8,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_EMAIL;
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_PASSWORD;
 import static br.com.bussolaacademica.support.AuthTestHelper.DEFAULT_PASSWORD;
+import static br.com.bussolaacademica.support.AuthTestHelper.answers;
 import static br.com.bussolaacademica.support.AuthTestHelper.bearer;
 import static br.com.bussolaacademica.support.AuthTestHelper.login;
 import static br.com.bussolaacademica.support.AuthTestHelper.loginJson;
@@ -115,9 +114,7 @@ class AccessControlIntegrationTest {
     }
 
     private Integer submitTest(String token) throws Exception {
-        String answers = IntStream.rangeClosed(1, 12)
-                .mapToObj(id -> "{\"questionId\":" + id + ",\"score\":4}")
-                .collect(Collectors.joining(",", "{\"answers\":[", "]}"));
+        String answers = "{\"answers\":[" + answers(4, 4, 4, 4, 4, 4) + "]}";
         String body = mockMvc.perform(post("/api/vocational-test/results")
                         .header("Authorization", bearer(token))
                         .contentType(MediaType.APPLICATION_JSON)

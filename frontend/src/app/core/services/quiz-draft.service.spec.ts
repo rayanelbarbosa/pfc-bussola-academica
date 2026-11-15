@@ -6,12 +6,12 @@ describe('QuizDraftService', () => {
   let service: QuizDraftService;
 
   beforeEach(() => {
-    localStorage.removeItem('bussola.quiz-draft');
+    localStorage.removeItem('bussola.quiz-draft.v2');
     TestBed.configureTestingModule({});
     service = TestBed.inject(QuizDraftService);
   });
 
-  afterEach(() => localStorage.removeItem('bussola.quiz-draft'));
+  afterEach(() => localStorage.removeItem('bussola.quiz-draft.v2'));
 
   it('allows at most 3 interest areas', () => {
     expect(service.toggleArea('HEALTH')).toBeNull();
@@ -39,15 +39,24 @@ describe('QuizDraftService', () => {
 
   it('keeps the answers in the browser and clears them at the end', () => {
     service.toggleArea('HEALTH');
-    service.answer(1, 5);
+    service.answer(1, 4);
     service.goTo(1);
 
     const restored = TestBed.runInInjectionContext(() => new QuizDraftService());
-    expect(restored.draft().answers).toEqual({ 1: 5 });
+    expect(restored.draft().answers).toEqual({ 1: 4 });
     expect(restored.draft().current).toBe(1);
 
     service.clear();
     expect(service.answeredCount()).toBe(0);
+    expect(localStorage.getItem('bussola.quiz-draft.v2')).toBeNull();
+  });
+
+  it('discards a draft of the old questionnaire (12 statements, scores 1 to 5)', () => {
+    localStorage.setItem('bussola.quiz-draft', JSON.stringify({ areas: ['HEALTH'], answers: { 1: 5 }, current: 3 }));
+
+    const restored = TestBed.runInInjectionContext(() => new QuizDraftService());
+
+    expect(restored.draft().answers).toEqual({});
     expect(localStorage.getItem('bussola.quiz-draft')).toBeNull();
   });
 });

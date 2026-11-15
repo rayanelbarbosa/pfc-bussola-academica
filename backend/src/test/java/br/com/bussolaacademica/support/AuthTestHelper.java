@@ -5,6 +5,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -54,6 +56,17 @@ public final class AuthTestHelper {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return JsonPath.read(body, "$.token");
+    }
+
+    /**
+     * As 30 respostas do questionário (Mini-IP), separadas por vírgula, com a mesma nota (0 a 4) nas 5 atividades de
+     * cada tipo, na ordem R, I, A, S, E, C. O escore de cada tipo fica 5 × a nota.
+     */
+    public static String answers(int r, int i, int a, int s, int e, int c) {
+        int[] byType = {r, i, a, s, e, c};
+        return IntStream.rangeClosed(1, 30)
+                .mapToObj(id -> "{\"questionId\":" + id + ",\"score\":" + byType[(id - 1) % 6] + "}")
+                .collect(Collectors.joining(","));
     }
 
     public static String bearer(String token) {

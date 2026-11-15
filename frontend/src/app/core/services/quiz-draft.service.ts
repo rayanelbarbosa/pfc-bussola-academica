@@ -2,12 +2,15 @@ import { Injectable, computed, signal } from '@angular/core';
 
 import { MAX_INTEREST_AREAS, UNDECIDED_AREA } from '../models/vocational-test.model';
 
-const STORAGE_KEY = 'bussola.quiz-draft';
+/** v2: questionário do Mini-IP (30 atividades, notas de 0 a 4). Rascunhos da versão antiga são descartados. */
+const STORAGE_KEY = 'bussola.quiz-draft.v2';
+const OLD_STORAGE_KEY = 'bussola.quiz-draft';
 
 export interface QuizDraft {
   areas: string[];
-  /** questionId -> nota (1 a 5) */
+  /** questionId -> nota (0 a 4) */
   answers: Record<number, number>;
+  /** Tela atual do questionário (6 atividades por tela). */
   current: number;
 }
 
@@ -73,6 +76,7 @@ export class QuizDraftService {
 
   private restore(): QuizDraft {
     try {
+      localStorage.removeItem(OLD_STORAGE_KEY);
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return { ...EMPTY };
       const parsed = JSON.parse(raw) as Partial<QuizDraft>;

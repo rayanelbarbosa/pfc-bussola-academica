@@ -49,10 +49,10 @@
                   <span class="grid size-6 place-items-center rounded-md text-xs font-bold text-white" [style.background]="riasecColor(score.category)">{{ letter(score.category) }}</span>
                   {{ score.label }}
                 </span>
-                <strong>{{ score.score }}/10</strong>
+                <strong>{{ score.score }}/{{ r.maxScore }}</strong>
               </div>
               <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-                <div class="h-full rounded-full" [style.width.%]="score.score * 10" [style.background]="riasecColor(score.category)"></div>
+                <div class="h-full rounded-full" [style.width.%]="score.score / r.maxScore * 100" [style.background]="riasecColor(score.category)"></div>
               </div>
             </li>
           }
@@ -102,7 +102,7 @@
               </button>
               @if (openDetails().has(career.name)) {
                 <div class="mb-4 space-y-3 rounded-lg bg-muted px-4 py-3 text-sm">
-                  <p><strong>Combina com você porque</strong> usa os seus tipos {{ career.categories[0].label }} ({{ scoreOf(career.categories[0].category) }}/10) e {{ career.categories[1].label }} ({{ scoreOf(career.categories[1].category) }}/10).</p>
+                  <p><strong>Combina com você porque</strong> usa os seus tipos {{ career.categories[0].label }} ({{ scoreOf(career.categories[0].category) }}/{{ r.maxScore }}) e {{ career.categories[1].label }} ({{ scoreOf(career.categories[1].category) }}/{{ r.maxScore }}).</p>
                   @if (career.dailyTasks.length) {
                     <div>
                       <p class="font-semibold">No dia a dia</p>

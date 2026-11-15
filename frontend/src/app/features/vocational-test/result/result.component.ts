@@ -93,7 +93,7 @@ export class ResultComponent implements OnInit {
     });
   }
 
-  /** Escore do estudante (2 a 10) num tipo RIASEC: usado para mostrar a conta da compatibilidade. */
+  /** Escore do estudante (0 a 20) num tipo RIASEC: usado para mostrar a conta da compatibilidade. */
   scoreOf(category: string): number {
     return this.result()?.scores.find((score) => score.category === category)?.score ?? 0;
   }

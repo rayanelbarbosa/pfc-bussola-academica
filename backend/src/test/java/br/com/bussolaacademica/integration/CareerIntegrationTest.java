@@ -9,11 +9,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_EMAIL;
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_PASSWORD;
+import static br.com.bussolaacademica.support.AuthTestHelper.answers;
 import static br.com.bussolaacademica.support.AuthTestHelper.bearer;
 import static br.com.bussolaacademica.support.AuthTestHelper.login;
 import static br.com.bussolaacademica.support.AuthTestHelper.registerStudent;
@@ -43,12 +42,9 @@ class CareerIntegrationTest {
                  "description":"Descrição de teste da carreira."}""".formatted(name, area, primary, secondary);
     }
 
-    /** Nota 5 em Realista (perguntas 1 e 2) e Investigativo (3 e 4), 2 nas demais: R = I = 10, o resto 4. */
+    /** Nota 4 em Realista e Investigativo, 1 nas demais: R = I = 20, o resto 5. */
     private static String answersForEducation() {
-        String answers = IntStream.rangeClosed(1, 12)
-                .mapToObj(id -> "{\"questionId\":" + id + ",\"score\":" + (id <= 4 ? 5 : 2) + "}")
-                .collect(Collectors.joining(","));
-        return "{\"answers\":[" + answers + "],\"interestAreas\":[\"EDUCATION\"]}";
+        return "{\"answers\":[" + answers(4, 4, 1, 1, 1, 1) + "],\"interestAreas\":[\"EDUCATION\"]}";
     }
 
     private String createCareer(String admin, String name) throws Exception {
@@ -199,10 +195,7 @@ class CareerIntegrationTest {
     @Test
     void sameCodeCareersAreRankedByTheFullOnetProfile() throws Exception {
         String student = registerStudent(mockMvc, uniqueEmail());
-        int[] answers = {5, 5, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4};
-        String body = IntStream.rangeClosed(1, 12)
-                .mapToObj(id -> "{\"questionId\":" + id + ",\"score\":" + answers[id - 1] + "}")
-                .collect(Collectors.joining(",", "{\"answers\":[", "],\"interestAreas\":[\"ENGINEERING\"]}"));
+        String body = "{\"answers\":[" + answers(4, 3, 0, 0, 0, 3) + "],\"interestAreas\":[\"ENGINEERING\"]}";
 
         mockMvc.perform(post("/api/vocational-test/results")
                         .header("Authorization", bearer(student))

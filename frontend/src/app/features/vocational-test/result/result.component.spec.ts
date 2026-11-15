@@ -18,6 +18,8 @@ const RESULT: VocationalTestResult = {
     { category: 'ENTERPRISING', label: 'Empreendedor', score: 3 },
     { category: 'CONVENTIONAL', label: 'Convencional', score: 9 }
   ],
+  // resultado antigo (12 perguntas): cada tipo ia até 10
+  maxScore: 10,
   topCategories: [
     { category: 'REALISTIC', label: 'Realista', score: 9 },
     { category: 'CONVENTIONAL', label: 'Convencional', score: 9 }

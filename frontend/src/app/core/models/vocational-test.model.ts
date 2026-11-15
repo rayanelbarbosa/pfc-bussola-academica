@@ -52,6 +52,8 @@ export interface VocationalTestResult {
   id: number;
   createdAt: string;
   scores: CategoryScore[];
+  /** Pontuação máxima de cada tipo: 20 (5 atividades de 0 a 4); 10 nos resultados antigos, de 12 perguntas. */
+  maxScore: number;
   topCategories: CategoryScore[];
   interestAreas: { value: string; label: string }[];
   /** Ranking único: as 4 carreiras mais compatíveis entre as áreas escolhidas. */
@@ -65,18 +67,17 @@ export interface VocationalTestResult {
   suggestedCareers: CareerRecommendation[];
 }
 
-/** Escala Likert usada em todas as perguntas. */
-export const LIKERT_OPTIONS: readonly { score: number; label: string }[] = [
-  { score: 1, label: 'Discordo totalmente' },
-  { score: 2, label: 'Discordo' },
-  { score: 3, label: 'Neutro' },
-  { score: 4, label: 'Concordo' },
-  { score: 5, label: 'Concordo totalmente' }
+/** Escala do O*NET Interest Profiler, de 0 (detesto) a 4 (adoro), com emojis. */
+export const LIKERT_OPTIONS: readonly { score: number; emoji: string; label: string }[] = [
+  { score: 0, emoji: '😣', label: 'Detesto' },
+  { score: 1, emoji: '🙁', label: 'Não gosto' },
+  { score: 2, emoji: '😐', label: 'Não sei' },
+  { score: 3, emoji: '🙂', label: 'Gosto' },
+  { score: 4, emoji: '😍', label: 'Adoro' }
 ];
 
-/** Escore mínimo e máximo por categoria: 2 perguntas com nota de 1 a 5. */
-export const MIN_SCORE = 2;
-export const MAX_SCORE = 10;
+/** Atividades por tela: uma de cada tipo RIASEC (o Mini-IP vem em blocos de 6, na ordem R, I, A, S, E, C). */
+export const QUESTIONS_PER_PAGE = 6;
 
 /** Máximo de áreas de interesse por teste (mesma regra do back-end). */
 export const MAX_INTEREST_AREAS = 3;

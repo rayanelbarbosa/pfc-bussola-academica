@@ -7,11 +7,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_EMAIL;
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_PASSWORD;
+import static br.com.bussolaacademica.support.AuthTestHelper.answers;
 import static br.com.bussolaacademica.support.AuthTestHelper.bearer;
 import static br.com.bussolaacademica.support.AuthTestHelper.login;
 import static br.com.bussolaacademica.support.AuthTestHelper.registerStudent;
@@ -34,9 +33,7 @@ class DashboardIntegrationTest {
     @Test
     void adminSeesMetricsAndStudentIsBlocked() throws Exception {
         String student = registerStudent(mockMvc, uniqueEmail());
-        String answers = IntStream.rangeClosed(1, 12)
-                .mapToObj(id -> "{\"questionId\":" + id + ",\"score\":" + (id == 7 || id == 8 ? 5 : 2) + "}")
-                .collect(Collectors.joining(",", "{\"answers\":[", "],\"interestAreas\":[\"EDUCATION\"]}"));
+        String answers = "{\"answers\":[" + answers(1, 1, 1, 4, 1, 1) + "],\"interestAreas\":[\"EDUCATION\"]}";
         mockMvc.perform(post("/api/vocational-test/results").header("Authorization", bearer(student))
                         .contentType(MediaType.APPLICATION_JSON).content(answers))
                 .andExpect(status().isCreated());
