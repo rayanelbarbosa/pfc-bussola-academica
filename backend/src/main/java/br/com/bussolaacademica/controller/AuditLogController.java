@@ -1,8 +1,10 @@
 package br.com.bussolaacademica.controller;
 
+import br.com.bussolaacademica.dto.AuditIntegrityResponse;
 import br.com.bussolaacademica.dto.AuditLogResponse;
 import br.com.bussolaacademica.dto.PageResponse;
 import br.com.bussolaacademica.model.AuditAction;
+import br.com.bussolaacademica.service.AuditIntegrityService;
 import br.com.bussolaacademica.service.AuditService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,9 +20,11 @@ import java.util.List;
 public class AuditLogController {
 
     private final AuditService auditService;
+    private final AuditIntegrityService integrityService;
 
-    public AuditLogController(AuditService auditService) {
+    public AuditLogController(AuditService auditService, AuditIntegrityService integrityService) {
         this.auditService = auditService;
+        this.integrityService = integrityService;
     }
 
     @GetMapping
@@ -29,6 +33,17 @@ public class AuditLogController {
                                                  @RequestParam(defaultValue = "0") int page,
                                                  @RequestParam(defaultValue = "20") int size) {
         return auditService.search(action, email, page, size);
+    }
+
+    /**
+     * Confere a corrente de hashes dos registros: mostra se algum foi alterado, apagado ou inserido por fora. A
+     * verificação também fica registrada na auditoria (depois de terminar, para não esperar a própria trava).
+     */
+    @GetMapping("/integrity")
+    public AuditIntegrityResponse integrity() {
+        AuditIntegrityResponse result = integrityService.verify();
+        auditService.recordForCurrentUser(AuditAction.AUDIT_INTEGRITY_CHECKED, result.message(), result.intact());
+        return result;
     }
 
     @GetMapping("/actions")

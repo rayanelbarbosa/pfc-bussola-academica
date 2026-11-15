@@ -3,7 +3,9 @@ package br.com.bussolaacademica.service;
 import br.com.bussolaacademica.dto.AuditLogResponse;
 import br.com.bussolaacademica.dto.PageResponse;
 import br.com.bussolaacademica.model.AuditAction;
+import br.com.bussolaacademica.model.AuditChainHead;
 import br.com.bussolaacademica.model.AuditLog;
+import br.com.bussolaacademica.repository.AuditChainHeadRepository;
 import br.com.bussolaacademica.repository.AuditLogRepository;
 import br.com.bussolaacademica.security.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,6 +32,9 @@ import java.util.List;
  *
  * Só ações de segurança, alterações de dados e ações administrativas são registradas (consultas
  * rotineiras não), e os registros são guardados por 6 meses (Marco Civil da Internet, art. 15).
+ *
+ * Todo registro novo é lacrado na corrente de hashes (ver {@link AuditIntegrityService}): a gravação trava o último
+ * hash da corrente, lacra o registro com ele e avança a corrente, tudo na mesma transação.
  */
 @Service
 public class AuditService {
@@ -38,11 +43,14 @@ public class AuditService {
     private static final int MAX_DETAILS_LENGTH = 500;
 
     private final AuditLogRepository repository;
+    private final AuditChainHeadRepository chainHeadRepository;
     private final CurrentUser currentUser;
     private final Clock clock;
 
-    public AuditService(AuditLogRepository repository, CurrentUser currentUser, Clock clock) {
+    public AuditService(AuditLogRepository repository, AuditChainHeadRepository chainHeadRepository,
+                        CurrentUser currentUser, Clock clock) {
         this.repository = repository;
+        this.chainHeadRepository = chainHeadRepository;
         this.currentUser = currentUser;
         this.clock = clock;
     }
@@ -51,8 +59,16 @@ public class AuditService {
     public void record(AuditAction action, Long userId, String userEmail, String details, boolean success) {
         HttpServletRequest request = currentRequest();
         String resource = request == null ? null : request.getMethod() + " " + request.getRequestURI();
-        repository.save(new AuditLog(LocalDateTime.now(clock), userId, userEmail, action, resource,
+        append(new AuditLog(LocalDateTime.now(clock), userId, userEmail, action, resource,
                 truncate(details), clientIp(request), success));
+    }
+
+    /** Lacra o registro com o último hash da corrente (travado até o fim da transação), grava e avança a corrente. */
+    private void append(AuditLog log) {
+        AuditChainHead head = chainHeadRepository.lockHead();
+        log.seal(head.getLastHash());
+        repository.save(log);
+        head.advance(log.getHash());
     }
 
     /** Registra a ação em nome do usuário autenticado na requisição atual (se houver). */
@@ -93,7 +109,7 @@ public class AuditService {
         LocalDateTime limit = LocalDateTime.now(clock).minus(retention);
         int deleted = repository.deleteOlderThan(limit);
         if (deleted > 0) {
-            repository.save(new AuditLog(LocalDateTime.now(clock), null, null, AuditAction.AUDIT_LOGS_PURGED,
+            append(new AuditLog(LocalDateTime.now(clock), null, null, AuditAction.AUDIT_LOGS_PURGED,
                     null, deleted + " registros anteriores a " + limit.toLocalDate() + " apagados", null, true));
         }
         return deleted;

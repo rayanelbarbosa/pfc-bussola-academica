@@ -259,6 +259,8 @@ class SecurityLgpdIntegrationTest {
         assertThat(auditLogRepository.findById(old.getId())).isEmpty();
         assertThat(auditLogRepository.findById(recent.getId())).isPresent();
         assertThat(auditLogRepository.findAll()).anyMatch(log -> log.getAction() == AuditAction.AUDIT_LOGS_PURGED);
+        // os dois registros foram inseridos direto no banco, sem lacre: o que sobrou sai para não quebrar a corrente
+        auditLogRepository.delete(recent);
     }
 
     @Test
