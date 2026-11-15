@@ -31,9 +31,10 @@ describe('UserService', () => {
   });
 
   it('deletes the own account', () => {
-    service.deleteMyAccount().subscribe();
+    service.deleteMyAccount('Senha1234').subscribe();
     const req = http.expectOne(url);
     expect(req.request.method).toBe('DELETE');
+    expect(req.request.body).toEqual({ password: 'Senha1234' });
     req.flush(null);
   });
 });

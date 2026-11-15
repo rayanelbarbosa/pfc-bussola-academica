@@ -37,15 +37,16 @@ describe('AdminUserService', () => {
     expect(create.request.method).toBe('POST');
     create.flush({});
 
-    service.changeRole(3, 'ADMIN').subscribe();
+    service.changeRole(3, 'ADMIN', 'Admin12345').subscribe();
     const role = http.expectOne(`${url}/3/role`);
     expect(role.request.method).toBe('PATCH');
-    expect(role.request.body).toEqual({ role: 'ADMIN' });
+    expect(role.request.body).toEqual({ role: 'ADMIN', password: 'Admin12345' });
     role.flush({});
 
-    service.deleteUser(3).subscribe();
+    service.deleteUser(3, 'Admin12345').subscribe();
     const del = http.expectOne(`${url}/3`);
     expect(del.request.method).toBe('DELETE');
+    expect(del.request.body).toEqual({ password: 'Admin12345' });
     del.flush(null);
   });
 });

@@ -4,6 +4,7 @@ import br.com.bussolaacademica.dto.AdminUserDetailResponse;
 import br.com.bussolaacademica.dto.AdminUserResponse;
 import br.com.bussolaacademica.dto.CreateAdminRequest;
 import br.com.bussolaacademica.dto.PageResponse;
+import br.com.bussolaacademica.dto.PasswordConfirmationRequest;
 import br.com.bussolaacademica.dto.RoleChangeRequest;
 import br.com.bussolaacademica.model.Role;
 import br.com.bussolaacademica.service.AdminUserService;
@@ -53,12 +54,12 @@ public class AdminUserController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable Long id) {
-        service.deleteUser(id);
+    public void deleteUser(@PathVariable Long id, @Valid @RequestBody PasswordConfirmationRequest request) {
+        service.deleteUser(id, request.password());
     }
 
     @PatchMapping("/{id}/role")
     public AdminUserResponse changeRole(@PathVariable Long id, @Valid @RequestBody RoleChangeRequest request) {
-        return service.changeRole(id, request.role());
+        return service.changeRole(id, request.role(), request.password());
     }
 }

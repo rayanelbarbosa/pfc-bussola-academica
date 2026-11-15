@@ -1,5 +1,6 @@
 package br.com.bussolaacademica.service;
 
+import br.com.bussolaacademica.exception.BusinessRuleException;
 import br.com.bussolaacademica.dto.UserDataExportResponse;
 import br.com.bussolaacademica.model.InterestArea;
 import br.com.bussolaacademica.model.RiasecCategory;
@@ -39,6 +40,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -56,6 +58,8 @@ class UserServiceTest {
     private CurrentUser currentUser;
     @Mock
     private AuditService auditService;
+    @Mock
+    private PasswordConfirmationService passwordConfirmation;
 
     @InjectMocks
     private UserService userService;
@@ -90,14 +94,32 @@ class UserServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(aluna));
 
         // Act
-        userService.deleteMyAccount();
+        userService.deleteMyAccount("Senha1234");
 
-        // Assert
-        InOrder ordem = inOrder(resultRepository, userRepository);
+        // Assert: confere a senha antes de mexer em qualquer dado
+        InOrder ordem = inOrder(passwordConfirmation, resultRepository, userRepository);
+        ordem.verify(passwordConfirmation).confirm(aluna, "Senha1234");
         ordem.verify(resultRepository).anonymizeByUser(1L);
         ordem.verify(userRepository).delete(aluna);
         verify(auditService).record(eq(AuditAction.ACCOUNT_DELETED), eq(1L), eq("aluna@email.com"),
                 anyString(), eq(true));
+    }
+
+    @Test
+    void naoDeveExcluirAContaQuandoASenhaEstiverErrada() {
+        // Arrange
+        User aluna = aluna();
+        when(currentUser.id()).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(aluna));
+        doThrow(new BusinessRuleException("Senha incorreta.")).when(passwordConfirmation).confirm(aluna, "errada");
+
+        // Act
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () -> userService.deleteMyAccount("errada"));
+
+        // Assert
+        assertEquals("Senha incorreta.", ex.getMessage());
+        verify(resultRepository, never()).anonymizeByUser(anyLong());
+        verify(userRepository, never()).delete(any(User.class));
     }
 
     @Test
@@ -108,7 +130,7 @@ class UserServiceTest {
 
         // Act
         ResourceNotFoundException ex = assertThrows(ResourceNotFoundException.class,
-                () -> userService.deleteMyAccount());
+                () -> userService.deleteMyAccount("Senha1234"));
 
         // Assert
         assertEquals("Usuário não encontrado", ex.getMessage());
@@ -134,7 +156,7 @@ class UserServiceTest {
     void deveExportarCadastroResultadosEHistoricoDoTitular() {
         // Arrange
         UserService service = new UserService(userRepository, resultRepository, currentUser, auditService,
-                Clock.fixed(Instant.parse("2026-10-08T15:00:00Z"), ZoneId.of("America/Sao_Paulo")));
+                Clock.fixed(Instant.parse("2026-10-08T15:00:00Z"), ZoneId.of("America/Sao_Paulo")), passwordConfirmation);
         User user = aluna();
         Map<RiasecCategory, Integer> scores = new EnumMap<>(RiasecCategory.class);
         for (RiasecCategory category : RiasecCategory.values()) {

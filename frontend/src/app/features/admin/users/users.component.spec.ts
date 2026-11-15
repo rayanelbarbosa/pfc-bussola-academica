@@ -72,19 +72,30 @@ describe('UsersComponent', () => {
 
   it('promotes after confirmation', () => {
     service.changeRole.and.returnValue(of({ ...STUDENT, role: 'ADMIN' }));
-    fixture.componentInstance.confirming.set(STUDENT);
-    fixture.componentInstance.confirmRoleChange();
+    const component = fixture.componentInstance;
+    component.askRoleChange(STUDENT);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('#role-password')).toBeTruthy();
 
-    expect(service.changeRole).toHaveBeenCalledWith(2, 'ADMIN');
-    expect(fixture.componentInstance.notice()).toContain('administrador');
+    component.confirmRoleChange();
+    expect(service.changeRole).not.toHaveBeenCalled();
+
+    component.actionPassword.set('Admin12345');
+    component.confirmRoleChange();
+
+    expect(service.changeRole).toHaveBeenCalledWith(2, 'ADMIN', 'Admin12345');
+    expect(component.notice()).toContain('administrador');
+    expect(component.confirming()).toBeNull();
+    expect(component.actionPassword()).toBe('');
   });
 
   it('deletes another account after confirmation', () => {
     service.deleteUser.and.returnValue(of(undefined));
-    fixture.componentInstance.deleting.set(STUDENT);
+    fixture.componentInstance.askDelete(STUDENT);
+    fixture.componentInstance.actionPassword.set('Admin12345');
     fixture.componentInstance.confirmDelete();
 
-    expect(service.deleteUser).toHaveBeenCalledWith(2);
+    expect(service.deleteUser).toHaveBeenCalledWith(2, 'Admin12345');
     expect(fixture.componentInstance.notice()).toContain('joao@teste.com');
   });
 
@@ -135,15 +146,25 @@ describe('UsersComponent', () => {
     component.load(0);
     expect(component.error()).toContain('usuários');
 
+    // erro de senha ou da API: o modal continua aberto e mostra o erro nele
     service.changeRole.and.returnValue(fail());
-    component.confirming.set(STUDENT);
+    component.askRoleChange(STUDENT);
+    component.actionPassword.set('errada');
     component.confirmRoleChange();
-    expect(component.error()).toContain('perfil');
+    expect(component.actionError()).toContain('perfil');
+    expect(component.confirming()).toEqual(STUDENT);
+    expect(component.actionBusy()).toBeFalse();
 
     service.deleteUser.and.returnValue(fail());
-    component.deleting.set(STUDENT);
+    component.askDelete(STUDENT);
+    expect(component.actionError()).toBeNull();
+    component.actionPassword.set('errada');
     component.confirmDelete();
-    expect(component.error()).toContain('excluir');
+    expect(component.actionError()).toContain('excluir');
+    expect(component.deleting()).toEqual(STUDENT);
+
+    component.closeAction();
+    expect(component.deleting()).toBeNull();
   });
 
   it('ignores confirmations without a selected user and clears the filters', () => {
