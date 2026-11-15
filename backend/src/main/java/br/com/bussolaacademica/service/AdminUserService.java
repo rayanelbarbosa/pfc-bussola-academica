@@ -51,10 +51,11 @@ public class AdminUserService {
     private final AuditService auditService;
     private final Clock clock;
     private final TermsService termsService;
+    private final PasswordConfirmationService passwordConfirmation;
 
     public AdminUserService(UserRepository userRepository, VocationalTestResultRepository resultRepository,
                             PasswordEncoder passwordEncoder, CurrentUser currentUser, AuditService auditService, Clock clock,
-                            TermsService termsService) {
+                            TermsService termsService, PasswordConfirmationService passwordConfirmation) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.passwordEncoder = passwordEncoder;
@@ -62,6 +63,7 @@ public class AdminUserService {
         this.auditService = auditService;
         this.clock = clock;
         this.termsService = termsService;
+        this.passwordConfirmation = passwordConfirmation;
     }
 
     @Transactional(readOnly = true)
@@ -107,11 +109,12 @@ public class AdminUserService {
     }
 
     @Transactional
-    public AdminUserResponse changeRole(Long userId, Role newRole) {
+    public AdminUserResponse changeRole(Long userId, Role newRole, String password) {
         if (userId.equals(currentUser.id())) {
             auditService.recordForCurrentUser(AuditAction.USER_ROLE_CHANGED, "Tentou alterar o próprio perfil", false);
             throw new BusinessRuleException("Você não pode alterar o seu próprio perfil.");
         }
+        passwordConfirmation.confirm(loadAdmin(), password);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
         Role previous = user.getRole();
@@ -122,17 +125,24 @@ public class AdminUserService {
     }
 
     @Transactional
-    public void deleteUser(Long userId) {
+    public void deleteUser(Long userId, String password) {
         if (userId.equals(currentUser.id())) {
             auditService.recordForCurrentUser(AuditAction.ACCOUNT_DELETED, "Tentou excluir a própria conta pelo painel", false);
             throw new BusinessRuleException("Para excluir a sua própria conta, use a página Meus dados.");
         }
+        passwordConfirmation.confirm(loadAdmin(), password);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
-        resultRepository.deleteByUser_Id(user.getId());
+        resultRepository.anonymizeByUser(user.getId());
         userRepository.delete(user);
         auditService.recordForCurrentUser(AuditAction.ACCOUNT_DELETED,
-                "Conta de " + user.getEmail() + " e resultados excluídos pelo administrador", true);
+                "Conta de " + user.getEmail() + " excluída e resultados anonimizados pelo administrador", true);
+    }
+
+    /** O administrador logado, cuja senha é pedida de novo nas ações críticas. */
+    private User loadAdmin() {
+        return userRepository.findById(currentUser.id())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
     }
 
     private static String label(Role role) {

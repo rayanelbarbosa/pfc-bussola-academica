@@ -1,15 +1,18 @@
 package br.com.bussolaacademica.controller;
 
+import br.com.bussolaacademica.dto.PasswordConfirmationRequest;
 import br.com.bussolaacademica.dto.ResultSummaryResponse;
 import br.com.bussolaacademica.dto.UserDataExportResponse;
 import br.com.bussolaacademica.dto.UserResponse;
 import br.com.bussolaacademica.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -49,7 +52,7 @@ public class UserController {
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteMyAccount() {
-        userService.deleteMyAccount();
+    public void deleteMyAccount(@Valid @RequestBody PasswordConfirmationRequest request) {
+        userService.deleteMyAccount(request.password());
     }
 }

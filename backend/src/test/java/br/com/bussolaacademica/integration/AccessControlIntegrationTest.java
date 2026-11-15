@@ -1,5 +1,9 @@
 package br.com.bussolaacademica.integration;
 
+import br.com.bussolaacademica.model.AuditAction;
+import br.com.bussolaacademica.model.VocationalTestResult;
+import br.com.bussolaacademica.repository.AuditLogRepository;
+import br.com.bussolaacademica.repository.VocationalTestResultRepository;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalTime;
 
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_EMAIL;
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_PASSWORD;
@@ -16,8 +21,10 @@ import static br.com.bussolaacademica.support.AuthTestHelper.answers;
 import static br.com.bussolaacademica.support.AuthTestHelper.bearer;
 import static br.com.bussolaacademica.support.AuthTestHelper.login;
 import static br.com.bussolaacademica.support.AuthTestHelper.loginJson;
+import static br.com.bussolaacademica.support.AuthTestHelper.passwordJson;
 import static br.com.bussolaacademica.support.AuthTestHelper.registerStudent;
 import static br.com.bussolaacademica.support.AuthTestHelper.uniqueEmail;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -33,6 +40,12 @@ class AccessControlIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private VocationalTestResultRepository resultRepository;
+
+    @Autowired
+    private AuditLogRepository auditLogRepository;
 
     @Test
     void studentCannotReadAuditLogsButAdminCan() throws Exception {
@@ -77,18 +90,38 @@ class AccessControlIntegrationTest {
     }
 
     @Test
-    void studentCanDeleteOwnAccount() throws Exception {
+    void studentCanDeleteOwnAccountAndTheResultsAreAnonymized() throws Exception {
         String email = uniqueEmail();
         String token = registerStudent(mockMvc, email);
-        submitTest(token);
+        Integer resultId = submitTest(token);
 
+        // sem a senha certa a conta não é excluída
+        mockMvc.perform(delete("/api/users/me").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content(passwordJson("SenhaErrada1")))
+                .andExpect(status().isUnprocessableEntity());
         mockMvc.perform(delete("/api/users/me").header("Authorization", bearer(token)))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/users/me").header("Authorization", bearer(token)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(delete("/api/users/me").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content(passwordJson(DEFAULT_PASSWORD)))
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginJson(email, DEFAULT_PASSWORD)))
                 .andExpect(status().isUnauthorized());
+
+        // LGPD: o resultado continua nas estatísticas, mas não é mais de ninguém e guarda só a data
+        VocationalTestResult anonymous = resultRepository.findById(resultId.longValue()).orElseThrow();
+        assertThat(anonymous.getUser()).isNull();
+        assertThat(anonymous.getCreatedAt().toLocalTime()).isEqualTo(LocalTime.MIDNIGHT);
+        // e a auditoria do envio do teste não guarda nada que religue o resultado ao e-mail
+        assertThat(auditLogRepository.findAll())
+                .filteredOn(log -> log.getAction() == AuditAction.TEST_SUBMITTED && email.equals(log.getUserEmail()))
+                .isNotEmpty()
+                .allMatch(log -> "Teste vocacional enviado".equals(log.getDetails()));
     }
 
     @Test

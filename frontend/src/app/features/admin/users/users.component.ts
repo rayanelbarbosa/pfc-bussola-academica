@@ -40,6 +40,10 @@ export class UsersComponent implements OnInit {
   readonly notice = signal<string | null>(null);
   readonly confirming = signal<AdminUser | null>(null);
   readonly deleting = signal<AdminUser | null>(null);
+  /** Senha do administrador, pedida de novo para trocar perfil ou excluir conta; erro e envio do modal aberto. */
+  readonly actionPassword = signal('');
+  readonly actionError = signal<string | null>(null);
+  readonly actionBusy = signal(false);
   /** Painel "Ver dados": cadastro e histórico de testes do usuário escolhido. */
   readonly viewing = signal<AdminUser | null>(null);
   readonly detail = signal<AdminUserDetail | null>(null);
@@ -83,16 +87,38 @@ export class UsersComponent implements OnInit {
     return user.role === 'ADMIN' ? 'STUDENT' : 'ADMIN';
   }
 
+  /** Abre a confirmação de troca de perfil ou de exclusão, sempre com a senha em branco. */
+  askRoleChange(user: AdminUser): void {
+    this.resetAction();
+    this.confirming.set(user);
+  }
+
+  askDelete(user: AdminUser): void {
+    this.resetAction();
+    this.deleting.set(user);
+  }
+
+  closeAction(): void {
+    this.confirming.set(null);
+    this.deleting.set(null);
+    this.resetAction();
+  }
+
   confirmRoleChange(): void {
     const user = this.confirming();
-    if (!user) return;
-    this.confirming.set(null);
-    this.service.changeRole(user.id, this.targetRole(user)).subscribe({
+    if (!user || !this.actionPassword() || this.actionBusy()) return;
+    this.actionBusy.set(true);
+    this.actionError.set(null);
+    this.service.changeRole(user.id, this.targetRole(user), this.actionPassword()).subscribe({
       next: (saved) => {
+        this.closeAction();
         this.notice.set(`${saved.name} agora é ${this.roleLabels[saved.role].toLowerCase()}.`);
         this.load(this.page()?.page ?? 0);
       },
-      error: (err) => this.error.set(getErrorMessage(err, 'Não foi possível alterar o perfil.'))
+      error: (err) => {
+        this.actionError.set(getErrorMessage(err, 'Não foi possível alterar o perfil.'));
+        this.actionBusy.set(false);
+      }
     });
   }
 
@@ -114,15 +140,26 @@ export class UsersComponent implements OnInit {
 
   confirmDelete(): void {
     const user = this.deleting();
-    if (!user) return;
-    this.deleting.set(null);
-    this.service.deleteUser(user.id).subscribe({
+    if (!user || !this.actionPassword() || this.actionBusy()) return;
+    this.actionBusy.set(true);
+    this.actionError.set(null);
+    this.service.deleteUser(user.id, this.actionPassword()).subscribe({
       next: () => {
+        this.closeAction();
         this.notice.set(`A conta de ${user.email} foi excluída.`);
         this.load(this.page()?.page ?? 0);
       },
-      error: (err) => this.error.set(getErrorMessage(err, 'Não foi possível excluir a conta.'))
+      error: (err) => {
+        this.actionError.set(getErrorMessage(err, 'Não foi possível excluir a conta.'));
+        this.actionBusy.set(false);
+      }
     });
+  }
+
+  private resetAction(): void {
+    this.actionPassword.set('');
+    this.actionError.set(null);
+    this.actionBusy.set(false);
   }
 
   openCreate(): void {

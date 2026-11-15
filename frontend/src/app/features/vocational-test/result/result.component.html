@@ -37,6 +37,17 @@
       </div>
     </div>
 
+    @if (r.noVariation) {
+      <div class="alert alert-warning mb-8" role="alert">
+        <app-icon name="alert-circle" class="mt-0.5 size-5" />
+        <div>
+          <p class="font-semibold">Seus pontos ficaram iguais nos 6 tipos.</p>
+          <p class="mt-1">Isso acontece quando a mesma resposta é dada em todas as atividades. Assim o teste não consegue diferenciar seus interesses, e a ordem das carreiras abaixo não diz muito sobre você. Refaça o teste pensando em quais atividades você faria com mais e com menos vontade.</p>
+          <a routerLink="/teste-vocacional" class="btn btn-primary btn-sm mt-3"><app-icon name="rotate-ccw" class="size-4" /> Refazer o teste</a>
+        </div>
+      </div>
+    }
+
     <section class="card mb-10">
       <h2 class="text-xl">Seus pontos em cada tipo</h2>
       <div class="mt-4 grid items-center gap-6 md:grid-cols-2">

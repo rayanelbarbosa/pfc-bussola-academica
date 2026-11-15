@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long>, JpaSpecificationExecutor<AuditLog> {
 
@@ -19,6 +20,9 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long>, JpaSp
     Optional<AuditLog> findFirstByUserEmailAndActionOrderByCreatedAtDesc(String userEmail, AuditAction action);
 
     List<AuditLog> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    /** Todos os registros na ordem em que foram gravados, lidos aos poucos (verificação da corrente de hashes). */
+    Stream<AuditLog> streamAllByOrderByIdAsc();
 
     /** Expurgo: apaga em uma única instrução os registros mais antigos que o limite. */
     @Modifying

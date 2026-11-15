@@ -56,19 +56,29 @@
     <section class="mt-4 rounded-lg border border-destructive/30 bg-destructive-soft p-5 sm:p-6">
       <h2 class="text-xl text-destructive">Excluir minha conta</h2>
       <p class="mt-2 text-sm text-foreground/85">
-        Apaga definitivamente seu cadastro e todos os seus resultados. Os registros de acesso ficam guardados apenas
-        pelo prazo exigido pelo Marco Civil da Internet (6 meses).
+        Apaga definitivamente seu cadastro. Seus resultados do teste deixam de ser ligados a você e viram dados anônimos
+        (sem nome, sem e-mail e só com a data), usados apenas nas estatísticas da plataforma. Os registros de acesso ficam
+        guardados apenas pelo prazo exigido pelo Marco Civil da Internet (6 meses).
       </p>
       @if (!confirmingDeletion()) {
         <button type="button" class="btn btn-danger mt-4" (click)="confirmingDeletion.set(true)">Excluir minha conta</button>
       } @else {
-        <p class="mt-4 text-sm"><strong>Tem certeza?</strong> Essa ação não pode ser desfeita.</p>
-        <div class="mt-3 flex flex-wrap gap-2">
-          <button type="button" class="btn btn-secondary" (click)="confirmingDeletion.set(false)" [disabled]="deleting()">Cancelar</button>
-          <button type="button" class="btn btn-danger" (click)="deleteAccount()" [disabled]="deleting()">
-            {{ deleting() ? 'Excluindo...' : 'Sim, excluir tudo' }}
-          </button>
-        </div>
+        <p class="mt-4 text-sm"><strong>Tem certeza?</strong> Essa ação não pode ser desfeita. Para confirmar, digite a sua senha.</p>
+        <form class="mt-3 max-w-sm" (submit)="deleteAccount(); $event.preventDefault()">
+          <label for="delete-password" class="field-label">Sua senha</label>
+          <input id="delete-password" type="password" class="field-input" autocomplete="current-password" required
+            [value]="deletePassword()" (input)="deletePassword.set($any($event.target).value)"
+            [attr.aria-invalid]="deleteError() ? true : null" [attr.aria-describedby]="deleteError() ? 'delete-error' : null" />
+          @if (deleteError()) {
+            <p id="delete-error" class="mt-1 text-sm text-destructive" role="alert">{{ deleteError() }}</p>
+          }
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button type="button" class="btn btn-secondary" (click)="cancelDeletion()" [disabled]="deleting()">Cancelar</button>
+            <button type="submit" class="btn btn-danger" [disabled]="deleting() || !deletePassword()">
+              {{ deleting() ? 'Excluindo...' : 'Sim, excluir minha conta' }}
+            </button>
+          </div>
+        </form>
       }
     </section>
   } @else if (!error()) {

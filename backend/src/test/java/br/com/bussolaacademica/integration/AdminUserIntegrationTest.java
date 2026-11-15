@@ -13,6 +13,7 @@ import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_PASSWORD;
 import static br.com.bussolaacademica.support.AuthTestHelper.answers;
 import static br.com.bussolaacademica.support.AuthTestHelper.bearer;
 import static br.com.bussolaacademica.support.AuthTestHelper.login;
+import static br.com.bussolaacademica.support.AuthTestHelper.passwordJson;
 import static br.com.bussolaacademica.support.AuthTestHelper.registerStudent;
 import static br.com.bussolaacademica.support.AuthTestHelper.uniqueEmail;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -33,8 +34,13 @@ class AdminUserIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
+    /** Novo perfil com a senha do administrador (pedida de novo para alterar perfis). */
     private static String roleJson(String role) {
-        return "{\"role\":\"" + role + "\"}";
+        return roleJson(role, ADMIN_PASSWORD);
+    }
+
+    private static String roleJson(String role, String password) {
+        return "{\"role\":\"" + role + "\",\"password\":\"" + password + "\"}";
     }
 
     @Test
@@ -50,6 +56,9 @@ class AdminUserIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         Integer id = JsonPath.read(page, "$.content[0].id");
 
+        mockMvc.perform(patch("/api/admin/users/" + id + "/role").header("Authorization", bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(roleJson("ADMIN", "SenhaErrada1")))
+                .andExpect(status().isUnprocessableEntity());
         mockMvc.perform(patch("/api/admin/users/" + id + "/role").header("Authorization", bearer(admin))
                         .contentType(MediaType.APPLICATION_JSON).content(roleJson("ADMIN")))
                 .andExpect(status().isOk())
@@ -119,7 +128,15 @@ class AdminUserIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         Integer id = JsonPath.read(page, "$.content[0].id");
 
-        mockMvc.perform(delete("/api/admin/users/" + id).header("Authorization", bearer(admin)))
+        // senha errada: a conta não é excluída
+        mockMvc.perform(delete("/api/admin/users/" + id).header("Authorization", bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(passwordJson("SenhaErrada1")))
+                .andExpect(status().isUnprocessableEntity());
+        mockMvc.perform(get("/api/admin/users").param("search", email).header("Authorization", bearer(admin)))
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        mockMvc.perform(delete("/api/admin/users/" + id).header("Authorization", bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(passwordJson(ADMIN_PASSWORD)))
                 .andExpect(status().isNoContent());
         mockMvc.perform(get("/api/admin/users").param("search", email).header("Authorization", bearer(admin)))
                 .andExpect(jsonPath("$.totalElements").value(0));
@@ -129,7 +146,8 @@ class AdminUserIntegrationTest {
         String adminPage = mockMvc.perform(get("/api/admin/users").param("search", ADMIN_EMAIL).header("Authorization", bearer(admin)))
                 .andReturn().getResponse().getContentAsString();
         Integer adminId = JsonPath.read(adminPage, "$.content[0].id");
-        mockMvc.perform(delete("/api/admin/users/" + adminId).header("Authorization", bearer(admin)))
+        mockMvc.perform(delete("/api/admin/users/" + adminId).header("Authorization", bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(passwordJson(ADMIN_PASSWORD)))
                 .andExpect(status().isUnprocessableEntity());
     }
 

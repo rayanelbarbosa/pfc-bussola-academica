@@ -12,7 +12,7 @@ describe('AuditLogsComponent', () => {
   let auditService: jasmine.SpyObj<AuditService>;
 
   beforeEach(async () => {
-    auditService = jasmine.createSpyObj('AuditService', ['search']);
+    auditService = jasmine.createSpyObj('AuditService', ['search', 'verifyIntegrity']);
     auditService.search.and.returnValue(
       of({
         content: [
@@ -70,5 +70,36 @@ describe('AuditLogsComponent', () => {
     expect(component.error()).toBeTruthy();
     expect(component.loading()).toBeFalse();
     expect(component.label('UNKNOWN_ACTION')).toBe('UNKNOWN_ACTION');
+  });
+
+  it('verifies the integrity and shows whether the chain is intact or where it broke', () => {
+    const component = fixture.componentInstance;
+    const el: HTMLElement = fixture.nativeElement;
+    auditService.verifyIntegrity.and.returnValue(of({
+      intact: true, checkedRecords: 42, brokenAtId: null, message: 'Corrente íntegra: 42 registros conferidos.',
+      checkedAt: '2026-11-15T16:40:00'
+    }));
+    auditService.search.calls.reset();
+
+    component.verifyIntegrity();
+    fixture.detectChanges();
+
+    expect(el.textContent).toContain('Auditoria íntegra');
+    expect(el.textContent).toContain('42 registros');
+    // a lista é recarregada para mostrar o registro da própria verificação
+    expect(auditService.search).toHaveBeenCalled();
+
+    auditService.verifyIntegrity.and.returnValue(of({
+      intact: false, checkedRecords: 10, brokenAtId: 11, message: 'O registro 11 foi alterado depois de gravado.',
+      checkedAt: '2026-11-15T16:41:00'
+    }));
+    component.verifyIntegrity();
+    fixture.detectChanges();
+    expect(el.querySelector('[role="alert"]')?.textContent).toContain('O registro 11 foi alterado');
+
+    auditService.verifyIntegrity.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    component.verifyIntegrity();
+    expect(component.error()).toContain('integridade');
+    expect(component.verifying()).toBeFalse();
   });
 });

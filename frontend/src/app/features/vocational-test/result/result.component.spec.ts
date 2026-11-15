@@ -19,6 +19,7 @@ const RESULT: VocationalTestResult = {
     { category: 'CONVENTIONAL', label: 'Convencional', score: 18 }
   ],
   maxScore: 20,
+  noVariation: false,
   topCategories: [
     { category: 'REALISTIC', label: 'Realista', score: 18 },
     { category: 'CONVENTIONAL', label: 'Convencional', score: 18 }
@@ -132,6 +133,21 @@ describe('ResultComponent', () => {
     fixture.componentInstance.toggleDetails('Engenharia Civil');
     fixture.detectChanges();
     expect(el.textContent).not.toContain('No dia a dia');
+  });
+
+  it('warns when the test was answered without variation and offers to retake it', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).not.toContain('Seus pontos ficaram iguais nos 6 tipos');
+
+    const flat = { ...RESULT, noVariation: true, scores: RESULT.scores.map((score) => ({ ...score, score: 10 })) };
+    testService.getResult.and.returnValue(of(flat));
+    fixture = TestBed.createComponent(ResultComponent);
+    fixture.componentRef.setInput('id', '7');
+    fixture.detectChanges();
+
+    const alert = (fixture.nativeElement as HTMLElement).querySelector('[role="alert"]')!;
+    expect(alert.textContent).toContain('Seus pontos ficaram iguais nos 6 tipos');
+    expect(alert.querySelector('a[href="/teste-vocacional"]')?.textContent).toContain('Refazer o teste');
   });
 
   it('opens the full ranking with every career, in the same order, without loading their videos', () => {

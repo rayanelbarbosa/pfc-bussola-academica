@@ -49,11 +49,13 @@ export class AdminUserService {
     return this.http.post<AdminUser>(this.baseUrl, request);
   }
 
-  deleteUser(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  /** Exclui a conta de alguém; a senha do administrador é pedida de novo. */
+  deleteUser(id: number, password: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`, { body: { password } });
   }
 
-  changeRole(id: number, role: Role): Observable<AdminUser> {
-    return this.http.patch<AdminUser>(`${this.baseUrl}/${id}/role`, { role });
+  /** Troca o perfil de alguém; a senha do administrador é pedida de novo. */
+  changeRole(id: number, role: Role, password: string): Observable<AdminUser> {
+    return this.http.patch<AdminUser>(`${this.baseUrl}/${id}/role`, { role, password });
   }
 }

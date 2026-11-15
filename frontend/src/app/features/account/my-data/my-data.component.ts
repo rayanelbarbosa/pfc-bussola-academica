@@ -25,6 +25,9 @@ export class MyDataComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly confirmingDeletion = signal(false);
   readonly deleting = signal(false);
+  /** Senha pedida de novo para excluir a conta, e o erro de quando ela está errada. */
+  readonly deletePassword = signal('');
+  readonly deleteError = signal<string | null>(null);
   readonly exporting = signal(false);
 
   readonly roleLabels: Record<string, string> = { STUDENT: 'Estudante', ADMIN: 'Administrador(a)' };
@@ -61,15 +64,25 @@ export class MyDataComponent implements OnInit {
     });
   }
 
+  cancelDeletion(): void {
+    this.confirmingDeletion.set(false);
+    this.deletePassword.set('');
+    this.deleteError.set(null);
+  }
+
   deleteAccount(): void {
+    if (!this.deletePassword() || this.deleting()) {
+      return;
+    }
     this.deleting.set(true);
-    this.userService.deleteMyAccount().subscribe({
+    this.deleteError.set(null);
+    this.userService.deleteMyAccount(this.deletePassword()).subscribe({
       next: () => {
         this.auth.clear();
         this.router.navigate(['/login']);
       },
       error: (err) => {
-        this.error.set(getErrorMessage(err, 'Não foi possível excluir a conta. Tente novamente.'));
+        this.deleteError.set(getErrorMessage(err, 'Não foi possível excluir a conta. Tente novamente.'));
         this.deleting.set(false);
       }
     });

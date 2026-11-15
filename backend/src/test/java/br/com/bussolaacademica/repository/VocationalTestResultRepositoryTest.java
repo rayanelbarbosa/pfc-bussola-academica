@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -72,21 +73,27 @@ class VocationalTestResultRepositoryTest {
     }
 
     @Test
-    void deveExcluirSomenteOsResultadosDoUsuarioInformado() {
+    void deveAnonimizarSomenteOsResultadosDoUsuarioInformadoSemApagarNenhum() {
         // Arrange
         User aluna = persistUser("aluna-del@teste.com");
         User outra = persistUser("outra-del@teste.com");
-        persistResult(aluna, LocalDateTime.of(2026, 9, 10, 8, 0));
+        VocationalTestResult daAluna = persistResult(aluna, LocalDateTime.of(2026, 9, 10, 8, 37));
         persistResult(outra, LocalDateTime.of(2026, 9, 11, 8, 0));
         entityManager.flush();
+        long total = resultRepository.count();
 
         // Act
-        resultRepository.deleteByUser_Id(aluna.getId());
+        resultRepository.anonymizeByUser(aluna.getId());
         entityManager.flush();
         entityManager.clear();
 
-        // Assert
+        // Assert: nada foi apagado, o resultado da aluna não é mais dela e guarda só a data
+        assertEquals(total, resultRepository.count());
         assertTrue(resultRepository.findByUser_IdOrderByCreatedAtDesc(aluna.getId()).isEmpty());
+        VocationalTestResult anonimo = resultRepository.findById(daAluna.getId()).orElseThrow();
+        assertNull(anonimo.getUser());
+        assertEquals(LocalDateTime.of(2026, 9, 10, 0, 0), anonimo.getCreatedAt());
+        assertEquals(List.of(RiasecCategory.SOCIAL), anonimo.getTopCategories());
         assertEquals(1, resultRepository.findByUser_IdOrderByCreatedAtDesc(outra.getId()).size());
     }
 

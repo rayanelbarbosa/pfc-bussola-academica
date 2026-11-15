@@ -40,10 +40,20 @@ describe('MyDataComponent', () => {
     spyOn(auth, 'clear');
     userService.deleteMyAccount.and.returnValue(of(undefined));
 
-    fixture.componentInstance.confirmingDeletion.set(true);
-    fixture.componentInstance.deleteAccount();
+    const component = fixture.componentInstance;
+    component.confirmingDeletion.set(true);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('#delete-password')).toBeTruthy();
 
-    expect(userService.deleteMyAccount).toHaveBeenCalled();
+    // sem a senha nada é enviado
+    component.deleteAccount();
+    expect(userService.deleteMyAccount).not.toHaveBeenCalled();
+
+    component.deletePassword.set('Senha1234');
+    component.deleteAccount();
+
+    expect(userService.deleteMyAccount).toHaveBeenCalledWith('Senha1234');
     expect(auth.clear).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
@@ -68,11 +78,23 @@ describe('MyDataComponent', () => {
     expect(fixture.componentInstance.exporting()).toBeFalse();
   });
 
-  it('keeps the account and shows an error when the deletion fails', () => {
-    userService.deleteMyAccount.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-    fixture.componentInstance.deleteAccount();
-    expect(fixture.componentInstance.error()).toBeTruthy();
-    expect(fixture.componentInstance.deleting()).toBeFalse();
+  it('keeps the account and shows the error next to the password when it is wrong', () => {
+    userService.deleteMyAccount.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 422, error: { message: 'Senha incorreta.' }
+    })));
+    const component = fixture.componentInstance;
+    component.confirmingDeletion.set(true);
+    component.deletePassword.set('errada');
+    component.deleteAccount();
+    fixture.detectChanges();
+
+    expect(component.deleteError()).toBeTruthy();
+    expect(component.deleting()).toBeFalse();
+    expect((fixture.nativeElement as HTMLElement).querySelector('#delete-error')).toBeTruthy();
+
+    component.cancelDeletion();
+    expect(component.deletePassword()).toBe('');
+    expect(component.deleteError()).toBeNull();
   });
 
   it('shows an error when the data cannot be loaded and an empty history when results fail', () => {

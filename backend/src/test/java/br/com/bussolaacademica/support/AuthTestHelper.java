@@ -69,6 +69,11 @@ public final class AuthTestHelper {
                 .collect(Collectors.joining(","));
     }
 
+    /** Corpo com a senha pedida de novo nas ações críticas (excluir conta, alterar perfil). */
+    public static String passwordJson(String password) {
+        return "{\"password\":\"" + password + "\"}";
+    }
+
     public static String bearer(String token) {
         return "Bearer " + token;
     }

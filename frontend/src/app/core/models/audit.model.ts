@@ -43,8 +43,19 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   USER_ROLE_CHANGED: 'Perfil de usuário alterado',
   USER_DATA_VIEWED: 'Dados de usuário consultados pelo administrador',
   AUDIT_LOGS_PURGED: 'Expurgo de registros antigos',
+  AUDIT_INTEGRITY_CHECKED: 'Verificação de integridade da auditoria',
   PERSONAL_DATA_VIEWED: 'Consulta aos próprios dados (antigo)',
   RESULT_VIEWED: 'Resultado consultado (antigo)',
   VIDEOS_SEARCHED: 'Busca de vídeos (antigo)',
   AUDIT_LOG_VIEWED: 'Consulta à auditoria (antigo)'
 };
+
+/** Resultado da verificação da corrente de hashes da auditoria. */
+export interface AuditIntegrity {
+  intact: boolean;
+  checkedRecords: number;
+  /** Id do primeiro registro com problema; nulo quando a corrente está íntegra. */
+  brokenAtId: number | null;
+  message: string;
+  checkedAt: string;
+}
