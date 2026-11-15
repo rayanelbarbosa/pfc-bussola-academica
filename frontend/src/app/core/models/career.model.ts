@@ -8,7 +8,7 @@ export interface Career {
   primaryCategoryLabel: string;
   secondaryCategory: string;
   secondaryCategoryLabel: string;
-  /** 3º tipo do código de Holland (opcional): só desempata carreiras com a mesma compatibilidade. */
+  /** 3º tipo do código de Holland (opcional): desempata carreiras com os mesmos pontos no 1º e no 2º tipo. */
   tertiaryCategory: string | null;
   tertiaryCategoryLabel: string | null;
   code: string;
