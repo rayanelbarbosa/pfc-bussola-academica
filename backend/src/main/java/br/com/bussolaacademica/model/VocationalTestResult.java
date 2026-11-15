@@ -60,6 +60,10 @@ public class VocationalTestResult {
     @Column(name = "top_categories", nullable = false, length = 100)
     private String topCategories;
 
+    /** Pontuação máxima de cada tipo: 20 no questionário atual (5 perguntas de 0 a 4); 10 nos resultados antigos. */
+    @Column(name = "max_score", nullable = false)
+    private int maxScore;
+
     /** Áreas de interesse escolhidas antes do teste, ex.: "HEALTH;ENGINEERING". Nulo = "Ainda não sei". */
     @Column(name = "interest_areas", length = 200)
     private String interestAreas;
@@ -69,8 +73,9 @@ public class VocationalTestResult {
     }
 
     public VocationalTestResult(User user, LocalDateTime createdAt, Map<RiasecCategory, Integer> scores,
-                                List<RiasecCategory> topCategories, List<InterestArea> interestAreas) {
+                                List<RiasecCategory> topCategories, List<InterestArea> interestAreas, int maxScore) {
         this.user = user;
+        this.maxScore = maxScore;
         this.createdAt = createdAt;
         this.realisticScore = scores.get(RiasecCategory.REALISTIC);
         this.investigativeScore = scores.get(RiasecCategory.INVESTIGATIVE);
@@ -116,6 +121,10 @@ public class VocationalTestResult {
     /** true se o resultado pertence ao usuário informado. */
     public boolean belongsTo(Long userId) {
         return user != null && user.getId().equals(userId);
+    }
+
+    public int getMaxScore() {
+        return maxScore;
     }
 
     public LocalDateTime getCreatedAt() {

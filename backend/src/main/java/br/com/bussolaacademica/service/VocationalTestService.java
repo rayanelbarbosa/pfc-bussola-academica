@@ -40,12 +40,13 @@ import java.util.stream.Collectors;
  * Regra de negócio: pontuação do teste vocacional com base no modelo RIASEC (Holland).
  *
  * <ol>
- *   <li>O usuário responde TODAS as perguntas do questionário, uma única vez cada, com nota de 1 a 5.</li>
- *   <li>O escore de cada categoria é a soma das notas das perguntas daquela categoria
- *       (2 perguntas por categoria, logo de 2 a 10 pontos).</li>
+ *   <li>O questionário é o O*NET Mini Interest Profiler: 30 atividades, 5 de cada categoria.</li>
+ *   <li>O usuário responde TODAS as atividades, uma única vez cada, de 0 (detesto) a 4 (adoro).</li>
+ *   <li>O escore de cada categoria é a soma das notas das atividades daquela categoria
+ *       (5 atividades, logo de 0 a 20 pontos), como no O*NET.</li>
  *   <li>A(s) categoria(s) com maior escore formam o perfil predominante (empates são mantidos).</li>
  *   <li>O estudante escolhe de 1 a 3 áreas de interesse ("Ainda não sei" não combina com outras);
- *       as carreiras de cada área são ranqueadas pelo {@link CareerRecommender}.</li>
+ *       as carreiras são recomendadas pelo {@link CareerRecommender}.</li>
  * </ol>
  * Cada resultado pertence ao usuário que respondeu: só ele (ou um administrador) pode consultá-lo.
  */
@@ -53,6 +54,9 @@ import java.util.stream.Collectors;
 public class VocationalTestService {
 
     private static final int MAX_INTEREST_AREAS = 3;
+
+    /** Maior nota de uma resposta (4 = adoro). */
+    static final int MAX_ANSWER = 4;
 
     private final QuestionRepository questionRepository;
     private final CareerRepository careerRepository;
@@ -102,11 +106,13 @@ public class VocationalTestService {
 
         Map<RiasecCategory, Integer> scores = calculateScores(request.answers(), questions);
         List<RiasecCategory> topCategories = findTopCategories(scores);
+        // pontuação máxima de um tipo: 4 pontos × perguntas por tipo (30 / 6 = 5), ou seja, 20
+        int maxScore = MAX_ANSWER * questions.size() / RiasecCategory.values().length;
 
         User owner = userRepository.findById(currentUser.id())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
         VocationalTestResult result = resultRepository.save(
-                new VocationalTestResult(owner, LocalDateTime.now(clock), scores, topCategories, interestAreas));
+                new VocationalTestResult(owner, LocalDateTime.now(clock), scores, topCategories, interestAreas, maxScore));
         auditService.record(AuditAction.TEST_SUBMITTED, owner.getId(), owner.getEmail(),
                 "resultadoId=" + result.getId() + ", perfil=" + topCategories + ", areas=" + interestAreas, true);
         return toResponse(result);
@@ -124,7 +130,8 @@ public class VocationalTestService {
 
     private VocationalTestResultResponse toResponse(VocationalTestResult result) {
         return VocationalTestResultResponse.from(result, careerRecommender.recommend(
-                result.getInterestAreas(), careerRepository.findByActiveTrue(), result.getScores()));
+                result.getInterestAreas(), careerRepository.findByActiveTrue(), result.getScores(),
+                result.getTopCategories()));
     }
 
     /** Sem áreas = "Ainda não sei"; remove repetidas; no máximo 3; "Ainda não sei" sozinha. */

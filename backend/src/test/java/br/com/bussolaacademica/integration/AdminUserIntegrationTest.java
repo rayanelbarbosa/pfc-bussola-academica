@@ -10,6 +10,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_EMAIL;
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_PASSWORD;
+import static br.com.bussolaacademica.support.AuthTestHelper.answers;
 import static br.com.bussolaacademica.support.AuthTestHelper.bearer;
 import static br.com.bussolaacademica.support.AuthTestHelper.login;
 import static br.com.bussolaacademica.support.AuthTestHelper.registerStudent;
@@ -137,9 +138,7 @@ class AdminUserIntegrationTest {
         String admin = login(mockMvc, ADMIN_EMAIL, ADMIN_PASSWORD);
         String email = uniqueEmail();
         String studentToken = registerStudent(mockMvc, email);
-        String answers = java.util.stream.IntStream.rangeClosed(1, 12)
-                .mapToObj(id -> "{\"questionId\":" + id + ",\"score\":" + (id == 3 || id == 4 ? 5 : 3) + "}")
-                .collect(java.util.stream.Collectors.joining(",", "{\"answers\":[", "]}"));
+        String answers = "{\"answers\":[" + answers(2, 4, 2, 2, 2, 2) + "]}";
         String result = mockMvc.perform(post("/api/vocational-test/results").header("Authorization", bearer(studentToken))
                         .contentType(MediaType.APPLICATION_JSON).content(answers))
                 .andExpect(status().isCreated())
