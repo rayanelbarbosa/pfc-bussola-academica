@@ -4,9 +4,9 @@
       <h1>Carreiras</h1>
       <p class="mt-2 max-w-2xl text-muted-foreground">
         Carreiras usadas na recomendação do teste e na busca de vídeos. Cada uma tem uma área e um código RIASEC
-        de Holland: a compatibilidade soma 2 vezes o escore do tipo principal com o escore do secundário. Empates são
-        decididos pelo perfil completo da profissão no O*NET (6 notas) e, sem ele, pelo 3º tipo. O teste mostra as 3
-        carreiras mais compatíveis de cada área.
+        de Holland: fica na frente a carreira em que o estudante fez mais pontos no 1º tipo; empates são decididos
+        pelos pontos no 2º tipo, depois no 3º e, por último, pelo nome. O teste mostra as 4 primeiras das áreas
+        escolhidas e o ranking completo de todas as carreiras.
       </p>
     </div>
     <button type="button" class="btn btn-primary" (click)="openCreate()"><app-icon name="plus" class="size-4" /> Nova carreira</button>
@@ -158,7 +158,7 @@
           @if (isInvalid('area')) { <p class="field-error">Selecione a área.</p> }
         </div>
         <div class="field">
-          <label for="primaryCategory" class="field-label">Tipo principal (peso 2)</label>
+          <label for="primaryCategory" class="field-label">1º tipo</label>
           <select id="primaryCategory" formControlName="primaryCategory" class="field-input" [class.is-invalid]="isInvalid('primaryCategory')">
             <option value="">Selecione</option>
             @for (category of categories(); track category.value) {
@@ -168,7 +168,7 @@
           @if (isInvalid('primaryCategory')) { <p class="field-error">Selecione o tipo principal.</p> }
         </div>
         <div class="field">
-          <label for="secondaryCategory" class="field-label">Tipo secundário (peso 1)</label>
+          <label for="secondaryCategory" class="field-label">2º tipo</label>
           <select id="secondaryCategory" formControlName="secondaryCategory" class="field-input"
             [class.is-invalid]="isInvalid('secondaryCategory') || sameType">
             <option value="">Selecione</option>
@@ -180,7 +180,7 @@
           @if (sameType) { <p class="field-error">Escolha um tipo diferente do principal.</p> }
         </div>
         <div class="field">
-          <label for="tertiaryCategory" class="field-label">3º tipo <span class="font-normal text-muted-foreground">(opcional, desempate)</span></label>
+          <label for="tertiaryCategory" class="field-label">3º tipo <span class="font-normal text-muted-foreground">(opcional)</span></label>
           <select id="tertiaryCategory" formControlName="tertiaryCategory" class="field-input" [class.is-invalid]="sameTertiary">
             <option value="">Nenhum</option>
             @for (category of categories(); track category.value) {
@@ -191,9 +191,8 @@
         </div>
         @if (codePreview().length >= 2 && !form.hasError('sameType') && !sameTertiary) {
           <p class="self-end text-sm leading-relaxed text-muted-foreground">
-            Código <strong class="text-foreground">{{ codePreview() }}</strong>: compatibilidade = 2 × escore
-            {{ codePreview().charAt(0) }} + escore {{ codePreview().charAt(1) }} (6 a 30).
-            Empate: vence a carreira com o perfil O*NET mais parecido com o do estudante@if (codePreview().length === 3) {; sem perfil O*NET, o maior escore {{ codePreview().charAt(2) }}}.
+            Código <strong class="text-foreground">{{ codePreview() }}</strong>: ordenada pelos pontos do estudante em
+            {{ codePreview().charAt(0) }}, depois em {{ codePreview().charAt(1) }}@if (codePreview().length === 3) {, depois em {{ codePreview().charAt(2) }}} e, por último, pelo nome.
           </p>
         }
         <div class="field sm:col-span-2">

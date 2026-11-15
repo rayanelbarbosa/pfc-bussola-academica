@@ -27,10 +27,10 @@ import java.util.List;
 /**
  * Gestão das carreiras pelo administrador.
  * <ul>
- *   <li>Cada carreira tem uma área de interesse e um código RIASEC de 2 letras (tipo principal + secundário),
- *       que alimentam a recomendação (compatibilidade = 2 × principal + secundário).</li>
- *   <li>Os tipos precisam ser diferentes entre si e a área não pode ser "Ainda não sei". O 3º tipo é opcional e
- *       só desempata carreiras com a mesma compatibilidade.</li>
+ *   <li>Cada carreira tem uma área de interesse e um código de Holland (1º, 2º e, opcionalmente, 3º tipo RIASEC),
+ *       que alimentam a recomendação ({@link CareerRecommender}: pontos do estudante no 1º tipo, depois no 2º e no 3º).</li>
+ *   <li>Os tipos precisam ser diferentes entre si e a área não pode ser "Ainda não sei". O 3º tipo é opcional
+ *       (sem ele, conta 0 no desempate).</li>
  *   <li>O nome é único dentro da área (sem diferenciar maiúsculas de minúsculas).</li>
  *   <li>Não há exclusão: a carreira é desativada e deixa de aparecer na recomendação e na busca de vídeos.</li>
  *   <li>Toda alteração é registrada na auditoria.</li>
