@@ -129,10 +129,10 @@ public class AdminUserService {
         }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
-        resultRepository.deleteByUser_Id(user.getId());
+        resultRepository.anonymizeByUser(user.getId());
         userRepository.delete(user);
         auditService.recordForCurrentUser(AuditAction.ACCOUNT_DELETED,
-                "Conta de " + user.getEmail() + " e resultados excluídos pelo administrador", true);
+                "Conta de " + user.getEmail() + " excluída e resultados anonimizados pelo administrador", true);
     }
 
     private static String label(Role role) {

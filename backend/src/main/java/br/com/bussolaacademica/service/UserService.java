@@ -65,14 +65,14 @@ public class UserService {
                         .toList());
     }
 
-    /** Exclui a conta e todos os resultados do teste do usuário. */
+    /** Exclui a conta e anonimiza os resultados do teste do usuário (eles deixam de ser dele). */
     @Transactional
     public void deleteMyAccount() {
         User user = loadCurrent();
-        resultRepository.deleteByUser_Id(user.getId());
+        resultRepository.anonymizeByUser(user.getId());
         userRepository.delete(user);
         auditService.record(AuditAction.ACCOUNT_DELETED, user.getId(), user.getEmail(),
-                "Conta e resultados excluídos a pedido do titular", true);
+                "Conta excluída e resultados anonimizados a pedido do titular", true);
     }
 
     private User loadCurrent() {
