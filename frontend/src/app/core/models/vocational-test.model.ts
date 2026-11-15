@@ -27,25 +27,11 @@ export interface CareerRecommendation {
   area: string;
   areaLabel: string;
   code: string;
+  /** Tipos do código, em ordem: o 1º é o tipo principal da carreira. */
   categories: { category: string; label: string }[];
-  compatibility: number;
   description: string;
   /** Até 3 tarefas do dia a dia (O*NET); vazio quando a carreira não tem. */
   dailyTasks: string[];
-  /** Carreira seguinte do ranking que empatou com esta; nulo sem empate. */
-  tiedWith: string | null;
-  /** Critério que deixou esta na frente: perfil completo do O*NET, 3º tipo ou nome. */
-  tieReason: 'PROFILE' | 'THIRD_TYPE' | 'NAME' | null;
-}
-
-/** Melhor carreira de cada área escolhida: mostra com qual área o perfil combina mais. */
-export interface AreaMatch {
-  area: string;
-  label: string;
-  bestCareer: string;
-  bestCompatibility: number;
-  /** Os 2 tipos da melhor carreira: explicam por que a área combina (ou não) com o perfil. */
-  bestCategories: { category: string; label: string }[];
 }
 
 export interface VocationalTestResult {
@@ -56,13 +42,11 @@ export interface VocationalTestResult {
   maxScore: number;
   topCategories: CategoryScore[];
   interestAreas: { value: string; label: string }[];
-  /** Ranking único: as 4 carreiras mais compatíveis entre as áreas escolhidas. */
+  /** As 4 carreiras que mais combinam entre as áreas escolhidas. */
   careerRecommendations: CareerRecommendation[];
-  /** Áreas na ordem de compatibilidade (a primeira é a que mais combina). */
-  areaMatches: AreaMatch[];
   /**
-   * Aviso de área que combina pouco: as 4 carreiras que mais combinam com o perfil, de todas as áreas, quando a
-   * melhor delas tem pelo menos 4 pontos a mais que a melhor das áreas escolhidas. Vazia quando não há aviso.
+   * Aviso de área: quando nenhuma carreira das áreas escolhidas tem o perfil como tipo principal, as 4 que mais
+   * combinam com ele em todas as áreas. Vazia quando não há aviso.
    */
   suggestedCareers: CareerRecommendation[];
 }

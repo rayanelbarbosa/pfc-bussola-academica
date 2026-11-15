@@ -53,13 +53,13 @@ export class ResultComponent implements OnInit {
     return names.length > 1 ? names.slice(0, -1).join(', ') + ' e ' + names.at(-1) : names[0] ?? '';
   });
 
-  /** Com mais de uma área: comparação entre elas pela melhor carreira de cada uma (a 1ª é a que mais combina). */
-  readonly areaComparison = computed(() => {
-    const matches = this.result()?.areaMatches ?? [];
-    return matches.length < 2 ? null : matches;
+  /** Com mais de uma área escolhida: a área da 1ª carreira é a que mais combina com o perfil. */
+  readonly bestArea = computed(() => {
+    const r = this.result();
+    return r && r.interestAreas.length > 1 ? r.careerRecommendations[0]?.areaLabel ?? null : null;
   });
 
-  /** Há carreiras de outras áreas que combinam bem mais com o perfil do que as das áreas escolhidas. */
+  /** Aviso de área: nenhuma carreira das áreas escolhidas tem o perfil do estudante como tipo principal. */
   readonly hasSuggestion = computed(() => (this.result()?.suggestedCareers ?? []).length > 0);
 
   /** Lista exibida: as áreas escolhidas (padrão, respeita a escolha) ou as que mais combinam, se ele preferir. */
@@ -93,7 +93,7 @@ export class ResultComponent implements OnInit {
     });
   }
 
-  /** Escore do estudante (0 a 20) num tipo RIASEC: usado para mostrar a conta da compatibilidade. */
+  /** Pontos do estudante (0 a 20) num tipo RIASEC: mostram por que a carreira está na lista. */
   scoreOf(category: string): number {
     return this.result()?.scores.find((score) => score.category === category)?.score ?? 0;
   }

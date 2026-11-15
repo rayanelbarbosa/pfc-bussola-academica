@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  *       (5 atividades, logo de 0 a 20 pontos), como no O*NET.</li>
  *   <li>A(s) categoria(s) com maior escore formam o perfil predominante (empates são mantidos).</li>
  *   <li>O estudante escolhe de 1 a 3 áreas de interesse ("Ainda não sei" não combina com outras);
- *       as carreiras de cada área são ranqueadas pelo {@link CareerRecommender}.</li>
+ *       as carreiras são recomendadas pelo {@link CareerRecommender}.</li>
  * </ol>
  * Cada resultado pertence ao usuário que respondeu: só ele (ou um administrador) pode consultá-lo.
  */
@@ -130,7 +130,8 @@ public class VocationalTestService {
 
     private VocationalTestResultResponse toResponse(VocationalTestResult result) {
         return VocationalTestResultResponse.from(result, careerRecommender.recommend(
-                result.getInterestAreas(), careerRepository.findByActiveTrue(), result.getScores()));
+                result.getInterestAreas(), careerRepository.findByActiveTrue(), result.getScores(),
+                result.getTopCategories()));
     }
 
     /** Sem áreas = "Ainda não sei"; remove repetidas; no máximo 3; "Ainda não sei" sozinha. */

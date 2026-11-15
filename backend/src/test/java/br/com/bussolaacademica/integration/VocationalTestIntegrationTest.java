@@ -80,18 +80,17 @@ class VocationalTestIntegrationTest {
                 .andExpect(jsonPath("$.interestAreas[0].value").value("ENGINEERING"))
                 // ranking único das 2 áreas: as 4 melhores, cada uma com a sua área
                 .andExpect(jsonPath("$.careerRecommendations", hasSize(4)))
-                // R=20, I=20: carreiras RI e IR empatam com 2 × 20 + 20 = 60 pontos
-                .andExpect(jsonPath("$.careerRecommendations[0].compatibility").value(60))
+                // R=20 e I=20: a 1ª carreira tem Realista ou Investigativo como tipo principal
+                .andExpect(jsonPath("$.careerRecommendations[0].categories[0].category",
+                        org.hamcrest.Matchers.oneOf("REALISTIC", "INVESTIGATIVE")))
                 .andExpect(jsonPath("$.careerRecommendations[0].areaLabel").isNotEmpty())
-                // comparação entre as áreas escolhidas
-                .andExpect(jsonPath("$.areaMatches", hasSize(2)))
-                .andExpect(jsonPath("$.areaMatches[*].area", org.hamcrest.Matchers.containsInAnyOrder("ENGINEERING", "HEALTH")))
+                // engenharias e saúde têm carreiras R e I: sem aviso de área
+                .andExpect(jsonPath("$.suggestedCareers", hasSize(0)))
                 .andReturn().getResponse().getContentAsString();
 
         Integer id = JsonPath.read(body, "$.id");
         mockMvc.perform(get("/api/vocational-test/results/" + id).header("Authorization", bearer(token)))
-                .andExpect(jsonPath("$.careerRecommendations", hasSize(4)))
-                .andExpect(jsonPath("$.areaMatches", hasSize(2)));
+                .andExpect(jsonPath("$.careerRecommendations", hasSize(4)));
         mockMvc.perform(get("/api/users/me/results").header("Authorization", bearer(token)))
                 .andExpect(jsonPath("$[0].interestAreas[0]").value("Engenharias"));
     }
@@ -118,7 +117,7 @@ class VocationalTestIntegrationTest {
                         .content(answersWithAreas("[\"UNDECIDED\"]")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.careerRecommendations", hasSize(4)))
-                .andExpect(jsonPath("$.areaMatches", hasSize(7)));
+                .andExpect(jsonPath("$.suggestedCareers", hasSize(0)));
     }
 
     @Test

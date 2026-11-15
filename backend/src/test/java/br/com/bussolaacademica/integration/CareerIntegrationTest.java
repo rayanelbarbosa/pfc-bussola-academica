@@ -146,7 +146,7 @@ class CareerIntegrationTest {
         String name = "Engenheiro de Prompt " + UUID.randomUUID().toString().substring(0, 6);
         String id = createCareer(admin, name);
 
-        // R = I = 10: compatibilidade 2 x 10 + 10 = 30, a maior possível; entra no topo da área Educação
+        // R = I = 20: a carreira pede Realista e Investigativo, os tipos mais fortes do aluno; entra no topo da área Educação
         String student = registerStudent(mockMvc, uniqueEmail());
         mockMvc.perform(post("/api/vocational-test/results")
                         .header("Authorization", bearer(student))
@@ -188,12 +188,11 @@ class CareerIntegrationTest {
     }
 
     /**
-     * Com os dados reais (V16 a V18): perfil R = 10, I = 8, C = 8 e o resto 2. As 5 engenharias RIC empatam em 28;
-     * antes o desempate era pela ordem alfabética e Mecânica, de Computação e Química nunca apareciam.
-     * Com o perfil completo do O*NET, são justamente as 3 primeiras do ranking desse aluno.
+     * Com os dados reais do banco: perfil R = 20, I = 15, C = 15 e o resto 0. Na frente ficam as engenharias com
+     * Realista como tipo principal; todas têm Investigativo como secundário, então empatam e seguem a ordem alfabética.
      */
     @Test
-    void sameCodeCareersAreRankedByTheFullOnetProfile() throws Exception {
+    void careersWithTheSameCodeAreOrderedByName() throws Exception {
         String student = registerStudent(mockMvc, uniqueEmail());
         String body = "{\"answers\":[" + answers(4, 3, 0, 0, 0, 3) + "],\"interestAreas\":[\"ENGINEERING\"]}";
 
@@ -203,11 +202,14 @@ class CareerIntegrationTest {
                         .content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.careerRecommendations", hasSize(4)))
-                .andExpect(jsonPath("$.careerRecommendations[0:3].name",
-                        org.hamcrest.Matchers.contains("Engenharia Mecânica", "Engenharia de Computação", "Engenharia Química")))
+                .andExpect(jsonPath("$.careerRecommendations[*].name", org.hamcrest.Matchers.contains(
+                        "Engenharia Civil", "Engenharia Elétrica", "Engenharia Mecatrônica", "Engenharia Mecânica")))
+                .andExpect(jsonPath("$.careerRecommendations[0].categories[0].category").value("REALISTIC"))
+                // perfil Realista e as engenharias pedem Realista: sem aviso de área
+                .andExpect(jsonPath("$.suggestedCareers", hasSize(0)))
                 // dia a dia vindo do O*NET (V19)
                 .andExpect(jsonPath("$.careerRecommendations[0].dailyTasks", hasSize(3)))
-                .andExpect(jsonPath("$.careerRecommendations[0].dailyTasks[0]").value("Lê e interpreta desenhos técnicos e projetos"));
+                .andExpect(jsonPath("$.careerRecommendations[0].dailyTasks[0]").value("Gerencia obras e a manutenção de construções"));
     }
 
     @Test

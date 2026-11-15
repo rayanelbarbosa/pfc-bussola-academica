@@ -11,9 +11,9 @@ import java.util.Map;
 /**
  * Resultado do teste vocacional: escore de cada categoria RIASEC (na ordem R, I, A, S, E, C) e a pontuação máxima
  * de cada uma ({@code maxScore}: 20 no questionário atual, 10 nos resultados antigos),
- * a(s) categoria(s) de maior escore, as áreas de interesse escolhidas, o ranking único de carreiras
- * dessas áreas, a comparação entre as áreas e, quando as áreas escolhidas combinam pouco com o perfil, as carreiras
- * que mais combinam com ele em todas as áreas ({@code suggestedCareers}, vazia quando não há aviso).
+ * a(s) categoria(s) de maior escore, as áreas de interesse escolhidas, as 4 carreiras recomendadas dessas áreas e,
+ * quando nenhuma carreira delas tem o perfil do estudante como tipo principal (aviso de área), as 4 que mais combinam
+ * com ele em todas as áreas ({@code suggestedCareers}, vazia quando não há aviso).
  */
 public record VocationalTestResultResponse(
         Long id,
@@ -23,7 +23,6 @@ public record VocationalTestResultResponse(
         List<CategoryScoreResponse> topCategories,
         List<OptionResponse> interestAreas,
         List<CareerRecommendationResponse> careerRecommendations,
-        List<AreaRecommendationResponse> areaMatches,
         List<CareerRecommendationResponse> suggestedCareers
 ) {
 
@@ -43,8 +42,7 @@ public record VocationalTestResultResponse(
                 result.getInterestAreas().stream()
                         .map(area -> new OptionResponse(area.name(), area.getLabel()))
                         .toList(),
-                recommendation.picks().stream().map(CareerRecommendationResponse::from).toList(),
-                recommendation.areaMatches().stream().map(AreaRecommendationResponse::from).toList(),
+                recommendation.careers().stream().map(CareerRecommendationResponse::from).toList(),
                 recommendation.suggestions().stream().map(CareerRecommendationResponse::from).toList()
         );
     }
