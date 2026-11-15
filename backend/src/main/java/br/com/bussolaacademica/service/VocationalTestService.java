@@ -113,8 +113,9 @@ public class VocationalTestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
         VocationalTestResult result = resultRepository.save(
                 new VocationalTestResult(owner, LocalDateTime.now(clock), scores, topCategories, interestAreas, maxScore));
-        auditService.record(AuditAction.TEST_SUBMITTED, owner.getId(), owner.getEmail(),
-                "resultadoId=" + result.getId() + ", perfil=" + topCategories + ", areas=" + interestAreas, true);
+        // a auditoria não guarda o id nem o conteúdo do resultado: senão daria para religar um resultado anonimizado
+        // (conta excluída) ao e-mail da pessoa enquanto o registro existir (6 meses)
+        auditService.record(AuditAction.TEST_SUBMITTED, owner.getId(), owner.getEmail(), "Teste vocacional enviado", true);
         return toResponse(result);
     }
 

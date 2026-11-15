@@ -10,7 +10,15 @@ public interface VocationalTestResultRepository extends JpaRepository<Vocational
 
     List<VocationalTestResult> findByUser_IdOrderByCreatedAtDesc(Long userId);
 
-    void deleteByUser_Id(Long userId);
+    /**
+     * Regra de negócio (LGPD, art. 12 e art. 16, IV): ao excluir a conta, os resultados não são apagados, e sim
+     * anonimizados. Deixam de pertencer ao usuário e guardam só a data, para não poderem ser religados à pessoa;
+     * continuam contando nas estatísticas do painel do administrador. Precisa rodar dentro de uma transação: as
+     * mudanças são gravadas pelo próprio JPA ao final dela.
+     */
+    default void anonymizeByUser(Long userId) {
+        findByUser_IdOrderByCreatedAtDesc(userId).forEach(VocationalTestResult::anonymize);
+    }
 
     List<VocationalTestResult> findByCreatedAtGreaterThanEqual(LocalDateTime start);
 

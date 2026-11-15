@@ -56,8 +56,9 @@
     <section class="mt-4 rounded-lg border border-destructive/30 bg-destructive-soft p-5 sm:p-6">
       <h2 class="text-xl text-destructive">Excluir minha conta</h2>
       <p class="mt-2 text-sm text-foreground/85">
-        Apaga definitivamente seu cadastro e todos os seus resultados. Os registros de acesso ficam guardados apenas
-        pelo prazo exigido pelo Marco Civil da Internet (6 meses).
+        Apaga definitivamente seu cadastro. Seus resultados do teste deixam de ser ligados a você e viram dados anônimos
+        (sem nome, sem e-mail e só com a data), usados apenas nas estatísticas da plataforma. Os registros de acesso ficam
+        guardados apenas pelo prazo exigido pelo Marco Civil da Internet (6 meses).
       </p>
       @if (!confirmingDeletion()) {
         <button type="button" class="btn btn-danger mt-4" (click)="confirmingDeletion.set(true)">Excluir minha conta</button>

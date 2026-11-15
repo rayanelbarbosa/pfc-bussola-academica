@@ -83,7 +83,7 @@ class UserServiceTest {
     }
 
     @Test
-    void deveExcluirResultadosAntesDaContaERegistrarAuditoria() {
+    void deveAnonimizarResultadosAntesDeExcluirAContaERegistrarAuditoria() {
         // Arrange
         User aluna = aluna();
         when(currentUser.id()).thenReturn(1L);
@@ -94,7 +94,7 @@ class UserServiceTest {
 
         // Assert
         InOrder ordem = inOrder(resultRepository, userRepository);
-        ordem.verify(resultRepository).deleteByUser_Id(1L);
+        ordem.verify(resultRepository).anonymizeByUser(1L);
         ordem.verify(userRepository).delete(aluna);
         verify(auditService).record(eq(AuditAction.ACCOUNT_DELETED), eq(1L), eq("aluna@email.com"),
                 anyString(), eq(true));
@@ -112,7 +112,7 @@ class UserServiceTest {
 
         // Assert
         assertEquals("Usuário não encontrado", ex.getMessage());
-        verify(resultRepository, never()).deleteByUser_Id(anyLong());
+        verify(resultRepository, never()).anonymizeByUser(anyLong());
         verify(userRepository, never()).delete(any(User.class));
         verify(auditService, never()).record(any(), any(), any(), any(), anyBoolean());
     }

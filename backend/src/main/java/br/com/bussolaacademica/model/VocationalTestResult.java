@@ -118,6 +118,16 @@ public class VocationalTestResult {
         return user;
     }
 
+    /**
+     * Anonimiza o resultado (exclusão da conta): tira o dono e guarda só a data, sem a hora, para o resultado não
+     * poder ser religado à pessoa (por exemplo, cruzando com o horário do cadastro). Os pontos, o perfil e as áreas
+     * ficam, porque sozinhos não identificam ninguém e alimentam as estatísticas.
+     */
+    public void anonymize() {
+        this.user = null;
+        this.createdAt = createdAt.toLocalDate().atStartOfDay();
+    }
+
     /** true se o resultado pertence ao usuário informado. */
     public boolean belongsTo(Long userId) {
         return user != null && user.getId().equals(userId);
