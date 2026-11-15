@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 
 /**
  * Forma de ingresso no ensino superior (Enem, Sisu, Prouni, Fies, vestibulares, portais de bolsas),
- * com o conteúdo explicativo exibido na página inicial. Não é excluída: o administrador a desativa.
+ * com o conteúdo explicativo exibido na página pública Formas de ingresso. Não é excluída: o administrador a desativa.
  */
 @Entity
 @Table(name = "admission_method")
