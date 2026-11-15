@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { AuditLog, Page } from '../models/audit.model';
+import { AuditIntegrity, AuditLog, Page } from '../models/audit.model';
 
 export interface AuditFilter {
   action?: string;
@@ -27,5 +27,10 @@ export class AuditService {
       params = params.set('email', filter.email.trim());
     }
     return this.http.get<Page<AuditLog>>(this.baseUrl, { params });
+  }
+
+  /** Confere a corrente de hashes: se algum registro foi alterado, apagado ou inserido por fora. */
+  verifyIntegrity(): Observable<AuditIntegrity> {
+    return this.http.get<AuditIntegrity>(`${this.baseUrl}/integrity`);
   }
 }

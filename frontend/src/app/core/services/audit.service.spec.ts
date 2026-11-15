@@ -30,4 +30,11 @@ describe('AuditService', () => {
     expect(empty.request.params.keys()).toEqual(['page', 'size']);
     empty.flush({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 });
   });
+
+  it('asks the API to verify the integrity of the audit chain', () => {
+    service.verifyIntegrity().subscribe();
+    const req = http.expectOne(`${url}/integrity`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ intact: true, checkedRecords: 1, brokenAtId: null, message: 'ok', checkedAt: '2026-11-15T16:40:00' });
+  });
 });

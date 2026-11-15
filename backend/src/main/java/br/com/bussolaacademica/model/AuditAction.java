@@ -30,6 +30,7 @@ public enum AuditAction {
     USER_ROLE_CHANGED("Perfil de usuário alterado"),
     USER_DATA_VIEWED("Dados de usuário consultados pelo administrador"),
     AUDIT_LOGS_PURGED("Expurgo de registros antigos"),
+    AUDIT_INTEGRITY_CHECKED("Verificação de integridade da auditoria"),
     /** antigo: consulta do histórico de resultados */
     PERSONAL_DATA_VIEWED("Consulta aos próprios dados"),
     /** antigo: consulta de um resultado */
