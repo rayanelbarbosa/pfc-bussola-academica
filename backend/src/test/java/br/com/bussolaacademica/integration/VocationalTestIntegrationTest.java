@@ -48,6 +48,7 @@ class VocationalTestIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.scores[1].score").value(20))
                 .andExpect(jsonPath("$.maxScore").value(20))
+                .andExpect(jsonPath("$.noVariation").value(false))
                 .andExpect(jsonPath("$.topCategories[0].category").value("INVESTIGATIVE"))
                 .andReturn().getResponse().getContentAsString();
 

@@ -40,6 +40,8 @@ export interface VocationalTestResult {
   scores: CategoryScore[];
   /** Pontuação máxima de cada tipo: 20 (5 atividades de 0 a 4); 10 nos resultados antigos, de 12 perguntas. */
   maxScore: number;
+  /** Os 6 tipos com a mesma pontuação (ex.: a mesma resposta em tudo): o resultado não diferencia os interesses. */
+  noVariation: boolean;
   topCategories: CategoryScore[];
   interestAreas: { value: string; label: string }[];
   /** As 4 carreiras que mais combinam entre as áreas escolhidas. */

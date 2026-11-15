@@ -121,6 +121,7 @@ class VocationalTestServiceTest {
                         tuple("Empreendedor", 8),
                         tuple("Convencional", 5));
         assertThat(result.maxScore()).isEqualTo(20);
+        assertThat(result.noVariation()).isFalse();
         assertThat(result.topCategories()).extracting(CategoryScoreResponse::category).containsExactly("SOCIAL");
         assertThat(result.createdAt()).isEqualTo("2026-09-28T09:00:00");
         verify(resultRepository).save(any(VocationalTestResult.class));
@@ -266,6 +267,8 @@ class VocationalTestServiceTest {
         // Assert
         assertThat(result.scores()).extracting(CategoryScoreResponse::score).containsOnly(escoreEsperado);
         assertEquals(6, result.topCategories().size());
+        // a mesma resposta em tudo: o resultado não diferencia os interesses e o estudante é avisado
+        assertThat(result.noVariation()).isTrue();
     }
 
     private static VocationalTestResult savedResultOf(User owner) {
