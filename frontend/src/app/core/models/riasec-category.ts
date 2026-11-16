@@ -7,7 +7,7 @@ export interface CategoryInfo {
   meaning: string;
   traits: string;
   environments: string;
-  /** Carreiras do catálogo com esse tipo como principal (exemplos para a página inicial). */
+  /** Carreiras do catálogo com esse tipo como principal (exemplos para a página "Como funciona o teste"). */
   examples: string;
 }
 

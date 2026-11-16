@@ -7,6 +7,8 @@ concluintes do ensino médio.
 
 **Sistema publicado:** https://www.bussolaacademica.com.br (API em https://api.bussolaacademica.com.br)
 
+**Manual do usuário:** [docs/manual-do-usuario.pdf](docs/manual-do-usuario.pdf) · **Evidências dos requisitos não funcionais:** [docs/evidencias](docs/evidencias/README.md)
+
 ## Arquitetura
 
 Monólito em camadas (Controller → Service → Repository), com:
@@ -23,13 +25,13 @@ Protótipo: [Figma](https://www.figma.com/design/TcdjgXfxrIpZVJAwjXlsDy/Prot%C3%
 backend/    API REST (detalhes em backend/README.md)
 frontend/   aplicação Angular (detalhes em frontend/README.md)
 infra/      configuração do nginx do servidor
-docs/       documentação técnica da integração com o YouTube
+docs/       manual do usuário, integração com o YouTube e evidências (desempenho, acessibilidade, cobertura)
 .github/    CI (build e testes), PRs automáticos e deploy na AWS
 ```
 
 ## Funcionalidades entregues
 
-- **Página inicial pública** com as formas de ingresso no ensino superior (Enem, Sisu, Prouni, Fies,
+- **Páginas públicas**: página inicial, "Como funciona o teste" e **Formas de ingresso** no ensino superior (Enem, Sisu, Prouni, Fies,
   vestibulares próprios, faculdades particulares, Quero Bolsa e Educa Mais Brasil), filtro por tipo e
   link para o site oficial. O administrador inclui, altera e desativa as formas de ingresso.
 - **Teste vocacional RIASEC (Holland)** com o questionário **O\*NET Mini Interest Profiler** (30 atividades,
