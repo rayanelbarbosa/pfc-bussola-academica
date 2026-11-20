@@ -24,13 +24,16 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 
 /**
  * Regra de negócio do dashboard administrativo (RF15).
  *
  * <ul>
+ *   <li>Padrão (sem filtro): todo o período, do primeiro cadastro ou teste até hoje.</li>
  *   <li>Período rápido: 7, 30 ou 90 dias, contados até hoje (inclusive).</li>
  *   <li>Período personalizado: data inicial e final (inclusive); para um dia só, as duas iguais. A inicial não pode
  *       ser depois da final, a final não pode ser no futuro e o período tem no máximo {@value #MAX_RANGE_DAYS} dias.</li>
@@ -59,6 +62,21 @@ public class DashboardService {
         this.clock = clock;
     }
 
+    /** Indicadores de todo o período: do primeiro cadastro ou teste até hoje (só hoje, se ainda não há dados). */
+    @Transactional(readOnly = true)
+    public DashboardResponse metricsAllTime() {
+        LocalDate today = LocalDate.now(clock);
+        LocalDate first = Stream.of(
+                        userRepository.findFirstByOrderByCreatedAtAsc().map(User::getCreatedAt),
+                        resultRepository.findFirstByOrderByCreatedAtAsc().map(VocationalTestResult::getCreatedAt))
+                .flatMap(Optional::stream)
+                .map(LocalDateTime::toLocalDate)
+                .min(Comparator.naturalOrder())
+                .filter(day -> day.isBefore(today))
+                .orElse(today);
+        return compute(first, today, true);
+    }
+
     /** Indicadores dos últimos 7, 30 ou 90 dias, contados até hoje (inclusive). */
     @Transactional(readOnly = true)
     public DashboardResponse metrics(int days) {
@@ -66,7 +84,7 @@ public class DashboardService {
             throw new IllegalArgumentException("Período inválido: use 7, 30 ou 90 dias");
         }
         LocalDate today = LocalDate.now(clock);
-        return compute(today.minusDays(days - 1L), today);
+        return compute(today.minusDays(days - 1L), today, false);
     }
 
     /** Indicadores de um período escolhido no calendário (datas inclusive; um dia só quando as duas são iguais). */
@@ -84,10 +102,10 @@ public class DashboardService {
         if (ChronoUnit.DAYS.between(from, to) + 1 > MAX_RANGE_DAYS) {
             throw new IllegalArgumentException("O período pode ter no máximo " + MAX_RANGE_DAYS + " dias");
         }
-        return compute(from, to);
+        return compute(from, to, false);
     }
 
-    private DashboardResponse compute(LocalDate from, LocalDate to) {
+    private DashboardResponse compute(LocalDate from, LocalDate to, boolean allTime) {
         int days = (int) ChronoUnit.DAYS.between(from, to) + 1;
         LocalDateTime start = from.atStartOfDay();
         LocalDateTime end = to.plusDays(1).atStartOfDay();
@@ -103,6 +121,7 @@ public class DashboardService {
                 days,
                 from,
                 to,
+                allTime,
                 userRepository.count(),
                 newUsers.size(),
                 userRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(previousStart, start),

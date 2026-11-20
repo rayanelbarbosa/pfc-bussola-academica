@@ -22,16 +22,16 @@ public class DashboardController {
     }
 
     /**
-     * Sem datas, usa o período rápido ({@code days}: 7, 30 ou 90). Com {@code from} e/ou {@code to} (AAAA-MM-DD),
-     * usa o período do calendário; para um dia só, as duas datas iguais.
+     * Com {@code from} e/ou {@code to} (AAAA-MM-DD), usa o período do calendário (um dia só: as duas datas iguais).
+     * Sem datas, usa o período rápido ({@code days}: 7, 30 ou 90). Sem nada, todo o período.
      */
     @GetMapping
-    public DashboardResponse metrics(@RequestParam(defaultValue = "30") int days,
+    public DashboardResponse metrics(@RequestParam(required = false) Integer days,
                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        if (from == null && to == null) {
-            return service.metrics(days);
+        if (from != null || to != null) {
+            return service.metrics(from, to);
         }
-        return service.metrics(from, to);
+        return days != null ? service.metrics(days) : service.metricsAllTime();
     }
 }

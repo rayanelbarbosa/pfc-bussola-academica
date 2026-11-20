@@ -26,6 +26,7 @@ import java.time.ZoneId;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -84,6 +85,7 @@ class DashboardServiceTest {
         DashboardResponse dashboard = service.metrics(7);
 
         assertThat(dashboard.periodDays()).isEqualTo(7);
+        assertThat(dashboard.allTime()).isFalse();
         assertThat(dashboard.startDate()).isEqualTo(LocalDate.of(2026, 11, 1));
         assertThat(dashboard.endDate()).isEqualTo(LocalDate.of(2026, 11, 7));
         assertThat(dashboard.totalUsers()).isEqualTo(10);
@@ -122,6 +124,36 @@ class DashboardServiceTest {
         assertThat(dashboard.testsPrevious()).isEqualTo(5);
         assertThat(dashboard.testsPerDay()).hasSize(10);
         assertThat(dashboard.testsPerDay().get(9)).isEqualTo(new DailyCount(to, 1));
+    }
+
+    @Test
+    void allTimeStartsOnTheFirstSignUpOrTestAndHasNoComparison() {
+        User first = new User("Bia", "bia@teste.com", "hash", Role.STUDENT, LocalDateTime.of(2026, 6, 1, 9, 0), "1.0");
+        when(userRepository.findFirstByOrderByCreatedAtAsc()).thenReturn(Optional.of(first));
+        when(resultRepository.findFirstByOrderByCreatedAtAsc()).thenReturn(Optional.of(
+                result(LocalDateTime.of(2026, 6, 3, 9, 0), List.of(RiasecCategory.SOCIAL), List.of(InterestArea.HEALTH))));
+        when(resultRepository.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(any(), any())).thenReturn(List.of());
+        when(userRepository.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(any(), any())).thenReturn(List.of(first));
+
+        DashboardResponse dashboard = service.metricsAllTime();
+
+        assertThat(dashboard.allTime()).isTrue();
+        assertThat(dashboard.startDate()).isEqualTo(LocalDate.of(2026, 6, 1));
+        assertThat(dashboard.endDate()).isEqualTo(LocalDate.of(2026, 11, 7));
+        assertThat(dashboard.newUsers()).isEqualTo(1);
+    }
+
+    @Test
+    void allTimeWithoutDataIsJustToday() {
+        when(userRepository.findFirstByOrderByCreatedAtAsc()).thenReturn(Optional.empty());
+        when(resultRepository.findFirstByOrderByCreatedAtAsc()).thenReturn(Optional.empty());
+        when(resultRepository.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(any(), any())).thenReturn(List.of());
+        when(userRepository.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(any(), any())).thenReturn(List.of());
+
+        DashboardResponse dashboard = service.metricsAllTime();
+
+        assertThat(dashboard.periodDays()).isEqualTo(1);
+        assertThat(dashboard.startDate()).isEqualTo(LocalDate.of(2026, 11, 7));
     }
 
     @Test
