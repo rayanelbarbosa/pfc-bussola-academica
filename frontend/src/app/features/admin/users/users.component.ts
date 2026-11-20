@@ -8,6 +8,7 @@ import { Role } from '../../../core/models/auth.model';
 import { AdminUser, AdminUserDetail, AdminUserService } from '../../../core/services/admin-user.service';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { AuthService } from '../../../core/services/auth.service';
+import { DateRangePickerComponent, DateRangeValue } from '../../../shared/components/date-range-picker/date-range-picker.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PASSWORD_PATTERN } from '../../auth/register/register.component';
 import { PasswordToggleComponent } from '../../../shared/components/password-toggle/password-toggle.component';
@@ -19,7 +20,7 @@ import { PasswordToggleComponent } from '../../../shared/components/password-tog
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [DatePipe, FormsModule, ReactiveFormsModule, RouterLink, IconComponent, PasswordToggleComponent],
+  imports: [DatePipe, FormsModule, ReactiveFormsModule, RouterLink, IconComponent, PasswordToggleComponent, DateRangePickerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './users.component.html'
 })
@@ -34,6 +35,8 @@ export class UsersComponent implements OnInit {
 
   search = '';
   role = '';
+  /** Período de cadastro escolhido no calendário (aplica na hora, sem precisar clicar em Filtrar). */
+  readonly range = signal<DateRangeValue>({ from: null, to: null });
   readonly page = signal<Page<AdminUser> | null>(null);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -62,10 +65,15 @@ export class UsersComponent implements OnInit {
     this.load(0);
   }
 
+  selectRange(range: DateRangeValue): void {
+    this.range.set(range);
+    this.load(0);
+  }
+
   load(pageNumber: number): void {
     this.loading.set(true);
     this.error.set(null);
-    this.service.search({ search: this.search, role: this.role, page: pageNumber, size: this.pageSize }).subscribe({
+    this.service.search({ search: this.search, role: this.role, from: this.range().from, to: this.range().to, page: pageNumber, size: this.pageSize }).subscribe({
       next: (page) => {
         this.page.set(page);
         this.loading.set(false);
@@ -80,6 +88,7 @@ export class UsersComponent implements OnInit {
   clearFilters(): void {
     this.search = '';
     this.role = '';
+    this.range.set({ from: null, to: null });
     this.load(0);
   }
 

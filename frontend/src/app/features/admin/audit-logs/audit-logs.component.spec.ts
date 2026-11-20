@@ -54,7 +54,15 @@ describe('AuditLogsComponent', () => {
     fixture.componentInstance.email = 'aluna';
     fixture.componentInstance.search();
 
-    expect(auditService.search).toHaveBeenCalledWith({ action: 'LOGIN_FAILURE', email: 'aluna', page: 0, size: 20 });
+    expect(auditService.search).toHaveBeenCalledWith({ action: 'LOGIN_FAILURE', email: 'aluna', from: null, to: null, page: 0, size: 20 });
+  });
+
+  it('filters by the period of the events from the calendar', () => {
+    const component = fixture.componentInstance;
+    component.selectRange({ from: '2026-11-20', to: '2026-11-20' });
+    expect(auditService.search).toHaveBeenCalledWith(jasmine.objectContaining({ from: '2026-11-20', to: '2026-11-20', page: 0 }));
+    component.clear();
+    expect(component.range()).toEqual({ from: null, to: null });
   });
 
   it('clears the filters and shows an error when loading fails', () => {

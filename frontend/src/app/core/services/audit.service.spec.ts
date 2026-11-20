@@ -31,6 +31,19 @@ describe('AuditService', () => {
     empty.flush({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 });
   });
 
+  it('sends the period only when both dates were chosen', () => {
+    service.search({ from: '2026-11-01', to: '2026-11-20', page: 0, size: 20 }).subscribe();
+    const req = http.expectOne((r) => r.url === url);
+    expect(req.request.params.get('from')).toBe('2026-11-01');
+    expect(req.request.params.get('to')).toBe('2026-11-20');
+    req.flush({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 });
+
+    service.search({ from: '2026-11-01', to: null, page: 0, size: 20 }).subscribe();
+    const half = http.expectOne((r) => r.url === url);
+    expect(half.request.params.has('from')).toBeFalse();
+    half.flush({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 });
+  });
+
   it('asks the API to verify the integrity of the audit chain', () => {
     service.verifyIntegrity().subscribe();
     const req = http.expectOne(`${url}/integrity`);

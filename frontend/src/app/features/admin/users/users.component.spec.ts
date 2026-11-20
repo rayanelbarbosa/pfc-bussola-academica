@@ -185,4 +185,15 @@ describe('UsersComponent', () => {
     component.clearFilters();
     expect(service.search).toHaveBeenCalledWith(jasmine.objectContaining({ search: '', role: '', page: 0 }));
   });
+
+  it('filters by sign-up period from the calendar and clears it with the other filters', () => {
+    const component = fixture.componentInstance;
+    service.search.calls.reset();
+    component.selectRange({ from: '2026-11-01', to: '2026-11-20' });
+    expect(service.search).toHaveBeenCalledWith(jasmine.objectContaining({ from: '2026-11-01', to: '2026-11-20', page: 0 }));
+
+    component.clearFilters();
+    expect(component.range()).toEqual({ from: null, to: null });
+    expect(service.search).toHaveBeenCalledWith(jasmine.objectContaining({ from: null, to: null, page: 0 }));
+  });
 });
