@@ -20,9 +20,11 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Registro e consulta dos logs de auditoria.
@@ -116,7 +118,7 @@ public class AuditService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<AuditLogResponse> search(AuditAction action, String email, int page, int size) {
+    public PageResponse<AuditLogResponse> search(AuditAction action, String email, LocalDate from, LocalDate to, int page, int size) {
         Specification<AuditLog> filter = Specification.where(null);
         if (action != null) {
             filter = filter.and((root, query, cb) -> cb.equal(root.get("action"), action));
@@ -124,6 +126,10 @@ public class AuditService {
         if (email != null && !email.isBlank()) {
             String pattern = "%" + email.trim().toLowerCase() + "%";
             filter = filter.and((root, query, cb) -> cb.like(cb.lower(root.<String>get("userEmail")), pattern));
+        }
+        Optional<DateRange> period = DateRange.of(from, to);
+        if (period.isPresent()) {
+            filter = filter.and(period.get().on("createdAt"));
         }
         PageRequest pageRequest = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), MAX_PAGE_SIZE),
                 Sort.by(Sort.Direction.DESC, "createdAt", "id"));
