@@ -8,8 +8,8 @@ import { AdminUser, AdminUserDetail, AdminUserService } from '../../../core/serv
 import { authResponse } from '../../../core/testing/auth-fixtures';
 import { UsersComponent } from './users.component';
 
-const ME: AdminUser = { id: 1, name: 'Marina Alves', email: 'marina@teste.com', role: 'ADMIN', createdAt: '2026-09-27T10:00:00' };
-const STUDENT: AdminUser = { id: 2, name: 'João', email: 'joao@teste.com', role: 'STUDENT', createdAt: '2026-11-01T10:00:00' };
+const ME: AdminUser = { id: 1, name: 'Marina Alves', role: 'ADMIN', createdAt: '2026-09-27T10:00:00' };
+const STUDENT: AdminUser = { id: 2, name: 'João', role: 'STUDENT', createdAt: '2026-11-01T10:00:00' };
 
 describe('UsersComponent', () => {
   let fixture: ComponentFixture<UsersComponent>;
@@ -31,9 +31,14 @@ describe('UsersComponent', () => {
 
   afterEach(() => localStorage.clear());
 
+  it('does not show the e-mail column in the list (LGPD)', () => {
+    const headers = Array.from(fixture.nativeElement.querySelectorAll('thead th') as NodeListOf<HTMLElement>).map((th) => th.textContent?.trim());
+    expect(headers).not.toContain('E-mail');
+  });
+
   it('shows the profile and test history of a user, with a link to each result', () => {
     const detail: AdminUserDetail = {
-      ...STUDENT, termsVersion: '1.2', termsAcceptedAt: '2026-11-01T10:00:00',
+      ...STUDENT, email: 'joao@teste.com', termsVersion: '1.2', termsAcceptedAt: '2026-11-01T10:00:00',
       results: [{ id: 42, createdAt: '2026-11-05T14:30:00', topCategories: ['Artístico', 'Social'], interestAreas: ['Educação'] }]
     };
     service.details.and.returnValue(of(detail));
@@ -96,7 +101,7 @@ describe('UsersComponent', () => {
     fixture.componentInstance.confirmDelete();
 
     expect(service.deleteUser).toHaveBeenCalledWith(2, 'Admin12345');
-    expect(fixture.componentInstance.notice()).toContain('joao@teste.com');
+    expect(fixture.componentInstance.notice()).toContain('João');
   });
 
   it('validates the new admin form before sending', () => {
@@ -106,7 +111,7 @@ describe('UsersComponent', () => {
     component.saveAdmin();
     expect(service.createAdmin).not.toHaveBeenCalled();
 
-    service.createAdmin.and.returnValue(of({ ...STUDENT, id: 3, email: 'nova@teste.com', role: 'ADMIN' }));
+    service.createAdmin.and.returnValue(of({ ...STUDENT, id: 3, name: 'Nova Admin', role: 'ADMIN' }));
     component.form.setValue({ name: 'Nova', email: 'nova@teste.com', password: 'Admin2026x' });
     component.saveAdmin();
     expect(service.createAdmin).toHaveBeenCalledWith({ name: 'Nova', email: 'nova@teste.com', password: 'Admin2026x' });
@@ -116,7 +121,7 @@ describe('UsersComponent', () => {
 
   it('creates a new admin with the name trimmed and shows a notice', () => {
     const component = fixture.componentInstance;
-    service.createAdmin.and.returnValue(of({ ...STUDENT, id: 3, email: 'nova@teste.com', role: 'ADMIN' }));
+    service.createAdmin.and.returnValue(of({ ...STUDENT, id: 3, name: 'Nova Admin', role: 'ADMIN' }));
     component.openCreate();
     component.form.setValue({ name: ' Nova Admin ', email: 'nova@teste.com', password: 'Senha@2026' });
 
@@ -124,7 +129,7 @@ describe('UsersComponent', () => {
 
     expect(service.createAdmin).toHaveBeenCalledWith({ name: 'Nova Admin', email: 'nova@teste.com', password: 'Senha@2026' });
     expect(component.creating()).toBeFalse();
-    expect(component.notice()).toContain('nova@teste.com');
+    expect(component.notice()).toContain('Nova Admin');
   });
 
   it('keeps the form open with an error when creating fails', () => {

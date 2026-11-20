@@ -146,7 +146,7 @@ export class UsersComponent implements OnInit {
     this.service.deleteUser(user.id, this.actionPassword()).subscribe({
       next: () => {
         this.closeAction();
-        this.notice.set(`A conta de ${user.email} foi excluída.`);
+        this.notice.set(`A conta de ${user.name} foi excluída.`);
         this.load(this.page()?.page ?? 0);
       },
       error: (err) => {
@@ -180,7 +180,7 @@ export class UsersComponent implements OnInit {
       next: (saved) => {
         this.saving.set(false);
         this.creating.set(false);
-        this.notice.set(`Administrador ${saved.email} cadastrado.`);
+        this.notice.set(`Administrador ${saved.name} cadastrado.`);
         this.load(0);
       },
       error: (err) => {
