@@ -53,6 +53,7 @@ class AdminUserIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].role").value("STUDENT"))
+                .andExpect(jsonPath("$.content[0].email").doesNotExist())
                 .andReturn().getResponse().getContentAsString();
         Integer id = JsonPath.read(page, "$.content[0].id");
 
