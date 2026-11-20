@@ -10,6 +10,7 @@ import { VideoService } from '../../../core/services/video.service';
 import { VocationalTestService } from '../../../core/services/vocational-test.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { RadarChartComponent } from '../../../shared/components/radar-chart/radar-chart.component';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 type VideoState = { status: 'loading' } | { status: 'ok'; videos: Video[] } | { status: 'error' };
 
@@ -26,6 +27,7 @@ type VideoState = { status: 'loading' } | { status: 'ok'; videos: Video[] } | { 
 })
 export class ResultComponent implements OnInit {
   private readonly testService = inject(VocationalTestService);
+  private readonly analytics = inject(AnalyticsService);
   private readonly videoService = inject(VideoService);
 
   /** Id do resultado, vindo da rota (/teste-vocacional/resultado/:id). */
@@ -107,11 +109,13 @@ export class ResultComponent implements OnInit {
   /** Troca entre as carreiras das áreas escolhidas e as que mais combinam; busca os vídeos das que aparecerem. */
   setShowSuggested(show: boolean): void {
     this.showSuggested.set(show);
+    this.analytics.track('suggested_careers_toggled', { show_suggested: show });
     this.shownCareers().forEach((career) => this.loadVideos(career.name));
   }
 
   toggleShowAll(): void {
     this.showAll.update((open) => !open);
+    this.analytics.track('full_ranking_toggled', { open: this.showAll() });
   }
 
   toggleDetails(career: string): void {
@@ -119,6 +123,7 @@ export class ResultComponent implements OnInit {
       const next = new Set(open);
       if (!next.delete(career)) {
         next.add(career);
+        this.analytics.track('career_details_opened', { career });
       }
       return next;
     });

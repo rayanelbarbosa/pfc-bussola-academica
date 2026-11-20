@@ -6,16 +6,17 @@ import { environment } from '../../../environments/environment';
 import { Page } from '../models/audit.model';
 import { ResultSummary, Role } from '../models/auth.model';
 
+/** Usuário na lista do painel admin. Sem e-mail (LGPD): ele só vem no detalhe, que é auditado. */
 export interface AdminUser {
   id: number;
   name: string;
-  email: string;
   role: Role;
   createdAt: string;
 }
 
 /** Cadastro e histórico de testes de um usuário, visto pelo administrador (consulta auditada). */
 export interface AdminUserDetail extends AdminUser {
+  email: string;
   termsVersion: string;
   termsAcceptedAt: string;
   results: ResultSummary[];
@@ -24,6 +25,9 @@ export interface AdminUserDetail extends AdminUser {
 export interface UserFilter {
   search?: string;
   role?: string;
+  /** Período (AAAA-MM-DD, inclusive): data de cadastro nos usuários, data do evento na auditoria. */
+  from?: string | null;
+  to?: string | null;
   page: number;
   size: number;
 }
@@ -38,6 +42,7 @@ export class AdminUserService {
     let params = new HttpParams().set('page', filter.page).set('size', filter.size);
     if (filter.search?.trim()) params = params.set('search', filter.search.trim());
     if (filter.role) params = params.set('role', filter.role);
+    if (filter.from && filter.to) params = params.set('from', filter.from).set('to', filter.to);
     return this.http.get<Page<AdminUser>>(this.baseUrl, { params });
   }
 

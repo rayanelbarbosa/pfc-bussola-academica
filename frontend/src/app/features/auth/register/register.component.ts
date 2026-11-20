@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PasswordToggleComponent } from '../../../shared/components/password-toggle/password-toggle.component';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 /** Senha com pelo menos 8 caracteres, letras e números (mesma regra do back-end). */
 export const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
@@ -25,6 +26,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
 })
 export class RegisterComponent implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly analytics = inject(AnalyticsService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
@@ -58,7 +60,10 @@ export class RegisterComponent implements OnInit {
     this.submitting.set(true);
     this.error.set(null);
     this.auth.register({ name: name.trim(), email: email.trim(), password, ageConfirmed, acceptedTerms }).subscribe({
-      next: () => this.router.navigateByUrl('/teste-vocacional'),
+      next: () => {
+        this.analytics.track('sign_up', { method: 'email' });
+        this.router.navigateByUrl('/teste-vocacional');
+      },
       error: (err) => {
         this.error.set(getErrorMessage(err, 'Não foi possível criar sua conta. Tente novamente.'));
         this.submitting.set(false);

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface VocationalTestResultRepository extends JpaRepository<VocationalTestResult, Long> {
 
@@ -20,7 +21,11 @@ public interface VocationalTestResultRepository extends JpaRepository<Vocational
         findByUser_IdOrderByCreatedAtDesc(userId).forEach(VocationalTestResult::anonymize);
     }
 
-    List<VocationalTestResult> findByCreatedAtGreaterThanEqual(LocalDateTime start);
+    /** O teste mais antigo: início do "todo o período" do dashboard. */
+    Optional<VocationalTestResult> findFirstByOrderByCreatedAtAsc();
+
+    /** Testes feitos em [start, end): o início entra, o fim não. */
+    List<VocationalTestResult> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime start, LocalDateTime end);
 
     long countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime start, LocalDateTime end);
 }

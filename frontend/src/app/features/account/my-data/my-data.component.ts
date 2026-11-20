@@ -7,6 +7,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 /** Meus dados: acesso, exportação em JSON e exclusão da conta (direitos do titular, LGPD art. 18). */
 @Component({
@@ -17,6 +18,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 })
 export class MyDataComponent implements OnInit {
   private readonly userService = inject(UserService);
+  private readonly analytics = inject(AnalyticsService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -55,6 +57,7 @@ export class MyDataComponent implements OnInit {
         link.download = 'meus-dados-bussola-academica.json';
         link.click();
         URL.revokeObjectURL(url);
+        this.analytics.track('data_exported', { format: 'json' });
         this.exporting.set(false);
       },
       error: (err) => {
@@ -78,6 +81,7 @@ export class MyDataComponent implements OnInit {
     this.deleteError.set(null);
     this.userService.deleteMyAccount(this.deletePassword()).subscribe({
       next: () => {
+        this.analytics.track('account_deleted');
         this.auth.clear();
         this.router.navigate(['/login']);
       },

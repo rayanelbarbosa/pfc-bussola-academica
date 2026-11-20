@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { AnalyticsService } from './core/services/analytics.service';
 import { FooterComponent } from './shared/components/footer/footer.component';
 import { HeaderComponent } from './shared/components/header/header.component';
 
@@ -18,4 +19,8 @@ import { HeaderComponent } from './shared/components/header/header.component';
     </div>
   `
 })
-export class AppComponent {}
+export class AppComponent {
+  constructor() {
+    inject(AnalyticsService).start();
+  }
+}

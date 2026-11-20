@@ -21,7 +21,7 @@
     </div>
   }
 
-  <form class="card mb-4 grid gap-4 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end sm:p-4" (ngSubmit)="search()">
+  <form class="card mb-4 grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] sm:items-end sm:p-4" (ngSubmit)="search()">
     <div class="field">
       <label for="action" class="field-label">Ação</label>
       <select id="action" name="action" class="field-input" [(ngModel)]="action">
@@ -34,6 +34,10 @@
     <div class="field">
       <label for="email" class="field-label">E-mail do usuário</label>
       <input id="email" name="email" type="text" class="field-input" placeholder="Parte do e-mail" [(ngModel)]="email" />
+    </div>
+    <div class="field">
+      <span class="field-label" aria-hidden="true">Período</span>
+      <app-date-range-picker class="w-full" label="Período dos eventos" [from]="range().from" [to]="range().to" (rangeChange)="selectRange($event)" />
     </div>
     <div class="flex gap-2">
       <button type="submit" class="btn btn-primary">Filtrar</button>

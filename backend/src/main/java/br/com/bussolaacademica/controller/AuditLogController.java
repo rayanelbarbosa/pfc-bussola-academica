@@ -6,11 +6,13 @@ import br.com.bussolaacademica.dto.PageResponse;
 import br.com.bussolaacademica.model.AuditAction;
 import br.com.bussolaacademica.service.AuditIntegrityService;
 import br.com.bussolaacademica.service.AuditService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,9 +32,11 @@ public class AuditLogController {
     @GetMapping
     public PageResponse<AuditLogResponse> search(@RequestParam(required = false) AuditAction action,
                                                  @RequestParam(required = false) String email,
+                                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                                                  @RequestParam(defaultValue = "0") int page,
                                                  @RequestParam(defaultValue = "20") int size) {
-        return auditService.search(action, email, page, size);
+        return auditService.search(action, email, from, to, page, size);
     }
 
     /**

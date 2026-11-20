@@ -12,6 +12,11 @@ export interface DailyCount {
 
 export interface Dashboard {
   periodDays: number;
+  /** Primeiro e último dia do período (AAAA-MM-DD), inclusive. */
+  startDate: string;
+  endDate: string;
+  /** true no padrão (todo o período, sem filtro): não há período anterior para comparar. */
+  allTime: boolean;
   totalUsers: number;
   newUsers: number;
   newUsersPrevious: number;

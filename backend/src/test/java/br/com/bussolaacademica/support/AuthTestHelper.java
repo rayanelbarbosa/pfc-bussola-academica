@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,13 +41,30 @@ public final class AuthTestHelper {
     }
 
     /** Cadastra um estudante novo e devolve o token. */
+    /** Nome único, para achar o usuário na busca do admin (que é só por nome). */
+    public static String uniqueName() {
+        return "Aluna " + UUID.randomUUID();
+    }
+
     public static String registerStudent(MockMvc mockMvc, String email) throws Exception {
+        return registerStudent(mockMvc, "Aluna Teste", email);
+    }
+
+    public static String registerStudent(MockMvc mockMvc, String name, String email) throws Exception {
         String body = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(registerJson("Aluna Teste", email, DEFAULT_PASSWORD, true)))
+                        .content(registerJson(name, email, DEFAULT_PASSWORD, true)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         return JsonPath.read(body, "$.token");
+    }
+
+    /** Id do usuário dono do token, lido em /api/users/me. */
+    public static Integer userId(MockMvc mockMvc, String token) throws Exception {
+        String body = mockMvc.perform(get("/api/users/me").header("Authorization", bearer(token)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        return JsonPath.read(body, "$.id");
     }
 
     public static String login(MockMvc mockMvc, String email, String password) throws Exception {

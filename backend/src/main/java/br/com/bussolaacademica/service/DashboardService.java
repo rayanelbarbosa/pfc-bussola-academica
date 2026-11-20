@@ -16,6 +16,7 @@ import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,14 +24,19 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 
 /**
  * Regra de negócio do dashboard administrativo (RF15).
  *
  * <ul>
- *   <li>Período aceito: 7, 30 ou 90 dias, contados até hoje (inclusive).</li>
+ *   <li>Padrão (sem filtro): todo o período, do primeiro cadastro ou teste até hoje.</li>
+ *   <li>Período rápido: 7, 30 ou 90 dias, contados até hoje (inclusive).</li>
+ *   <li>Período personalizado: data inicial e final (inclusive); para um dia só, as duas iguais. A inicial não pode
+ *       ser depois da final, a final não pode ser no futuro e o período tem no máximo {@value #MAX_RANGE_DAYS} dias.</li>
  *   <li>Variação: compara o período com o período anterior de mesmo tamanho.</li>
  *   <li>Perfil mais comum: o tipo RIASEC que mais apareceu como perfil principal nos testes do período
  *       (em caso de empate no teste, cada tipo empatado conta 1).</li>
@@ -43,6 +49,9 @@ public class DashboardService {
 
     public static final Set<Integer> ALLOWED_PERIODS = Set.of(7, 30, 90);
 
+    /** Limite do período personalizado (um ano), para o gráfico por dia não crescer sem controle. */
+    public static final int MAX_RANGE_DAYS = 366;
+
     private final UserRepository userRepository;
     private final VocationalTestResultRepository resultRepository;
     private final Clock clock;
@@ -53,23 +62,66 @@ public class DashboardService {
         this.clock = clock;
     }
 
+    /** Indicadores de todo o período: do primeiro cadastro ou teste até hoje (só hoje, se ainda não há dados). */
+    @Transactional(readOnly = true)
+    public DashboardResponse metricsAllTime() {
+        LocalDate today = LocalDate.now(clock);
+        LocalDate first = Stream.of(
+                        userRepository.findFirstByOrderByCreatedAtAsc().map(User::getCreatedAt),
+                        resultRepository.findFirstByOrderByCreatedAtAsc().map(VocationalTestResult::getCreatedAt))
+                .flatMap(Optional::stream)
+                .map(LocalDateTime::toLocalDate)
+                .min(Comparator.naturalOrder())
+                .filter(day -> day.isBefore(today))
+                .orElse(today);
+        return compute(first, today, true);
+    }
+
+    /** Indicadores dos últimos 7, 30 ou 90 dias, contados até hoje (inclusive). */
     @Transactional(readOnly = true)
     public DashboardResponse metrics(int days) {
         if (!ALLOWED_PERIODS.contains(days)) {
             throw new IllegalArgumentException("Período inválido: use 7, 30 ou 90 dias");
         }
         LocalDate today = LocalDate.now(clock);
-        LocalDateTime start = today.minusDays(days - 1L).atStartOfDay();
+        return compute(today.minusDays(days - 1L), today, false);
+    }
+
+    /** Indicadores de um período escolhido no calendário (datas inclusive; um dia só quando as duas são iguais). */
+    @Transactional(readOnly = true)
+    public DashboardResponse metrics(LocalDate from, LocalDate to) {
+        if (from == null || to == null) {
+            throw new IllegalArgumentException("Informe a data inicial e a data final do período");
+        }
+        if (from.isAfter(to)) {
+            throw new IllegalArgumentException("A data inicial não pode ser depois da data final");
+        }
+        if (to.isAfter(LocalDate.now(clock))) {
+            throw new IllegalArgumentException("A data final não pode ser no futuro");
+        }
+        if (ChronoUnit.DAYS.between(from, to) + 1 > MAX_RANGE_DAYS) {
+            throw new IllegalArgumentException("O período pode ter no máximo " + MAX_RANGE_DAYS + " dias");
+        }
+        return compute(from, to, false);
+    }
+
+    private DashboardResponse compute(LocalDate from, LocalDate to, boolean allTime) {
+        int days = (int) ChronoUnit.DAYS.between(from, to) + 1;
+        LocalDateTime start = from.atStartOfDay();
+        LocalDateTime end = to.plusDays(1).atStartOfDay();
         LocalDateTime previousStart = start.minusDays(days);
 
-        List<VocationalTestResult> results = resultRepository.findByCreatedAtGreaterThanEqual(start);
-        List<User> newUsers = userRepository.findByCreatedAtGreaterThanEqual(start);
+        List<VocationalTestResult> results = resultRepository.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(start, end);
+        List<User> newUsers = userRepository.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(start, end);
 
         List<CountItem> profiles = profileDistribution(results);
         List<CountItem> areas = areaDistribution(results);
 
         return new DashboardResponse(
                 days,
+                from,
+                to,
+                allTime,
                 userRepository.count(),
                 newUsers.size(),
                 userRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(previousStart, start),
@@ -78,10 +130,10 @@ public class DashboardService {
                 resultRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(previousStart, start),
                 mostCommon(profiles),
                 mostCommon(areas),
-                perDay(results.stream().map(VocationalTestResult::getCreatedAt).toList(), start.toLocalDate(), today),
+                perDay(results.stream().map(VocationalTestResult::getCreatedAt).toList(), from, to),
                 profiles,
                 areas,
-                perWeek(newUsers.stream().map(User::getCreatedAt).toList(), start.toLocalDate(), today)
+                perWeek(newUsers.stream().map(User::getCreatedAt).toList(), from, to)
         );
     }
 

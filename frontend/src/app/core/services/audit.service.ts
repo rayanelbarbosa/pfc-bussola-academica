@@ -8,6 +8,9 @@ import { AuditIntegrity, AuditLog, Page } from '../models/audit.model';
 export interface AuditFilter {
   action?: string;
   email?: string;
+  /** Período (AAAA-MM-DD, inclusive): data de cadastro nos usuários, data do evento na auditoria. */
+  from?: string | null;
+  to?: string | null;
   page: number;
   size: number;
 }
@@ -25,6 +28,9 @@ export class AuditService {
     }
     if (filter.email?.trim()) {
       params = params.set('email', filter.email.trim());
+    }
+    if (filter.from && filter.to) {
+      params = params.set('from', filter.from).set('to', filter.to);
     }
     return this.http.get<Page<AuditLog>>(this.baseUrl, { params });
   }
