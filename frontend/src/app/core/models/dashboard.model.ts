@@ -28,7 +28,7 @@ export interface Dashboard {
   testsPerDay: DailyCount[];
   profileDistribution: CountItem[];
   areaDistribution: CountItem[];
-  newUsersPerWeek: DailyCount[];
+  newUsersPerDay: DailyCount[];
 }
 
 export const DASHBOARD_PERIODS = [7, 30, 90] as const;

@@ -5,12 +5,29 @@ import { DASHBOARD_PERIODS, Dashboard, DailyCount } from '../../../core/models/d
 import { getCategoryInfo } from '../../../core/models/riasec-category';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { DashboardService } from '../../../core/services/dashboard.service';
+import { ChartPoint } from '../../../shared/components/charts/line-chart.component';
 import { BarListComponent } from '../../../shared/components/charts/bar-list.component';
 import { ColumnChartComponent } from '../../../shared/components/charts/column-chart.component';
 import { LineChartComponent } from '../../../shared/components/charts/line-chart.component';
 import { DateRangePickerComponent, DateRangeValue, formatBr } from '../../../shared/components/date-range-picker/date-range-picker.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { AnalyticsService } from '../../../core/services/analytics.service';
+
+const MAX_DAYS_PER_DAY_CHART = 31;
+const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+/** Soma as contagens diárias por mês, na ordem: [{ label: 'jun/26', value: 85 }, ...]. */
+export function groupByMonth(items: DailyCount[]): ChartPoint[] {
+  const totals = new Map<string, number>();
+  items.forEach((item) => {
+    const month = item.date.slice(0, 7);
+    totals.set(month, (totals.get(month) ?? 0) + item.count);
+  });
+  return [...totals.entries()].map(([month, value]) => {
+    const [year, number] = month.split('-');
+    return { label: `${MONTHS[Number(number) - 1]}/${year.slice(2)}`, value };
+  });
+}
 
 /** Dashboard administrativo (RF15): big numbers e gráficos de uso da plataforma, com filtro de período. */
 @Component({
@@ -42,8 +59,10 @@ export class DashboardComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
-  readonly testsPerDay = computed(() => this.toPoints(this.data()?.testsPerDay ?? [], 'dd/MM'));
-  readonly usersPerWeek = computed(() => this.toPoints(this.data()?.newUsersPerWeek ?? [], 'dd/MM'));
+  /** Até 31 dias, um ponto por dia; em períodos maiores, um por mês (por dia vira um borrão de rótulos). */
+  readonly byMonth = computed(() => (this.data()?.periodDays ?? 0) > MAX_DAYS_PER_DAY_CHART);
+  readonly testsChart = computed(() => this.series(this.data()?.testsPerDay ?? []));
+  readonly usersChart = computed(() => this.series(this.data()?.newUsersPerDay ?? []));
   readonly profiles = computed(() =>
     (this.data()?.profileDistribution ?? []).map((item) => ({
       key: item.key,
@@ -101,7 +120,9 @@ export class DashboardComponent implements OnInit {
     return `${sign}${diff} em relação ${days === 1 ? 'ao dia anterior' : `aos ${days} dias anteriores`}`;
   }
 
-  private toPoints(items: DailyCount[], format: string) {
-    return items.map((item) => ({ label: this.datePipe.transform(item.date, format) ?? item.date, value: item.count }));
+  private series(items: DailyCount[]): ChartPoint[] {
+    return this.byMonth()
+      ? groupByMonth(items)
+      : items.map((item) => ({ label: this.datePipe.transform(item.date, 'dd/MM') ?? item.date, value: item.count }));
   }
 }
