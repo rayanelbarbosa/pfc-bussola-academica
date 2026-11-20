@@ -29,7 +29,7 @@ import java.util.Locale;
 /**
  * Regras da gestão de usuários pelo administrador (RF12).
  * <ul>
- *   <li>Lista paginada, com busca por nome ou e-mail e filtro por perfil.</li>
+ *   <li>Lista paginada, com busca por nome e filtro por perfil.</li>
  *   <li>O administrador pode cadastrar outro administrador e promover ou rebaixar usuários.</li>
  *   <li>Ninguém altera o próprio perfil: assim a plataforma nunca fica sem administrador.</li>
  *   <li>O administrador pode excluir a conta de outra pessoa (cadastro e resultados); a própria conta
@@ -71,9 +71,8 @@ public class AdminUserService {
         Specification<User> filter = Specification.where(null);
         if (text != null && !text.isBlank()) {
             String pattern = "%" + text.trim().toLowerCase(Locale.ROOT) + "%";
-            filter = filter.and((root, query, cb) -> cb.or(
-                    cb.like(cb.lower(root.get("name")), pattern),
-                    cb.like(cb.lower(root.get("email")), pattern)));
+            // só por nome: buscar por e-mail revelaria se um e-mail está cadastrado (LGPD)
+            filter = filter.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), pattern));
         }
         if (role != null) {
             filter = filter.and((root, query, cb) -> cb.equal(root.get("role"), role));

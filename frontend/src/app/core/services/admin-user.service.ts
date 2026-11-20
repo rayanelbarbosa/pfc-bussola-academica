@@ -6,16 +6,17 @@ import { environment } from '../../../environments/environment';
 import { Page } from '../models/audit.model';
 import { ResultSummary, Role } from '../models/auth.model';
 
+/** Usuário na lista do painel admin. Sem e-mail (LGPD): ele só vem no detalhe, que é auditado. */
 export interface AdminUser {
   id: number;
   name: string;
-  email: string;
   role: Role;
   createdAt: string;
 }
 
 /** Cadastro e histórico de testes de um usuário, visto pelo administrador (consulta auditada). */
 export interface AdminUserDetail extends AdminUser {
+  email: string;
   termsVersion: string;
   termsAcceptedAt: string;
   results: ResultSummary[];
