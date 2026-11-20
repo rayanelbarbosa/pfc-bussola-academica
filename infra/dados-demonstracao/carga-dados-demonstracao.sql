@@ -22,17 +22,20 @@
 -- inserir eventos por fora quebraria o "Verificar integridade" (e seria registrar algo que não aconteceu).
 --
 -- Como rodar: Neon > SQL Editor (banco de produção) > colar o arquivo inteiro > Run. Leva poucos segundos.
--- Rodar de novo não duplica nada: o script para com um aviso se já encontrar os dados de demonstração.
--- O sorteio usa uma semente fixa (setseed), então a carga sai sempre igual.
+-- Rodar de novo não duplica nada: o script para com um aviso se já houver dados de demonstração no mesmo período.
+-- O sorteio usa uma semente fixa (setseed) tirada da data inicial: o mesmo período gera sempre a mesma carga.
+--
+-- Cargas complementares (ex.: manter os últimos dias com movimento até a apresentação): troque só as 3 linhas
+-- marcadas com ">>>" (data inicial, data final e quantidade) e rode de novo. Os e-mails continuam a numeração.
 -- =====================================================================================================================
 
 DO $$
 DECLARE
     demo_domain  CONSTANT text := '@demo.bussolaacademica.com.br';
-    start_day    CONSTANT date := DATE '2026-06-01';
-    end_day      CONSTANT date := DATE '2026-11-19';
+    start_day    CONSTANT date := DATE '2026-06-01';   -- >>> data inicial
+    end_day      CONSTANT date := DATE '2026-11-19';   -- >>> data final (no máximo ontem)
     demo_hash    CONSTANT text := '$2a$10$kJWpAKGX.JAwORw6zLcwueCLTKbmu5Qryjb6ib.wyhwQmA1IMWWNa';
-    total_users  CONSTANT int  := 1000;
+    total_users  CONSTANT int  := 1000;                -- >>> quantidade de cadastros
 
     first_names  text[] := ARRAY['Ana', 'Maria', 'Julia', 'Beatriz', 'Larissa', 'Camila', 'Fernanda', 'Gabriela',
         'Mariana', 'Isabela', 'Leticia', 'Amanda', 'Bruna', 'Carolina', 'Vitoria', 'Rafaela', 'Yasmin', 'Luana',
@@ -65,6 +68,8 @@ DECLARE
     test_at timestamp;
     user_name text;
     new_user_id bigint;
+    first_number int;
+    tests_created int := 0;
     dom1 int; dom2 int;
     mean double precision;
     scores int[];
@@ -73,11 +78,18 @@ DECLARE
     areas text[];
     area text;
 BEGIN
-    PERFORM setseed(0.2026);
+    PERFORM setseed((start_day - DATE '2026-01-01') / 1000.0);
 
-    IF EXISTS (SELECT 1 FROM app_user WHERE email LIKE '%' || demo_domain) THEN
-        RAISE EXCEPTION 'Os dados de demonstração já foram carregados (há e-mails %). Nada foi alterado.', demo_domain;
+    IF end_day >= current_date OR end_day < start_day THEN
+        RAISE EXCEPTION 'Período inválido (% a %): a data final deve ser até ontem e depois da inicial.', start_day, end_day;
     END IF;
+    IF EXISTS (SELECT 1 FROM app_user WHERE email LIKE '%' || demo_domain
+               AND created_at >= start_day AND created_at < end_day + 1) THEN
+        RAISE EXCEPTION 'Já há dados de demonstração entre % e %. Nada foi alterado.', start_day, end_day;
+    END IF;
+    -- a numeração dos e-mails continua depois da última carga (evita repetir e-mail)
+    SELECT coalesce(max(split_part(split_part(email, '@', 1), '.', 3)::int), 0) + 1 INTO first_number
+    FROM app_user WHERE email LIKE '%' || demo_domain;
 
     -- Peso de cada dia: cresce ao longo do período, cai no fim de semana e sobe na reta final do Enem.
     CREATE TEMP TABLE demo_day ON COMMIT DROP AS
@@ -103,7 +115,7 @@ BEGIN
 
         INSERT INTO app_user (name, email, password_hash, role, terms_accepted_at, terms_version, created_at)
         VALUES (user_name,
-                lower(translate(replace(user_name, ' ', '.'), 'áàâãéêíóôõúç', 'aaaaeeiooouc')) || '.' || i || demo_domain,
+                lower(translate(replace(user_name, ' ', '.'), 'áàâãéêíóôõúç', 'aaaaeeiooouc')) || '.' || (first_number + i - 1) || demo_domain,
                 demo_hash, 'STUDENT', created,
                 coalesce((SELECT v.version FROM terms_version v WHERE v.published_at <= created
                           ORDER BY v.published_at DESC LIMIT 1),
@@ -167,13 +179,12 @@ BEGIN
                                                 interest_areas, max_score, user_id)
             VALUES (test_at, scores[1], scores[2], scores[3], scores[4], scores[5], scores[6],
                     array_to_string(tops, ';'), array_to_string(areas, ';'), 20, new_user_id);
+            tests_created := tests_created + 1;
         END LOOP;
     END LOOP;
 
-    RAISE NOTICE 'Carga concluída: % cadastros e % testes de demonstração.',
-        (SELECT count(*) FROM app_user WHERE email LIKE '%' || demo_domain),
-        (SELECT count(*) FROM vocational_test_result vtr JOIN app_user au ON au.id = vtr.user_id
-         WHERE au.email LIKE '%' || demo_domain);
+    RAISE NOTICE 'Carga concluída: % cadastros e % testes de demonstração (% a %).',
+        total_users, tests_created, start_day, end_day;
 END $$;
 
 -- Conferência: cadastros e testes de demonstração por mês (nenhum mês concentra a carga).

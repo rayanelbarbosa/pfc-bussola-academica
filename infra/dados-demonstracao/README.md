@@ -16,4 +16,7 @@ realistas. O script foi gerado com apoio de IA, a pedido do professor, e revisad
 2. Neon > SQL Editor (banco de produção) > cole o arquivo inteiro > **Run**.
 3. A última consulta mostra os cadastros e testes por mês. Rodar de novo não duplica: o script para com um aviso.
 
+Para uma carga complementar (ex.: na véspera da apresentação, cobrindo os dias depois da primeira carga), troque
+só as 3 linhas marcadas com `>>>` no script (data inicial, data final e quantidade) e rode de novo.
+
 As duas linhas comentadas no fim do arquivo desfazem só a carga de demonstração, se precisar.
