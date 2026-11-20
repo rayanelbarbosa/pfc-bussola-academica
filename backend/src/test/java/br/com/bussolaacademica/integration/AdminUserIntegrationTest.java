@@ -16,6 +16,8 @@ import static br.com.bussolaacademica.support.AuthTestHelper.login;
 import static br.com.bussolaacademica.support.AuthTestHelper.passwordJson;
 import static br.com.bussolaacademica.support.AuthTestHelper.registerStudent;
 import static br.com.bussolaacademica.support.AuthTestHelper.uniqueEmail;
+import static br.com.bussolaacademica.support.AuthTestHelper.uniqueName;
+import static br.com.bussolaacademica.support.AuthTestHelper.userId;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
@@ -47,9 +49,15 @@ class AdminUserIntegrationTest {
     void adminPromotesAndDemotesAndOldTokenStopsWorking() throws Exception {
         String admin = login(mockMvc, ADMIN_EMAIL, ADMIN_PASSWORD);
         String email = uniqueEmail();
-        String studentToken = registerStudent(mockMvc, email);
+        String name = uniqueName();
+        String studentToken = registerStudent(mockMvc, name, email);
 
-        String page = mockMvc.perform(get("/api/admin/users").param("search", email).header("Authorization", bearer(admin)))
+        // a busca é só por nome: pelo e-mail não acha ninguém (LGPD)
+        mockMvc.perform(get("/api/admin/users").param("search", email).header("Authorization", bearer(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+
+        String page = mockMvc.perform(get("/api/admin/users").param("search", name).header("Authorization", bearer(admin)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].role").value("STUDENT"))
@@ -86,9 +94,7 @@ class AdminUserIntegrationTest {
     @Test
     void adminCannotChangeOwnRole() throws Exception {
         String admin = login(mockMvc, ADMIN_EMAIL, ADMIN_PASSWORD);
-        String page = mockMvc.perform(get("/api/admin/users").param("search", ADMIN_EMAIL).header("Authorization", bearer(admin)))
-                .andReturn().getResponse().getContentAsString();
-        Integer adminId = JsonPath.read(page, "$.content[0].id");
+        Integer adminId = userId(mockMvc, admin);
 
         mockMvc.perform(patch("/api/admin/users/" + adminId + "/role").header("Authorization", bearer(admin))
                         .contentType(MediaType.APPLICATION_JSON).content(roleJson("STUDENT")))
@@ -123,30 +129,26 @@ class AdminUserIntegrationTest {
     @Test
     void adminDeletesAnotherAccountButNotTheirOwn() throws Exception {
         String admin = login(mockMvc, ADMIN_EMAIL, ADMIN_PASSWORD);
-        String email = uniqueEmail();
-        String studentToken = registerStudent(mockMvc, email);
-        String page = mockMvc.perform(get("/api/admin/users").param("search", email).header("Authorization", bearer(admin)))
-                .andReturn().getResponse().getContentAsString();
-        Integer id = JsonPath.read(page, "$.content[0].id");
+        String name = uniqueName();
+        String studentToken = registerStudent(mockMvc, name, uniqueEmail());
+        Integer id = userId(mockMvc, studentToken);
 
         // senha errada: a conta não é excluída
         mockMvc.perform(delete("/api/admin/users/" + id).header("Authorization", bearer(admin))
                         .contentType(MediaType.APPLICATION_JSON).content(passwordJson("SenhaErrada1")))
                 .andExpect(status().isUnprocessableEntity());
-        mockMvc.perform(get("/api/admin/users").param("search", email).header("Authorization", bearer(admin)))
+        mockMvc.perform(get("/api/admin/users").param("search", name).header("Authorization", bearer(admin)))
                 .andExpect(jsonPath("$.totalElements").value(1));
 
         mockMvc.perform(delete("/api/admin/users/" + id).header("Authorization", bearer(admin))
                         .contentType(MediaType.APPLICATION_JSON).content(passwordJson(ADMIN_PASSWORD)))
                 .andExpect(status().isNoContent());
-        mockMvc.perform(get("/api/admin/users").param("search", email).header("Authorization", bearer(admin)))
+        mockMvc.perform(get("/api/admin/users").param("search", name).header("Authorization", bearer(admin)))
                 .andExpect(jsonPath("$.totalElements").value(0));
         mockMvc.perform(get("/api/users/me").header("Authorization", bearer(studentToken)))
                 .andExpect(status().isUnauthorized());
 
-        String adminPage = mockMvc.perform(get("/api/admin/users").param("search", ADMIN_EMAIL).header("Authorization", bearer(admin)))
-                .andReturn().getResponse().getContentAsString();
-        Integer adminId = JsonPath.read(adminPage, "$.content[0].id");
+        Integer adminId = userId(mockMvc, admin);
         mockMvc.perform(delete("/api/admin/users/" + adminId).header("Authorization", bearer(admin))
                         .contentType(MediaType.APPLICATION_JSON).content(passwordJson(ADMIN_PASSWORD)))
                 .andExpect(status().isUnprocessableEntity());
@@ -163,9 +165,7 @@ class AdminUserIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         Integer resultId = JsonPath.read(result, "$.id");
-        String page = mockMvc.perform(get("/api/admin/users").param("search", email).header("Authorization", bearer(admin)))
-                .andReturn().getResponse().getContentAsString();
-        Integer id = JsonPath.read(page, "$.content[0].id");
+        Integer id = userId(mockMvc, studentToken);
 
         mockMvc.perform(get("/api/admin/users/" + id).header("Authorization", bearer(admin)))
                 .andExpect(status().isOk())
