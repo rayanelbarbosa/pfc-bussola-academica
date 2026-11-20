@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 
 import { Dashboard } from '../../../core/models/dashboard.model';
 import { DashboardService } from '../../../core/services/dashboard.service';
-import { DashboardComponent } from './dashboard.component';
+import { DashboardComponent, groupByMonth } from './dashboard.component';
 
 const DATA: Dashboard = {
   periodDays: 30,
@@ -21,7 +21,7 @@ const DATA: Dashboard = {
   testsPerDay: [{ date: '2026-11-06', count: 3 }, { date: '2026-11-07', count: 5 }],
   profileDistribution: [{ key: 'SOCIAL', label: 'Social', count: 4 }, { key: 'REALISTIC', label: 'Realista', count: 1 }],
   areaDistribution: [{ key: 'HEALTH', label: 'Saúde', count: 3 }, { key: 'EDUCATION', label: 'Educação', count: 1 }],
-  newUsersPerWeek: [{ date: '2026-11-02', count: 5 }]
+  newUsersPerDay: [{ date: '2026-11-06', count: 2 }, { date: '2026-11-07', count: 3 }]
 };
 
 describe('DashboardComponent', () => {
@@ -106,5 +106,39 @@ describe('DashboardComponent', () => {
     expect(el.textContent).toContain('em relação ao dia anterior');
     expect(el.querySelector('.chip-active')).toBeNull();
     expect(el.querySelector('app-date-range-picker button')?.textContent).toContain('03/11/2026');
+  });
+
+  it('shows the charts per day up to 31 days and per month in longer periods', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Testes realizados por dia');
+    expect(el.textContent).toContain('Novos cadastros por dia');
+
+    service.getMetrics.and.returnValue(of({
+      ...DATA, allTime: true, periodDays: 62, startDate: '2026-10-01', endDate: '2026-12-01',
+      testsPerDay: [{ date: '2026-10-01', count: 2 }, { date: '2026-10-31', count: 3 }, { date: '2026-11-15', count: 4 }],
+      newUsersPerDay: [{ date: '2026-10-05', count: 1 }, { date: '2026-12-01', count: 6 }]
+    }));
+    fixture.componentInstance.load();
+    fixture.detectChanges();
+
+    expect(el.textContent).toContain('Testes realizados por mês');
+    expect(el.textContent).toContain('Novos cadastros por mês');
+    expect(fixture.componentInstance.testsChart()).toEqual([{ label: 'out/26', value: 5 }, { label: 'nov/26', value: 4 }]);
+    expect(fixture.componentInstance.usersChart()).toEqual([{ label: 'out/26', value: 1 }, { label: 'dez/26', value: 6 }]);
+  });
+
+  it('groups daily counts by month, across years', () => {
+    expect(groupByMonth([{ date: '2026-12-31', count: 2 }, { date: '2027-01-01', count: 1 }, { date: '2027-01-20', count: 1 }]))
+      .toEqual([{ label: 'dez/26', value: 2 }, { label: 'jan/27', value: 2 }]);
+    expect(groupByMonth([])).toEqual([]);
+  });
+
+  it('names the calendar button after the active filter', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    const button = () => el.querySelector('app-date-range-picker button')!.textContent!;
+    expect(button()).toContain('Todo o período');
+    fixture.componentInstance.selectPeriod(7);
+    fixture.detectChanges();
+    expect(button()).toContain('Escolher datas');
   });
 });

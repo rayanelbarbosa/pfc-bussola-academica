@@ -107,7 +107,9 @@ describe('DateRangePickerComponent', () => {
     fixture.componentInstance.to.set('2026-11-20');
     fixture.detectChanges();
     click(trigger());
-    click(Array.from(el.querySelectorAll<HTMLButtonElement>('button')).find((b) => b.textContent?.trim() === 'Limpar')!);
+    const allTime = () => Array.from(el.querySelectorAll<HTMLButtonElement>('button')).find((b) => b.textContent?.trim() === 'Todo o período')!;
+    expect(allTime().getAttribute('aria-pressed')).toBe('false');
+    click(allTime());
     expect(fixture.componentInstance.changes).toEqual([{ from: null, to: null }]);
     expect(panel()).toBeNull();
   });

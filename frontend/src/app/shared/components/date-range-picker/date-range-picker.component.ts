@@ -48,7 +48,8 @@ let nextId = 0;
 /**
  * Calendário de período (RF do #153): um botão que abre, logo abaixo, um calendário de um mês.
  * 1º clique marca o início, 2º clique marca o fim e aplica; dois cliques no mesmo dia filtram só aquele dia.
- * Datas futuras ficam desabilitadas. Funciona por teclado (setas, PageUp/PageDown, Enter, Esc).
+ * Datas futuras ficam desabilitadas. O botão "Todo o período" tira o filtro de datas (fica marcado quando não há
+ * período). Funciona por teclado (setas, PageUp/PageDown, Enter, Esc).
  */
 @Component({
   selector: 'app-date-range-picker',
@@ -112,12 +113,13 @@ let nextId = 0;
           </tbody>
         </table>
 
-        <div class="mt-2 flex items-center justify-between gap-2">
-          <p class="text-xs text-muted-foreground" aria-live="polite">
-            {{ pendingStart() ? 'Agora clique na data final (ou no mesmo dia).' : 'Clique na data inicial.' }}
-          </p>
-          <button type="button" class="btn btn-link text-xs" (click)="clear()">Limpar</button>
-        </div>
+        <p class="mt-2 text-xs text-muted-foreground" aria-live="polite">
+          {{ pendingStart() ? 'Agora clique na data final (ou no mesmo dia).' : 'Clique na data inicial.' }}
+        </p>
+        <button type="button" class="chip mt-3 w-full justify-center" [class.chip-active]="isAllTime()"
+          [attr.aria-pressed]="isAllTime()" (click)="clear()">
+          Todo o período
+        </button>
       </div>
     }
   `
@@ -150,10 +152,18 @@ export class DateRangePickerComponent {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly trigger = viewChild.required<ElementRef<HTMLButtonElement>>('trigger');
 
+  /** Texto do botão quando não há datas escolhidas (ex.: "Escolher datas" quando outro filtro, como 7 dias, está ativo). */
+  readonly emptyLabel = input('Todo o período');
+  /** Se "Todo o período" está valendo; por padrão, quando não há datas. Telas com outros atalhos informam isso. */
+  readonly allTimeSelected = input<boolean | null>(null);
+
+  readonly hasRange = computed(() => !!this.from() && !!this.to());
+  readonly isAllTime = computed(() => this.allTimeSelected() ?? !this.hasRange());
+
   readonly summary = computed(() => {
     const from = this.from();
     const to = this.to();
-    if (!from || !to) return 'Todo o período';
+    if (!from || !to) return this.emptyLabel();
     return from === to ? formatBr(from) : `${formatBr(from)} a ${formatBr(to)}`;
   });
 
