@@ -25,14 +25,14 @@ public record DashboardResponse(
         List<DailyCount> testsPerDay,
         List<CountItem> profileDistribution,
         List<CountItem> areaDistribution,
-        List<DailyCount> newUsersPerWeek
+        List<DailyCount> newUsersPerDay
 ) {
 
     /** Contagem de um item (tipo RIASEC ou área). "key" é o código e "label", o rótulo em português. */
     public record CountItem(String key, String label, long count) {
     }
 
-    /** Contagem por dia (ou por semana, iniciando na data informada). */
+    /** Contagem por dia (o front agrupa por mês quando o período passa de 31 dias). */
     public record DailyCount(LocalDate date, long count) {
     }
 }

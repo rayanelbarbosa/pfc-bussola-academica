@@ -141,6 +141,7 @@ class DashboardServiceTest {
         assertThat(dashboard.startDate()).isEqualTo(LocalDate.of(2026, 6, 1));
         assertThat(dashboard.endDate()).isEqualTo(LocalDate.of(2026, 11, 7));
         assertThat(dashboard.newUsers()).isEqualTo(1);
+        assertThat(dashboard.newUsersPerDay()).hasSize(160).contains(new DailyCount(LocalDate.of(2026, 6, 1), 1));
     }
 
     @Test
@@ -184,16 +185,5 @@ class DashboardServiceTest {
         assertThat(DashboardService.mostCommon(List.of(new CountItem("A", "A", 0)))).isNull();
         assertThat(DashboardService.mostCommon(List.of(new CountItem("R", "Realista", 3), new CountItem("I", "Investigativo", 3))))
                 .extracting(CountItem::key).isEqualTo("R");
-    }
-
-    @Test
-    void groupsNewUsersByWeekStartingOnMonday() {
-        List<DailyCount> weeks = DashboardService.perWeek(
-                List.of(LocalDateTime.of(2026, 11, 3, 9, 0), LocalDateTime.of(2026, 11, 7, 9, 0), LocalDateTime.of(2026, 10, 28, 9, 0)),
-                LocalDate.of(2026, 10, 27), LocalDate.of(2026, 11, 7));
-
-        assertThat(weeks).containsExactly(
-                new DailyCount(LocalDate.of(2026, 10, 26), 1),
-                new DailyCount(LocalDate.of(2026, 11, 2), 2));
     }
 }
