@@ -6,6 +6,7 @@ import { getErrorMessage } from '../../../core/services/api-error';
 import { QuizDraftService } from '../../../core/services/quiz-draft.service';
 import { VocationalTestService } from '../../../core/services/vocational-test.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 /**
  * Etapa 2 do teste (RF06): as 30 atividades do O*NET Mini Interest Profiler em 5 telas de 6 (uma de cada tipo
@@ -20,6 +21,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 })
 export class QuestionsComponent implements OnInit {
   private readonly testService = inject(VocationalTestService);
+  private readonly analytics = inject(AnalyticsService);
   private readonly draft = inject(QuizDraftService);
   private readonly router = inject(Router);
 
@@ -93,6 +95,10 @@ export class QuestionsComponent implements OnInit {
     const answers = this.questions().map((q) => ({ questionId: q.id, score: this.answers()[q.id] }));
     this.testService.submitAnswers({ answers, interestAreas: this.draft.areas() }).subscribe({
       next: (result) => {
+        this.analytics.track('test_completed', {
+          profile: result.topCategories.map((c) => c.category).join(','),
+          tie: result.topCategories.length > 1
+        });
         this.draft.clear();
         this.router.navigate(['/teste-vocacional/resultado', result.id]);
       },

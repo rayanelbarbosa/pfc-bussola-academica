@@ -71,6 +71,16 @@ describe('DashboardComponent', () => {
     expect(el.querySelector('.chip-active')).toBeNull();
   });
 
+  it('tags the period filter as an event (dataLayer)', () => {
+    window.dataLayer = [];
+    fixture.componentInstance.selectPeriod(30);
+    fixture.componentInstance.selectRange({ from: '2026-11-01', to: '2026-11-20' });
+    expect(window.dataLayer).toEqual([
+      jasmine.objectContaining({ event: 'period_filter_applied', screen: 'dashboard', source: 'quick', days: 30 }),
+      jasmine.objectContaining({ event: 'period_filter_applied', screen: 'dashboard', source: 'calendar', from: '2026-11-01' })
+    ]);
+  });
+
   it('shows "desde" instead of a comparison when it is the whole period', () => {
     service.getMetrics.and.returnValue(of({ ...DATA, allTime: true, startDate: '2026-06-01' }));
     fixture.componentInstance.load();

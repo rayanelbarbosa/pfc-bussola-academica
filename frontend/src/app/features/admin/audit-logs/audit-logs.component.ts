@@ -7,6 +7,7 @@ import { AuditService } from '../../../core/services/audit.service';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { DateRangePickerComponent, DateRangeValue } from '../../../shared/components/date-range-picker/date-range-picker.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 /** Consulta dos logs de auditoria (somente administrador), com filtros e paginação. */
 @Component({
@@ -17,6 +18,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 })
 export class AuditLogsComponent implements OnInit {
   private readonly auditService = inject(AuditService);
+  private readonly analytics = inject(AnalyticsService);
 
   readonly pageSize = 20;
   readonly labels = AUDIT_ACTION_LABELS;
@@ -50,6 +52,7 @@ export class AuditLogsComponent implements OnInit {
 
   selectRange(range: DateRangeValue): void {
     this.range.set(range);
+    this.analytics.track('period_filter_applied', { screen: 'audit', source: 'calendar', from: range.from, to: range.to });
     this.load(0);
   }
 
@@ -76,6 +79,7 @@ export class AuditLogsComponent implements OnInit {
     this.auditService.verifyIntegrity().subscribe({
       next: (result) => {
         this.integrity.set(result);
+        this.analytics.track('audit_integrity_checked', { intact: result.intact, checked_records: result.checkedRecords });
         this.verifying.set(false);
         this.load(0);
       },

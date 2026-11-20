@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { CompassMarkComponent } from '../compass/compass.component';
 import { IconComponent } from '../icon/icon.component';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 /** Cabeçalho do site: links mudam conforme o perfil (visitante, estudante ou administrador). */
 @Component({
@@ -15,6 +16,7 @@ import { IconComponent } from '../icon/icon.component';
 })
 export class HeaderComponent {
   private readonly auth = inject(AuthService);
+  private readonly analytics = inject(AnalyticsService);
 
   readonly user = this.auth.user;
   readonly isLoggedIn = this.auth.isLoggedIn;
@@ -38,6 +40,7 @@ export class HeaderComponent {
 
   logout(): void {
     this.mobileOpen.set(false);
+    this.analytics.track('logout');
     this.auth.logout();
   }
 }

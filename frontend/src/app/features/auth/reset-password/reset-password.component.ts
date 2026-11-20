@@ -7,6 +7,7 @@ import { getErrorMessage } from '../../../core/services/api-error';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PASSWORD_PATTERN } from '../register/register.component';
 import { PasswordToggleComponent } from '../../../shared/components/password-toggle/password-toggle.component';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {
   const password = group.get('password')?.value;
@@ -27,6 +28,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
 })
 export class ResetPasswordComponent implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly analytics = inject(AnalyticsService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
@@ -72,6 +74,7 @@ export class ResetPasswordComponent implements OnInit {
     this.error.set(null);
     this.auth.resetPassword(token, this.form.getRawValue().password).subscribe({
       next: () => {
+        this.analytics.track('password_reset_completed');
         this.auth.clear();
         this.router.navigate(['/login'], { queryParams: { senhaRedefinida: 1 } });
       },

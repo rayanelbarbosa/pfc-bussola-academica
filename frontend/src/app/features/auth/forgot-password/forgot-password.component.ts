@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 /**
  * Esqueci minha senha (RF04): pede o link por e-mail. A mensagem de confirmação é sempre a mesma,
@@ -18,6 +19,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 })
 export class ForgotPasswordComponent {
   private readonly auth = inject(AuthService);
+  private readonly analytics = inject(AnalyticsService);
   private readonly fb = inject(FormBuilder);
 
   readonly submitting = signal(false);
@@ -37,6 +39,7 @@ export class ForgotPasswordComponent {
     this.error.set(null);
     this.auth.forgotPassword(this.form.getRawValue().email.trim()).subscribe({
       next: (res) => {
+        this.analytics.track('password_reset_requested');
         this.sent.set(res.message);
         this.submitting.set(false);
       },

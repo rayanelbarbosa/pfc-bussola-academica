@@ -91,7 +91,11 @@ describe('QuestionsComponent', () => {
     expect(component.isLast()).toBeTrue();
     expect(component.allAnswered()).toBeTrue();
 
-    testService.submitAnswers.and.returnValue(of({ id: 9 } as unknown as VocationalTestResult));
+    window.dataLayer = [];
+    testService.submitAnswers.and.returnValue(of({
+      id: 9,
+      topCategories: [{ category: 'SOCIAL', label: 'Social', score: 18 }, { category: 'ARTISTIC', label: 'Artístico', score: 18 }]
+    } as unknown as VocationalTestResult));
     component.submit();
 
     const sent = testService.submitAnswers.calls.mostRecent().args[0];
@@ -101,6 +105,7 @@ describe('QuestionsComponent', () => {
     expect(sent.answers[11]).toEqual({ questionId: 12, score: 4 });
     expect(router.navigate).toHaveBeenCalledWith(['/teste-vocacional/resultado', 9]);
     expect(draft.answeredCount()).toBe(0);
+    expect(window.dataLayer).toContain(jasmine.objectContaining({ event: 'test_completed', profile: 'SOCIAL,ARTISTIC', tie: true }));
   });
 
   it('marks the chosen option when clicked', () => {
