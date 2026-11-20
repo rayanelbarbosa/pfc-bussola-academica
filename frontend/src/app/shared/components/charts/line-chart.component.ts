@@ -26,7 +26,7 @@ const PAD = { top: 20, right: 12, bottom: 24, left: 28 };
       <polyline [attr.points]="path()" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linejoin="round" />
       @for (p of coords(); track $index) {
         <circle [attr.cx]="p.x" [attr.cy]="p.y" r="3" fill="var(--primary)"><title>{{ p.label }}: {{ p.value }}</title></circle>
-        @if (p.value > 0) {
+        @if (p.value > 0 && showValues()) {
           <text [attr.x]="p.x" [attr.y]="p.y - 8" text-anchor="middle" font-size="11" font-weight="600" fill="var(--foreground)">{{ p.value }}</text>
         }
       }
@@ -71,6 +71,8 @@ export class LineChartComponent {
   });
 
   readonly ariaLabel = computed(() => this.points().map((p) => `${p.label}: ${p.value}`).join(', '));
+  /** Com mais de 31 pontos, os números em cima somem (ficam no título de cada ponto, ao passar o mouse). */
+  readonly showValues = computed(() => this.points().length <= 31);
 }
 
 /** Arredonda o topo do eixo para um número "redondo" (mínimo 4). */

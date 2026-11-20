@@ -13,7 +13,9 @@
             (click)="selectPeriod(period)">{{ period }} dias</button>
         }
       </div>
-      <app-date-range-picker label="Período no calendário" align="right" [from]="range().from" [to]="range().to" (rangeChange)="selectRange($event)" />
+      <app-date-range-picker label="Período no calendário" align="right" [from]="range().from" [to]="range().to"
+        [emptyLabel]="days() ? 'Escolher datas' : 'Todo o período'" [allTimeSelected]="!days() && !range().from"
+        (rangeChange)="selectRange($event)" />
     </div>
   </div>
 
@@ -64,9 +66,9 @@
 
     <div class="mt-3 grid gap-3 lg:grid-cols-2" [class.opacity-60]="loading()">
       <section class="card p-4 sm:p-4">
-        <h2 class="text-base">Testes realizados por dia</h2>
-        <p class="mb-3 text-xs text-muted-foreground">Últimos {{ d.periodDays }} dias.</p>
-        <app-line-chart [points]="testsPerDay()" />
+        <h2 class="text-base">Testes realizados por {{ byMonth() ? 'mês' : 'dia' }}</h2>
+        <p class="mb-3 text-xs text-muted-foreground">De {{ periodLabel() }}.@if (byMonth()) { O primeiro e o último mês podem estar incompletos.}</p>
+        <app-line-chart [points]="testsChart()" />
       </section>
       <section class="card p-4 sm:p-4">
         <h2 class="text-base">Perfis principais</h2>
@@ -79,9 +81,9 @@
         <app-bar-list [items]="areas()" />
       </section>
       <section class="card p-4 sm:p-4">
-        <h2 class="text-base">Novos cadastros por semana</h2>
-        <p class="mb-3 text-xs text-muted-foreground">Semanas iniciando na segunda-feira.</p>
-        <app-column-chart [points]="usersPerWeek()" />
+        <h2 class="text-base">Novos cadastros por {{ byMonth() ? 'mês' : 'dia' }}</h2>
+        <p class="mb-3 text-xs text-muted-foreground">De {{ periodLabel() }}.@if (byMonth()) { O primeiro e o último mês podem estar incompletos.}</p>
+        <app-column-chart [points]="usersChart()" />
       </section>
     </div>
   }

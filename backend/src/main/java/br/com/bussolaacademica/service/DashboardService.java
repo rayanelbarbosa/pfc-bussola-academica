@@ -13,12 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -133,7 +130,7 @@ public class DashboardService {
                 perDay(results.stream().map(VocationalTestResult::getCreatedAt).toList(), from, to),
                 profiles,
                 areas,
-                perWeek(newUsers.stream().map(User::getCreatedAt).toList(), from, to)
+                perDay(newUsers.stream().map(User::getCreatedAt).toList(), from, to)
         );
     }
 
@@ -171,19 +168,5 @@ public class DashboardService {
         }
         moments.forEach(moment -> counts.computeIfPresent(moment.toLocalDate(), (day, count) -> count + 1));
         return counts.entrySet().stream().map(entry -> new DailyCount(entry.getKey(), entry.getValue())).toList();
-    }
-
-    /** Uma entrada por semana (iniciando na segunda-feira) que cruza o período. */
-    static List<DailyCount> perWeek(List<LocalDateTime> moments, LocalDate start, LocalDate end) {
-        Map<LocalDate, Long> counts = new TreeMap<>();
-        LocalDate firstMonday = start.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        for (LocalDate week = firstMonday; !week.isAfter(end); week = week.plusWeeks(1)) {
-            counts.put(week, 0L);
-        }
-        moments.forEach(moment -> counts.computeIfPresent(
-                moment.toLocalDate().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)), (week, count) -> count + 1));
-        List<DailyCount> weeks = new ArrayList<>();
-        counts.forEach((week, count) -> weeks.add(new DailyCount(week, count)));
-        return weeks;
     }
 }
