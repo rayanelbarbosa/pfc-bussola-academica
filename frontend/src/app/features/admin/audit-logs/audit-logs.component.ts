@@ -5,13 +5,14 @@ import { FormsModule } from '@angular/forms';
 import { AUDIT_ACTION_LABELS, AuditIntegrity, AuditLog, Page } from '../../../core/models/audit.model';
 import { AuditService } from '../../../core/services/audit.service';
 import { getErrorMessage } from '../../../core/services/api-error';
+import { DateRangePickerComponent, DateRangeValue } from '../../../shared/components/date-range-picker/date-range-picker.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 /** Consulta dos logs de auditoria (somente administrador), com filtros e paginação. */
 @Component({
   selector: 'app-audit-logs',
   standalone: true,
-  imports: [DatePipe, FormsModule, IconComponent],
+  imports: [DatePipe, FormsModule, IconComponent, DateRangePickerComponent],
   templateUrl: './audit-logs.component.html'
 })
 export class AuditLogsComponent implements OnInit {
@@ -23,6 +24,8 @@ export class AuditLogsComponent implements OnInit {
 
   action = '';
   email = '';
+  /** Período dos eventos escolhido no calendário (aplica na hora, sem precisar clicar em Filtrar). */
+  readonly range = signal<DateRangeValue>({ from: null, to: null });
   readonly page = signal<Page<AuditLog> | null>(null);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -41,13 +44,20 @@ export class AuditLogsComponent implements OnInit {
   clear(): void {
     this.action = '';
     this.email = '';
+    this.range.set({ from: null, to: null });
+    this.load(0);
+  }
+
+  selectRange(range: DateRangeValue): void {
+    this.range.set(range);
     this.load(0);
   }
 
   load(pageNumber: number): void {
     this.loading.set(true);
     this.error.set(null);
-    this.auditService.search({ action: this.action, email: this.email, page: pageNumber, size: this.pageSize }).subscribe({
+    this.auditService.search({ action: this.action, email: this.email, from: this.range().from, to: this.range().to, page: pageNumber,
+      size: this.pageSize }).subscribe({
       next: (page) => {
         this.page.set(page);
         this.loading.set(false);

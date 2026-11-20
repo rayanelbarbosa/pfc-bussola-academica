@@ -8,6 +8,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 
+import java.time.Clock;
+import java.time.LocalDate;
+
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_EMAIL;
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_PASSWORD;
 import static br.com.bussolaacademica.support.AuthTestHelper.answers;
@@ -29,6 +32,9 @@ class DashboardIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private Clock clock;
 
     @Test
     void adminSeesMetricsAndStudentIsBlocked() throws Exception {
@@ -52,6 +58,31 @@ class DashboardIntegrationTest {
                 .andExpect(jsonPath("$.areaDistribution", hasSize(8)));
 
         mockMvc.perform(get("/api/admin/dashboard").param("days", "15").header("Authorization", bearer(admin)))
+                .andExpect(status().isBadRequest());
+
+        // sem filtro: todo o período, do primeiro cadastro até hoje
+        mockMvc.perform(get("/api/admin/dashboard").header("Authorization", bearer(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.allTime").value(true))
+                .andExpect(jsonPath("$.endDate").value(LocalDate.now(clock).toString()))
+                .andExpect(jsonPath("$.newUsers", greaterThanOrEqualTo(2)));
+
+        // período do calendário: um dia só (hoje) e validações
+        String today = LocalDate.now(clock).toString(); // mesmo fuso da aplicação (o CI roda em UTC)
+        mockMvc.perform(get("/api/admin/dashboard").param("from", today).param("to", today).header("Authorization", bearer(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.periodDays").value(1))
+                .andExpect(jsonPath("$.startDate").value(today))
+                .andExpect(jsonPath("$.endDate").value(today))
+                .andExpect(jsonPath("$.tests", greaterThanOrEqualTo(1)))
+                .andExpect(jsonPath("$.testsPerDay", hasSize(1)));
+        mockMvc.perform(get("/api/admin/dashboard").param("from", today).header("Authorization", bearer(admin)))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/admin/dashboard").param("from", "2026-11-10").param("to", "2026-11-01")
+                        .header("Authorization", bearer(admin)))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/admin/dashboard").param("from", "10/11/2026").param("to", today)
+                        .header("Authorization", bearer(admin)))
                 .andExpect(status().isBadRequest());
     }
 }

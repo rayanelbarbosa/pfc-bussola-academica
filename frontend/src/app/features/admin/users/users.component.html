@@ -14,7 +14,7 @@
     </div>
   }
 
-  <form class="card mb-4 grid gap-4 p-4 sm:p-4 md:grid-cols-[2fr_1fr_auto] md:items-end" (ngSubmit)="load(0)">
+  <form class="card mb-4 grid gap-4 p-4 sm:p-4 md:grid-cols-[2fr_1fr_1fr_auto] md:items-end" (ngSubmit)="load(0)">
     <div class="field">
       <label for="u-search" class="field-label">Buscar por nome</label>
       <input id="u-search" name="search" class="field-input" [(ngModel)]="search" />
@@ -26,6 +26,10 @@
         <option value="STUDENT">Estudante</option>
         <option value="ADMIN">Administrador</option>
       </select>
+    </div>
+    <div class="field">
+      <span class="field-label" aria-hidden="true">Cadastrado em</span>
+      <app-date-range-picker class="w-full" label="Cadastrado em" [from]="range().from" [to]="range().to" (rangeChange)="selectRange($event)" />
     </div>
     <div class="flex gap-2">
       <button type="submit" class="btn btn-primary">Filtrar</button>

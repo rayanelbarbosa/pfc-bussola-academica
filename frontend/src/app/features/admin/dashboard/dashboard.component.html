@@ -2,13 +2,18 @@
   <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
     <div>
       <h1>Dashboard</h1>
-      <p class="mt-2 text-muted-foreground">Indicadores de uso da plataforma.</p>
+      <p class="mt-2 text-muted-foreground">
+        Indicadores de uso da plataforma@if (periodLabel()) { de <span class="font-medium text-foreground">{{ periodLabel() }}</span>}.
+      </p>
     </div>
-    <div class="flex gap-2" role="group" aria-label="Período">
-      @for (period of periods; track period) {
-        <button type="button" class="chip" [class.chip-active]="days() === period" [attr.aria-pressed]="days() === period"
-          (click)="selectPeriod(period)">{{ period }} dias</button>
-      }
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="flex gap-2" role="group" aria-label="Período rápido">
+        @for (period of periods; track period) {
+          <button type="button" class="chip" [class.chip-active]="days() === period" [attr.aria-pressed]="days() === period"
+            (click)="selectPeriod(period)">{{ period }} dias</button>
+        }
+      </div>
+      <app-date-range-picker label="Período no calendário" align="right" [from]="range().from" [to]="range().to" (rangeChange)="selectRange($event)" />
     </div>
   </div>
 
@@ -30,12 +35,16 @@
       <div class="card p-4 sm:p-4">
         <p class="text-sm text-muted-foreground">Usuários cadastrados</p>
         <p class="mt-1 text-2xl font-semibold">{{ d.totalUsers }}</p>
-        <p class="mt-1 text-xs text-muted-foreground">{{ d.newUsers }} novos · {{ variation(d.newUsers, d.newUsersPrevious) }}</p>
+        <p class="mt-1 text-xs text-muted-foreground">
+          @if (d.allTime) { desde {{ formatBr(d.startDate) }} } @else { {{ d.newUsers }} novos · {{ variation(d.newUsers, d.newUsersPrevious) }} }
+        </p>
       </div>
       <div class="card p-4 sm:p-4">
         <p class="text-sm text-muted-foreground">Testes realizados</p>
         <p class="mt-1 text-2xl font-semibold">{{ d.totalTests }}</p>
-        <p class="mt-1 text-xs text-muted-foreground">{{ d.tests }} no período · {{ variation(d.tests, d.testsPrevious) }}</p>
+        <p class="mt-1 text-xs text-muted-foreground">
+          @if (d.allTime) { desde {{ formatBr(d.startDate) }} } @else { {{ d.tests }} no período · {{ variation(d.tests, d.testsPrevious) }} }
+        </p>
       </div>
       <div class="card p-4 sm:p-4">
         <p class="text-sm text-muted-foreground">Perfil RIASEC mais comum</p>

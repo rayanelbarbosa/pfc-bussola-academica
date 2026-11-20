@@ -22,14 +22,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * Regras da gestão de usuários pelo administrador (RF12).
  * <ul>
- *   <li>Lista paginada, com busca por nome e filtro por perfil.</li>
+ *   <li>Lista paginada, com busca por nome e filtros por perfil e por período de cadastro.</li>
  *   <li>O administrador pode cadastrar outro administrador e promover ou rebaixar usuários.</li>
  *   <li>Ninguém altera o próprio perfil: assim a plataforma nunca fica sem administrador.</li>
  *   <li>O administrador pode excluir a conta de outra pessoa (cadastro e resultados); a própria conta
@@ -67,7 +69,7 @@ public class AdminUserService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<AdminUserResponse> search(String text, Role role, int page, int size) {
+    public PageResponse<AdminUserResponse> search(String text, Role role, LocalDate from, LocalDate to, int page, int size) {
         Specification<User> filter = Specification.where(null);
         if (text != null && !text.isBlank()) {
             String pattern = "%" + text.trim().toLowerCase(Locale.ROOT) + "%";
@@ -76,6 +78,10 @@ public class AdminUserService {
         }
         if (role != null) {
             filter = filter.and((root, query, cb) -> cb.equal(root.get("role"), role));
+        }
+        Optional<DateRange> period = DateRange.of(from, to);
+        if (period.isPresent()) {
+            filter = filter.and(period.get().on("createdAt"));
         }
         PageRequest pageRequest = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), MAX_PAGE_SIZE),
                 Sort.by(Sort.Direction.DESC, "createdAt", "id"));

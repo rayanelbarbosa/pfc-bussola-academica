@@ -31,6 +31,14 @@ describe('AdminUserService', () => {
     empty.flush({ content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 });
   });
 
+  it('sends the sign-up period when both dates were chosen', () => {
+    service.search({ from: '2026-11-20', to: '2026-11-20', page: 0, size: 10 }).subscribe();
+    const req = http.expectOne((r) => r.url === url);
+    expect(req.request.params.get('from')).toBe('2026-11-20');
+    expect(req.request.params.get('to')).toBe('2026-11-20');
+    req.flush({ content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 });
+  });
+
   it('creates an admin, changes a role and deletes a user', () => {
     service.createAdmin({ name: 'Ana', email: 'ana@email.com', password: 'Senha@123' }).subscribe();
     const create = http.expectOne(url);

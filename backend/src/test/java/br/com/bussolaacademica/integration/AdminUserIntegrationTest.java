@@ -8,6 +8,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Clock;
+import java.time.LocalDate;
+
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_EMAIL;
 import static br.com.bussolaacademica.support.AuthTestHelper.ADMIN_PASSWORD;
 import static br.com.bussolaacademica.support.AuthTestHelper.answers;
@@ -35,6 +38,9 @@ class AdminUserIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private Clock clock;
 
     /** Novo perfil com a senha do administrador (pedida de novo para alterar perfis). */
     private static String roleJson(String role) {
@@ -183,6 +189,39 @@ class AdminUserIntegrationTest {
 
         mockMvc.perform(get("/api/admin/users/999999").header("Authorization", bearer(admin)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void filtersUsersAndAuditLogsByPeriod() throws Exception {
+        String admin = login(mockMvc, ADMIN_EMAIL, ADMIN_PASSWORD);
+        String name = uniqueName();
+        String email = uniqueEmail();
+        registerStudent(mockMvc, name, email);
+        String today = LocalDate.now(clock).toString(); // mesmo fuso da aplicação (o CI roda em UTC)
+        String yesterday = LocalDate.now(clock).minusDays(1).toString();
+
+        // cadastro de hoje: aparece filtrando só hoje e some filtrando só ontem
+        mockMvc.perform(get("/api/admin/users").param("search", name).param("from", today).param("to", today)
+                        .header("Authorization", bearer(admin)))
+                .andExpect(jsonPath("$.totalElements").value(1));
+        mockMvc.perform(get("/api/admin/users").param("search", name).param("from", yesterday).param("to", yesterday)
+                        .header("Authorization", bearer(admin)))
+                .andExpect(jsonPath("$.totalElements").value(0));
+
+        // eventos de hoje na auditoria (o cadastro da aluna), e nenhum dela ontem
+        mockMvc.perform(get("/api/admin/audit-logs").param("email", email).param("from", today).param("to", today)
+                        .header("Authorization", bearer(admin)))
+                .andExpect(jsonPath("$.totalElements", greaterThanOrEqualTo(1)));
+        mockMvc.perform(get("/api/admin/audit-logs").param("email", email).param("from", yesterday).param("to", yesterday)
+                        .header("Authorization", bearer(admin)))
+                .andExpect(jsonPath("$.totalElements").value(0));
+
+        // só uma data, ou a inicial depois da final: 400
+        mockMvc.perform(get("/api/admin/users").param("from", today).header("Authorization", bearer(admin)))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/admin/audit-logs").param("from", today).param("to", yesterday)
+                        .header("Authorization", bearer(admin)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
