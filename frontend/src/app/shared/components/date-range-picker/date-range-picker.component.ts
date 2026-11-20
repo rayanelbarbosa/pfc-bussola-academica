@@ -1,12 +1,9 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, output, signal, viewChild } from '@angular/core';
 
+import { DateRangeValue } from '../../../core/models/date-range.model';
 import { IconComponent } from '../icon/icon.component';
 
-/** Período escolhido: datas ISO (AAAA-MM-DD), as duas inclusive; as duas nulas = sem filtro de período. */
-export interface DateRangeValue {
-  from: string | null;
-  to: string | null;
-}
+export type { DateRangeValue } from '../../../core/models/date-range.model';
 
 interface CalendarDay {
   iso: string;
@@ -74,7 +71,7 @@ let nextId = 0;
 
     @if (open()) {
       <div [id]="panelId" role="dialog" [attr.aria-label]="'Escolher ' + label().toLowerCase()"
-        class="absolute left-0 top-full z-30 mt-2 w-[19rem] rounded-xl border border-border bg-card p-3 shadow-lg">
+        [class]="panelClass()">
         <div class="mb-2 flex items-center justify-between">
           <button type="button" class="btn btn-ghost btn-sm size-9 p-0" aria-label="Mês anterior" (click)="moveMonth(-1)">
             <app-icon name="chevron-left" class="size-4" />
@@ -129,6 +126,14 @@ export class DateRangePickerComponent {
   readonly from = input<string | null>(null);
   readonly to = input<string | null>(null);
   readonly label = input('Período');
+  /**
+   * Lado em que o painel se alinha ao botão. "right": no celular continua à esquerda (o botão fica à esquerda da tela)
+   * e, a partir de telas médias, alinha à direita (o botão fica no canto direito).
+   */
+  readonly align = input<'left' | 'right'>('left');
+  readonly panelClass = computed(() =>
+    'absolute top-full z-30 mt-2 w-[19rem] rounded-xl border border-border bg-card p-3 shadow-lg left-0 '
+    + (this.align() === 'right' ? 'md:left-auto md:right-0' : ''));
   readonly rangeChange = output<DateRangeValue>();
 
   readonly panelId = `periodo-${nextId++}`;

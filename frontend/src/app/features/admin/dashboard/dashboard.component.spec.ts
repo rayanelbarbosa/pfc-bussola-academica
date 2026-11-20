@@ -6,7 +6,10 @@ import { DashboardService } from '../../../core/services/dashboard.service';
 import { DashboardComponent } from './dashboard.component';
 
 const DATA: Dashboard = {
-  periodDays: 7,
+  periodDays: 30,
+  startDate: '2026-10-09',
+  endDate: '2026-11-07',
+  allTime: false,
   totalUsers: 12,
   newUsers: 5,
   newUsersPrevious: 2,
@@ -38,7 +41,7 @@ describe('DashboardComponent', () => {
 
   it('shows the big numbers with the variation and the charts', () => {
     const el: HTMLElement = fixture.nativeElement;
-    expect(service.getMetrics).toHaveBeenCalledWith(30);
+    expect(service.getMetrics).toHaveBeenCalledWith(null, { from: null, to: null });
     expect(el.textContent).toContain('12');
     expect(el.textContent).toContain('+3 em relação aos 30 dias anteriores');
     expect(el.textContent).toContain('-2 em relação aos 30 dias anteriores');
@@ -48,8 +51,43 @@ describe('DashboardComponent', () => {
     expect(el.querySelectorAll('app-bar-list li').length).toBe(4);
   });
 
-  it('reloads when the period changes', () => {
+  it('starts with no quick period marked and toggles a quick period on and off', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.chip-active')).toBeNull();
+
     fixture.componentInstance.selectPeriod(7);
-    expect(service.getMetrics).toHaveBeenCalledWith(7);
+    fixture.detectChanges();
+    expect(service.getMetrics).toHaveBeenCalledWith(7, { from: null, to: null });
+    expect(el.querySelector('.chip-active')?.textContent).toContain('7 dias');
+
+    fixture.componentInstance.selectPeriod(7);
+    fixture.detectChanges();
+    expect(service.getMetrics).toHaveBeenCalledWith(null, { from: null, to: null });
+    expect(el.querySelector('.chip-active')).toBeNull();
+  });
+
+  it('shows "desde" instead of a comparison when it is the whole period', () => {
+    service.getMetrics.and.returnValue(of({ ...DATA, allTime: true, startDate: '2026-06-01' }));
+    fixture.componentInstance.load();
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('desde 01/06/2026');
+    expect(el.textContent).not.toContain('em relação');
+  });
+
+  it('shows the period and the calendar range unmarks the quick period', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('09/10/2026 a 07/11/2026');
+
+    service.getMetrics.and.returnValue(of({ ...DATA, periodDays: 1, startDate: '2026-11-03', endDate: '2026-11-03' }));
+    fixture.componentInstance.selectPeriod(30);
+    fixture.componentInstance.selectRange({ from: '2026-11-03', to: '2026-11-03' });
+    fixture.detectChanges();
+
+    expect(service.getMetrics).toHaveBeenCalledWith(null, { from: '2026-11-03', to: '2026-11-03' });
+    expect(el.textContent).toContain('03/11/2026');
+    expect(el.textContent).toContain('em relação ao dia anterior');
+    expect(el.querySelector('.chip-active')).toBeNull();
+    expect(el.querySelector('app-date-range-picker button')?.textContent).toContain('03/11/2026');
   });
 });
