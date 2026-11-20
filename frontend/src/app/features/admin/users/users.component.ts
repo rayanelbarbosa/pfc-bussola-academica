@@ -12,6 +12,7 @@ import { DateRangePickerComponent, DateRangeValue } from '../../../shared/compon
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PASSWORD_PATTERN } from '../../auth/register/register.component';
 import { PasswordToggleComponent } from '../../../shared/components/password-toggle/password-toggle.component';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 /**
  * Gestão de usuários (RF12): lista paginada com busca e filtro, cadastro de administrador e
@@ -26,6 +27,7 @@ import { PasswordToggleComponent } from '../../../shared/components/password-tog
 })
 export class UsersComponent implements OnInit {
   private readonly service = inject(AdminUserService);
+  private readonly analytics = inject(AnalyticsService);
   private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
 
@@ -67,6 +69,7 @@ export class UsersComponent implements OnInit {
 
   selectRange(range: DateRangeValue): void {
     this.range.set(range);
+    this.analytics.track('period_filter_applied', { screen: 'users', source: 'calendar', from: range.from, to: range.to });
     this.load(0);
   }
 
@@ -134,6 +137,7 @@ export class UsersComponent implements OnInit {
   /** Abre o painel e busca o cadastro e o histórico (a consulta fica registrada na auditoria). */
   openDetails(user: AdminUser): void {
     this.viewing.set(user);
+    this.analytics.track('user_details_viewed', { role: user.role });
     this.detail.set(null);
     this.detailError.set(null);
     this.service.details(user.id).subscribe({

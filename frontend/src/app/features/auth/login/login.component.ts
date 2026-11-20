@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { getErrorMessage } from '../../../core/services/api-error';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PasswordToggleComponent } from '../../../shared/components/password-toggle/password-toggle.component';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 /** Tela de login (RF03): e-mail e senha; o perfil (estudante ou administrador) vem do token. */
 @Component({
@@ -16,6 +17,7 @@ import { PasswordToggleComponent } from '../../../shared/components/password-tog
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);
+  private readonly analytics = inject(AnalyticsService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
@@ -42,10 +44,12 @@ export class LoginComponent {
     this.submitting.set(true);
     this.error.set(null);
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: (res) =>
-        res.pendingTerms
+      next: (res) => {
+        this.analytics.track('login', { role: res.user.role, pending_terms: !!res.pendingTerms });
+        return res.pendingTerms
           ? this.router.navigate(['/novo-aceite'], { queryParams: { voltar: this.safeReturnUrl() } })
-          : this.router.navigateByUrl(this.safeReturnUrl()),
+          : this.router.navigateByUrl(this.safeReturnUrl());
+      },
       error: (err) => {
         this.error.set(getErrorMessage(err, 'Não foi possível entrar. Tente novamente.'));
         this.submitting.set(false);

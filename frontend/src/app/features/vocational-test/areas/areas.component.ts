@@ -7,6 +7,7 @@ import { getErrorMessage } from '../../../core/services/api-error';
 import { QuizDraftService } from '../../../core/services/quiz-draft.service';
 import { VocationalTestService } from '../../../core/services/vocational-test.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 /** Etapa 1 do teste (RF06): escolha de 1 a 3 áreas de interesse. */
 @Component({
@@ -18,6 +19,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 })
 export class AreasComponent implements OnInit {
   private readonly testService = inject(VocationalTestService);
+  private readonly analytics = inject(AnalyticsService);
   private readonly draft = inject(QuizDraftService);
   private readonly router = inject(Router);
 
@@ -47,6 +49,8 @@ export class AreasComponent implements OnInit {
 
   start(): void {
     if (this.selected().length > 0) {
+      const areas = this.selected();
+      this.analytics.track('test_started', { interest_areas: areas.join(','), areas_count: areas.length });
       this.router.navigate(['/teste-vocacional/perguntas']);
     }
   }

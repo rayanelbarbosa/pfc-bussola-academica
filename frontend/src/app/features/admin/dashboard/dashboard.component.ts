@@ -10,6 +10,7 @@ import { ColumnChartComponent } from '../../../shared/components/charts/column-c
 import { LineChartComponent } from '../../../shared/components/charts/line-chart.component';
 import { DateRangePickerComponent, DateRangeValue, formatBr } from '../../../shared/components/date-range-picker/date-range-picker.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 /** Dashboard administrativo (RF15): big numbers e gráficos de uso da plataforma, com filtro de período. */
 @Component({
@@ -22,6 +23,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 })
 export class DashboardComponent implements OnInit {
   private readonly service = inject(DashboardService);
+  private readonly analytics = inject(AnalyticsService);
   private readonly datePipe = inject(DatePipe);
 
   readonly periods = DASHBOARD_PERIODS;
@@ -64,6 +66,7 @@ export class DashboardComponent implements OnInit {
   selectPeriod(days: number): void {
     this.days.set(this.days() === days ? null : days);
     this.range.set({ from: null, to: null });
+    this.analytics.track('period_filter_applied', { screen: 'dashboard', source: 'quick', days: this.days() });
     this.load();
   }
 
@@ -71,6 +74,7 @@ export class DashboardComponent implements OnInit {
   selectRange(range: DateRangeValue): void {
     this.days.set(null);
     this.range.set(range);
+    this.analytics.track('period_filter_applied', { screen: 'dashboard', source: 'calendar', from: range.from, to: range.to });
     this.load();
   }
 
