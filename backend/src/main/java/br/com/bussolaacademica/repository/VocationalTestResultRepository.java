@@ -20,7 +20,8 @@ public interface VocationalTestResultRepository extends JpaRepository<Vocational
         findByUser_IdOrderByCreatedAtDesc(userId).forEach(VocationalTestResult::anonymize);
     }
 
-    List<VocationalTestResult> findByCreatedAtGreaterThanEqual(LocalDateTime start);
+    /** Testes feitos em [start, end): o início entra, o fim não. */
+    List<VocationalTestResult> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime start, LocalDateTime end);
 
     long countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime start, LocalDateTime end);
 }

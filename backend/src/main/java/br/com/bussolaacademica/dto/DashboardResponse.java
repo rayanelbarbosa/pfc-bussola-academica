@@ -4,11 +4,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Indicadores do dashboard administrativo (RF15) para um período (7, 30 ou 90 dias).
+ * Indicadores do dashboard administrativo (RF15) para um período: 7, 30 ou 90 dias, ou datas escolhidas no calendário.
+ * "startDate" e "endDate" são o primeiro e o último dia do período (inclusive).
  * "Previous" é o período imediatamente anterior, de mesmo tamanho, usado para mostrar a variação.
  */
 public record DashboardResponse(
         int periodDays,
+        LocalDate startDate,
+        LocalDate endDate,
         long totalUsers,
         long newUsers,
         long newUsersPrevious,

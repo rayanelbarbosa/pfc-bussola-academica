@@ -14,7 +14,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     boolean existsByEmailIgnoreCase(String email);
 
-    List<User> findByCreatedAtGreaterThanEqual(LocalDateTime start);
+    /** Usuários cadastrados em [start, end): o início entra, o fim não. */
+    List<User> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime start, LocalDateTime end);
 
     long countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime start, LocalDateTime end);
 }
