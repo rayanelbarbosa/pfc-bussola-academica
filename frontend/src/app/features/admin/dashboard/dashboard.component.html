@@ -33,17 +33,17 @@
   @if (data(); as d) {
     <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Indicadores principais" [class.opacity-60]="loading()">
       <div class="card p-4 sm:p-4">
-        <p class="text-sm text-muted-foreground">Usuários cadastrados</p>
-        <p class="mt-1 text-2xl font-semibold">{{ d.totalUsers }}</p>
+        <p class="text-sm text-muted-foreground">@if (d.allTime) { Usuários cadastrados } @else { Novos cadastros no período }</p>
+        <p class="mt-1 text-2xl font-semibold" data-testid="users-big-number">{{ d.allTime ? d.totalUsers : d.newUsers }}</p>
         <p class="mt-1 text-xs text-muted-foreground">
-          @if (d.allTime) { desde {{ formatBr(d.startDate) }} } @else { {{ d.newUsers }} novos · {{ variation(d.newUsers, d.newUsersPrevious) }} }
+          @if (d.allTime) { desde {{ formatBr(d.startDate) }} } @else { {{ d.totalUsers }} no total · {{ variation(d.newUsers, d.newUsersPrevious) }} }
         </p>
       </div>
       <div class="card p-4 sm:p-4">
-        <p class="text-sm text-muted-foreground">Testes realizados</p>
-        <p class="mt-1 text-2xl font-semibold">{{ d.totalTests }}</p>
+        <p class="text-sm text-muted-foreground">@if (d.allTime) { Testes realizados } @else { Testes no período }</p>
+        <p class="mt-1 text-2xl font-semibold" data-testid="tests-big-number">{{ d.allTime ? d.totalTests : d.tests }}</p>
         <p class="mt-1 text-xs text-muted-foreground">
-          @if (d.allTime) { desde {{ formatBr(d.startDate) }} } @else { {{ d.tests }} no período · {{ variation(d.tests, d.testsPrevious) }} }
+          @if (d.allTime) { desde {{ formatBr(d.startDate) }} } @else { {{ d.totalTests }} no total · {{ variation(d.tests, d.testsPrevious) }} }
         </p>
       </div>
       <div class="card p-4 sm:p-4">

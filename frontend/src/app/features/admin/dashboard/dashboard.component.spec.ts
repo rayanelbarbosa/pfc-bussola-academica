@@ -42,7 +42,12 @@ describe('DashboardComponent', () => {
   it('shows the big numbers with the variation and the charts', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(service.getMetrics).toHaveBeenCalledWith(null, { from: null, to: null });
-    expect(el.textContent).toContain('12');
+    // o número grande é o do período escolhido; o total fica na linha de baixo
+    expect(el.querySelector('[data-testid="users-big-number"]')?.textContent?.trim()).toBe('5');
+    expect(el.querySelector('[data-testid="tests-big-number"]')?.textContent?.trim()).toBe('8');
+    expect(el.textContent).toContain('Novos cadastros no período');
+    expect(el.textContent).toContain('12 no total');
+    expect(el.textContent).toContain('20 no total');
     expect(el.textContent).toContain('+3 em relação aos 30 dias anteriores');
     expect(el.textContent).toContain('-2 em relação aos 30 dias anteriores');
     expect(el.textContent).toContain('Social');
@@ -72,6 +77,8 @@ describe('DashboardComponent', () => {
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     expect(el.textContent).toContain('desde 01/06/2026');
+    expect(el.textContent).toContain('Usuários cadastrados');
+    expect(el.querySelector('[data-testid="users-big-number"]')?.textContent?.trim()).toBe('12');
     expect(el.textContent).not.toContain('em relação');
   });
 
