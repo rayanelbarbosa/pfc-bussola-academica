@@ -1,5 +1,6 @@
 package br.com.bussolaacademica.repository;
 
+import br.com.bussolaacademica.model.Role;
 import br.com.bussolaacademica.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -13,6 +14,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Optional<User> findByEmailIgnoreCase(String email);
 
     boolean existsByEmailIgnoreCase(String email);
+
+    /** Quantos usuários têm o perfil (ex.: para nunca deixar o sistema sem administrador). */
+    long countByRole(Role role);
 
     /** O cadastro mais antigo: início do "todo o período" do dashboard. */
     Optional<User> findFirstByOrderByCreatedAtAsc();
