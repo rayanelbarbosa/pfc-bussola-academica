@@ -3,8 +3,10 @@ package br.com.bussolaacademica.service;
 import br.com.bussolaacademica.dto.ResultSummaryResponse;
 import br.com.bussolaacademica.dto.UserDataExportResponse;
 import br.com.bussolaacademica.dto.UserResponse;
+import br.com.bussolaacademica.exception.BusinessRuleException;
 import br.com.bussolaacademica.exception.ResourceNotFoundException;
 import br.com.bussolaacademica.model.AuditAction;
+import br.com.bussolaacademica.model.Role;
 import br.com.bussolaacademica.model.User;
 import br.com.bussolaacademica.repository.UserRepository;
 import br.com.bussolaacademica.repository.VocationalTestResultRepository;
@@ -68,10 +70,17 @@ public class UserService {
                         .toList());
     }
 
-    /** Confere a senha, exclui a conta e anonimiza os resultados do teste do usuário (eles deixam de ser dele). */
+    /**
+     * Confere a senha, exclui a conta e anonimiza os resultados do teste do usuário (eles deixam de ser dele).
+     * O último administrador não pode excluir a própria conta, senão o sistema fica sem administração.
+     */
     @Transactional
     public void deleteMyAccount(String password) {
         User user = loadCurrent();
+        if (user.getRole() == Role.ADMIN && userRepository.countByRole(Role.ADMIN) <= 1) {
+            throw new BusinessRuleException(
+                    "Você é o único administrador. Torne outra pessoa administradora antes de excluir a sua conta.");
+        }
         passwordConfirmation.confirm(user, password);
         resultRepository.anonymizeByUser(user.getId());
         userRepository.delete(user);

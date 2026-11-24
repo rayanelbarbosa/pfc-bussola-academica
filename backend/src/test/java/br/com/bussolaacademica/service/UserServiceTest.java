@@ -106,6 +106,42 @@ class UserServiceTest {
     }
 
     @Test
+    void naoDeveExcluirAContaDoUnicoAdministrador() {
+        // Arrange
+        User admin = aluna();
+        admin.changeRole(Role.ADMIN);
+        when(currentUser.id()).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(userRepository.countByRole(Role.ADMIN)).thenReturn(1L);
+
+        // Act
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () -> userService.deleteMyAccount("Senha1234"));
+
+        // Assert: nada é apagado e a senha nem chega a ser conferida
+        assertTrue(ex.getMessage().contains("único administrador"));
+        verify(passwordConfirmation, never()).confirm(any(User.class), anyString());
+        verify(resultRepository, never()).anonymizeByUser(anyLong());
+        verify(userRepository, never()).delete(any(User.class));
+    }
+
+    @Test
+    void deveExcluirAContaDeAdministradorQuandoExisteOutroAdministrador() {
+        // Arrange
+        User admin = aluna();
+        admin.changeRole(Role.ADMIN);
+        when(currentUser.id()).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(userRepository.countByRole(Role.ADMIN)).thenReturn(2L);
+
+        // Act
+        userService.deleteMyAccount("Senha1234");
+
+        // Assert
+        verify(passwordConfirmation).confirm(admin, "Senha1234");
+        verify(userRepository).delete(admin);
+    }
+
+    @Test
     void naoDeveExcluirAContaQuandoASenhaEstiverErrada() {
         // Arrange
         User aluna = aluna();
