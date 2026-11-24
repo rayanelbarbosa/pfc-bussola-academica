@@ -5,6 +5,7 @@ import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { AuthResponse, LoginRequest, RegisterRequest, TermsVersion, User } from '../models/auth.model';
+import { QuizDraftService } from './quiz-draft.service';
 
 const TOKEN_KEY = 'bussola.token';
 const USER_KEY = 'bussola.user';
@@ -17,6 +18,7 @@ const USER_KEY = 'bussola.user';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly quizDraft = inject(QuizDraftService);
   private readonly baseUrl = `${environment.apiUrl}/auth`;
 
   private readonly currentUser = signal<User | null>(this.restoreUser());
@@ -27,6 +29,11 @@ export class AuthService {
   readonly isAdmin = computed(() => this.currentUser()?.role === 'ADMIN');
   /** Versão nova dos termos ainda não aceita (vem no login). */
   readonly pendingTerms = this.pending.asReadonly();
+
+  constructor() {
+    // O rascunho do teste só vale para quem está logado (e é dessa conta).
+    this.quizDraft.bindToUser(this.currentUser()?.id ?? null);
+  }
 
   login(request: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/login`, request).pipe(tap((res) => this.store(res)));
@@ -83,6 +90,7 @@ export class AuthService {
     });
     this.currentUser.set(null);
     this.pending.set(null);
+    this.quizDraft.clear();
   }
 
   token(): string | null {
@@ -101,6 +109,7 @@ export class AuthService {
     });
     this.currentUser.set(response.user);
     this.pending.set(response.pendingTerms ?? null);
+    this.quizDraft.bindToUser(response.user.id);
   }
 
   private restoreUser(): User | null {
