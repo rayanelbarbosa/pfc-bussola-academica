@@ -59,4 +59,30 @@ describe('QuizDraftService', () => {
     expect(restored.draft().answers).toEqual({});
     expect(localStorage.getItem('bussola.quiz-draft')).toBeNull();
   });
+  it('keeps the draft of the same user and discards the draft of another account', () => {
+    service.bindToUser(1);
+    service.toggleArea('HEALTH');
+    service.answer(1, 4);
+
+    service.bindToUser(1);
+    expect(service.draft().answers).toEqual({ 1: 4 });
+
+    service.bindToUser(2);
+    expect(service.areas()).toEqual([]);
+    expect(service.answeredCount()).toBe(0);
+    expect(service.draft().owner).toBe(2);
+  });
+
+  it('discards a draft without owner and clears everything when nobody is logged in', () => {
+    localStorage.setItem('bussola.quiz-draft.v2', JSON.stringify({ areas: ['HEALTH'], answers: { 1: 4 }, current: 2 }));
+    const restored = TestBed.runInInjectionContext(() => new QuizDraftService());
+
+    restored.bindToUser(7);
+    expect(restored.draft().answers).toEqual({});
+
+    restored.answer(1, 3);
+    restored.bindToUser(null);
+    expect(restored.answeredCount()).toBe(0);
+    expect(localStorage.getItem('bussola.quiz-draft.v2')).toBeNull();
+  });
 });

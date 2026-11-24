@@ -12,13 +12,16 @@ export interface QuizDraft {
   answers: Record<number, number>;
   /** Tela atual do questionário (6 atividades por tela). */
   current: number;
+  /** Id do usuário dono do rascunho: o rascunho de uma conta nunca aparece para outra. */
+  owner?: number;
 }
 
 const EMPTY: QuizDraft = { areas: [], answers: {}, current: 0 };
 
 /**
  * Rascunho do teste vocacional (áreas escolhidas, respostas e pergunta atual), salvo no navegador
- * para a pessoa não perder o progresso se sair e voltar.
+ * para a pessoa não perder o progresso se sair e voltar. O rascunho pertence a um usuário: é apagado
+ * quando a sessão termina e descartado se outra conta entrar no mesmo navegador.
  */
 @Injectable({ providedIn: 'root' })
 export class QuizDraftService {
@@ -55,6 +58,21 @@ export class QuizDraftService {
     this.update({ current: Math.max(0, index) });
   }
 
+  /**
+   * Liga o rascunho ao usuário da sessão. Sem usuário, apaga; com outro usuário (ou um rascunho
+   * antigo sem dono), começa do zero. O mesmo usuário continua de onde parou.
+   */
+  bindToUser(userId: number | null): void {
+    if (userId === null) {
+      this.clear();
+      return;
+    }
+    if (this.state().owner !== userId) {
+      this.clear();
+      this.update({ owner: userId });
+    }
+  }
+
   clear(): void {
     this.state.set({ ...EMPTY });
     try {
@@ -83,7 +101,8 @@ export class QuizDraftService {
       return {
         areas: Array.isArray(parsed.areas) ? parsed.areas : [],
         answers: parsed.answers && typeof parsed.answers === 'object' ? parsed.answers : {},
-        current: typeof parsed.current === 'number' ? parsed.current : 0
+        current: typeof parsed.current === 'number' ? parsed.current : 0,
+        owner: typeof parsed.owner === 'number' ? parsed.owner : undefined
       };
     } catch {
       return { ...EMPTY };
