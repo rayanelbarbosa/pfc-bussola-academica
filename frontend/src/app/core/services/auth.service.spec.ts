@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Router, provideRouter } from '@angular/router';
 
 import { AuthService, isExpired } from './auth.service';
+import { QuizDraftService } from './quiz-draft.service';
 import { environment } from '../../../environments/environment';
 import { authResponse, fakeToken } from '../testing/auth-fixtures';
 
@@ -88,5 +89,29 @@ describe('AuthService', () => {
     expect(isExpired(fakeToken(-10))).toBeTrue();
     expect(isExpired(fakeToken(600))).toBeFalse();
     expect(isExpired('lixo')).toBeTrue();
+  });
+  it('clears the vocational test draft when the session ends', () => {
+    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    const draft = TestBed.inject(QuizDraftService);
+    service.login({ email: 'a@b.com', password: 'x' }).subscribe();
+    http.expectOne(`${environment.apiUrl}/auth/login`).flush(authResponse());
+    draft.answer(1, 4);
+
+    service.logout(true);
+
+    expect(draft.answeredCount()).toBe(0);
+  });
+
+  it('does not show the draft of another account that used the same browser', () => {
+    const draft = TestBed.inject(QuizDraftService);
+    draft.bindToUser(99);
+    draft.toggleArea('HEALTH');
+    draft.answer(1, 4);
+
+    service.login({ email: 'marina@teste.com', password: 'Senha1234' }).subscribe();
+    http.expectOne(`${environment.apiUrl}/auth/login`).flush(authResponse());
+
+    expect(draft.areas()).toEqual([]);
+    expect(draft.answeredCount()).toBe(0);
   });
 });
